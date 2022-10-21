@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "hassio-onedrive-backup": {
+      "commandName": "Project"
+    },
+    "Docker": {
+      "commandName": "Docker"
+    }
+  }
+}
