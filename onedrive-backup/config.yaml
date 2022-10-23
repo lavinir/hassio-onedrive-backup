@@ -5,10 +5,9 @@ description: >-
   "Automatic backups from Home Assistant to Onedrive"
 arch:
   - amd64
+  - armhf
   - armv7
   - aarch64
-  - amd64
-  - i386
 url: "https://github.com/lavinir/hassio-onedrive-backup"
 map:
   - config
@@ -18,11 +17,16 @@ options:
   local_backup_num_to_keep : 2
   onedrive_backup_num_to_keep : 2
   backup_interval_days : 3
+  notify_on_error : true
+  backup_name : "hass_backup"
+
 schema:
   local_backup_num_to_keep : "int(0,)"
-  onedrive_backup_num_to_keep : "int(1,)"
+  onedrive_backup_num_to_keep : "int(1,100)"
   backup_interval_days : "float(0,)"
   backup_passwd : "password?"
+  backup_name : "match([a-zA-Z_]*)"
+  notify_on_error : bool
 hassio_role : "backup"
 hassio_api : true
-image: repo/{arch}-hassonedrivebackup
+image: ghcr.io/lavinir/{arch}-hassonedrive

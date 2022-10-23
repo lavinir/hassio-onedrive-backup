@@ -30,7 +30,7 @@ namespace hassio_onedrive_backup.Graph
             _persistentDataPath = persistentDataPath;
         }
 
-        public string PersistantAuthRecordFullPath => Path.Combine(_persistentDataPath, AuthRecordFile);
+        public string PersistentAuthRecordFullPath => Path.Combine(_persistentDataPath, AuthRecordFile);
 
         public async Task InitializeGraphForUserAuthAsync()
         {
@@ -71,23 +71,45 @@ namespace hassio_onedrive_backup.Graph
             return response.Token;
         }
 
-        public async Task TestClient()
+        public async Task<List<DriveItem>> GetItemsInAppFolder()
         {
-            var item = await _userClient.Drive.Special.AppRoot.Request().GetAsync();
+            var items = await _userClient.Drive.Special.AppRoot.Children.Request().GetAsync();
+            return items.ToList();
         }
 
+        public async Task<bool> DeleteFileFromAppFolderAsync(string filePath)
+        {
+            try
+            {
+                ConsoleLogger.LogInfo($"Deleting File: {filePath}");
+                await _userClient.Drive.Special.AppRoot.ItemWithPath(filePath).Request().DeleteAsync();
+            }
+            catch (Exception ex)
+            {
+                ConsoleLogger.LogError($"Error deleting {filePath}. {ex}");
+                return false;
+            }
 
-        public async Task UploadFileAsync(string filePath, string? destinationFileName = null)
+            return true;
+        }
+
+        public async Task<bool> UploadFileAsync(string filePath, string? destinationFileName = null)
         {
             if (File.Exists(filePath) == false)
             {
                 ConsoleLogger.LogError($"File {filePath} not found");
-                return;
+                return false;
             }
 
             using var fileStream = System.IO.File.OpenRead(filePath);
-            destinationFileName = destinationFileName ?? Path.GetFileName(filePath);           
-            var uploadSession = await _userClient.Drive.Special.AppRoot.ItemWithPath(destinationFileName).CreateUploadSession().Request().PostAsync();
+            destinationFileName = destinationFileName ?? Path.GetFileName(filePath);
+            string originalFileName = Path.GetFileNameWithoutExtension(filePath);
+            var uploadSession = await _userClient.Drive.Special.AppRoot.ItemWithPath(destinationFileName).CreateUploadSession(new DriveItemUploadableProperties
+            {
+                Description = originalFileName
+            }
+                
+            ).Request().PostAsync();
 
             int maxSlizeSize = (320 * 1024) * 10;
             long totalFileLength = fileStream.Length;
@@ -126,8 +148,11 @@ namespace hassio_onedrive_backup.Graph
                 catch (ServiceException ex)
                 {
                     ConsoleLogger.LogError($"Error uploading: {ex}");
+                    return false;
                 }
             }
+
+            return true;
         }
 
         private AuthenticationRecord GetAuthenticationRecordFromCredential()
@@ -141,19 +166,19 @@ namespace hassio_onedrive_backup.Graph
 
         private async Task PersistAuthenticationRecord(AuthenticationRecord record)
         {
-            using var authRecordStream = new FileStream(PersistantAuthRecordFullPath, FileMode.Create, FileAccess.Write);
+            using var authRecordStream = new FileStream(PersistentAuthRecordFullPath, FileMode.Create, FileAccess.Write);
             await record.SerializeAsync(authRecordStream);
         }
 
         private async Task<AuthenticationRecord?> ReadPersistedAuthenticationRecord()
         {
-            if (File.Exists(PersistantAuthRecordFullPath) == false)
+            if (File.Exists(PersistentAuthRecordFullPath) == false)
             {
                 ConsoleLogger.LogWarning("Token Cache is Empty");
                 return null;
             }
 
-            using var authRecordStream = new FileStream(PersistantAuthRecordFullPath, FileMode.Open, FileAccess.Read);
+            using var authRecordStream = new FileStream(PersistentAuthRecordFullPath, FileMode.Open, FileAccess.Read);
             var record = await AuthenticationRecord.DeserializeAsync(authRecordStream);
             return record;
         }

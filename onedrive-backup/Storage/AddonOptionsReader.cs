@@ -10,14 +10,14 @@ namespace hassio_onedrive_backup.Storage
 {
     internal class AddonOptionsReader
     {
-        public static AddonOptions ReadOptions(string dataPath)
+        public static AddonOptions ReadOptions(string path = "options.json")
         {
-            if (File.Exists(dataPath) == false)
+            if (File.Exists(path) == false)
             {
-                throw new NotSupportedException($"{dataPath} not found");
+                throw new NotSupportedException($"{path} not found");
             }
 
-            string optionContents = File.ReadAllText(dataPath);
+            string optionContents = File.ReadAllText(path);
             var options = JsonConvert.DeserializeObject<AddonOptions>(optionContents);
             return options!;
         }

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using JsonIgnoreAttribute = Newtonsoft.Json.JsonIgnoreAttribute;
 
 namespace hassio_onedrive_backup.Contracts
 {
@@ -22,5 +23,13 @@ namespace hassio_onedrive_backup.Contracts
         [JsonProperty("backup_passwd")]
         public string? BackupPassword { get; set; }
 
+        [JsonProperty("backup_name")]
+        public string? BackupName { get; set; }
+
+        [JsonProperty("notify_on_error")]
+        public bool NotifyOnError { get; set; }
+
+        [JsonIgnore]
+        public float BackupIntervalHours => BackupIntervalDays * 24;
     }
 }
