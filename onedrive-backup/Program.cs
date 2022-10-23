@@ -34,13 +34,15 @@ namespace hassio_onedrive_backup
             Console.WriteLine($"Supervisor Token : {supervisorToken}");
             var hassIoClient = new HassioClient(supervisorToken);
 
-            string token = await graphHelper.GetUserTokenAsync();
-            Console.WriteLine($"Got Token: {token}");
+            await hassIoClient.GetAuth();
 
-            var backups = await hassIoClient.GetBackupsAsync();
-            Console.WriteLine($"Got {backups.Length} Backups");
-            string backupFileToUpload = hassIoClient.GetBackupFilePath(backups.First());
-            await graphHelper.UploadFileAsync(backupFileToUpload, $"{backups.First().Name}_{Guid.NewGuid()}.tar");
+            //string token = await graphHelper.GetUserTokenAsync();
+            //Console.WriteLine($"Got Token: {token}");
+
+            //var backups = await hassIoClient.GetBackupsAsync();
+            //Console.WriteLine($"Got {backups.Length} Backups");
+            //string backupFileToUpload = hassIoClient.GetBackupFilePath(backups.First());
+            //await graphHelper.UploadFileAsync(backupFileToUpload, $"{backups.First().Name}_{Guid.NewGuid()}.tar");
             //foreach (var backup in backups)
             //{
             //    string backupStr = JsonConvert.SerializeObject(backup);

@@ -25,4 +25,4 @@ schema:
   backup_passwd : "password?"
 hassio_role : "backup"
 hassio_api : true
-image: repo/{arch}-my-custom-addon
+image: repo/{arch}-hassonedrivebackup

@@ -15,6 +15,15 @@ namespace hassio_onedrive_backup.Hass
         {
             _httpClient = new HttpClient();
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            _httpClient.DefaultRequestHeaders.Add("X-Supervisor-Token", token);
+        }
+
+        public async Task<string> GetAuth()
+        {
+            Uri uri = new Uri(Base_Uri_Str + "/auth");
+            string rawResponse = await _httpClient.GetStringAsync(uri);
+            Console.WriteLine($"Raw Auth Response : {rawResponse}");
+            return rawResponse;
         }
 
         public async Task<Backup[]> GetBackupsAsync()
@@ -31,10 +40,6 @@ namespace hassio_onedrive_backup.Hass
             return response.DataProperty.Backups;
         }
 
-        public  string GetBackupFilePath(Backup backup)
-        {
-            return $"/backup/{backup.Slug}.tar";
-        }
 
         private async Task<T> GetJsonResponseAsync<T>(Uri uri) 
         { 
