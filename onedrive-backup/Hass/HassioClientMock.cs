@@ -1,4 +1,6 @@
-﻿using System.Diagnostics;
+﻿using Newtonsoft.Json;
+using System.Diagnostics;
+using System.Net.Http;
 using static hassio_onedrive_backup.Contracts.HassBackupsResponse;
 
 namespace hassio_onedrive_backup.Hass
@@ -42,7 +44,20 @@ namespace hassio_onedrive_backup.Hass
 
         public Task SendPersistentNotificationAsync(string message)
         {
-            Debug.WriteLine(message);
+            var payload = new
+            {
+                message = message,
+                title = "hassio-onedrive-backup"
+            };
+
+            string payloadStr = JsonConvert.SerializeObject(payload);
+            Debug.WriteLine(payloadStr);
+            return Task.CompletedTask;
+        }
+
+        public Task UpdateHassEntityState(string entityId, string payload)
+        {
+            Debug.WriteLine($"EntityId: {entityId}. State: {payload}");
             return Task.CompletedTask;
         }
     }

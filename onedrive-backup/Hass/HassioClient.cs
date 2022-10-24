@@ -68,13 +68,13 @@ namespace hassio_onedrive_backup.Hass
 
             try
             {
-                ConsoleLogger.LogInfo("Starting Full Local Backup");
+                ConsoleLogger.LogInfo("Starting full local backup");
                 await _httpClient.PostAsync(uri, new StringContent(payloadStr, Encoding.UTF8, "application/json"));
-                ConsoleLogger.LogInfo("Backup Complete");
+                ConsoleLogger.LogInfo("Backup complete");
             }
             catch (Exception ex)
             {
-                ConsoleLogger.LogError($"Failed Creating New Backup. {ex}");
+                ConsoleLogger.LogError($"Failed creating new backup. {ex}");
                 return false;
             }
 
@@ -88,11 +88,8 @@ namespace hassio_onedrive_backup.Hass
                 Uri uri = new Uri(Hass_Base_Uri_Str + "/services/notify/persistent_notification");
                 var payload = new
                 {
-                    data = new
-                    {
-                        message = message,
-                        title = "hassio-onedrive-backup"
-                    }
+                    message = message,
+                    title = "hassio-onedrive-backup"
                 };
 
                 string payloadStr = JsonConvert.SerializeObject(payload);
@@ -100,8 +97,14 @@ namespace hassio_onedrive_backup.Hass
             }
             catch (Exception ex)
             {
-                ConsoleLogger.LogError($"Failed Sending Persistent Notification. {ex}");
+                ConsoleLogger.LogError($"Failed sending persistent notification. {ex}");
             }
+        }
+
+        public async Task UpdateHassEntityState(string entityId, string payload)
+        {
+            Uri uri = new Uri(Hass_Base_Uri_Str + "/states/sensor.onedrivebackup");
+            await _httpClient.PostAsync(uri, new StringContent(payload, Encoding.UTF8, "application/json"));
         }
 
         private async Task<T> GetJsonResponseAsync<T>(Uri uri) 
@@ -110,5 +113,6 @@ namespace hassio_onedrive_backup.Hass
             T ret = JsonConvert.DeserializeObject<T>(response)!;
             return ret;
         }
+
     }
 }

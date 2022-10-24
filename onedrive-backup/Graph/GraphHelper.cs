@@ -1,6 +1,8 @@
 ﻿using Azure.Core;
 using Azure.Identity;
+using hassio_onedrive_backup.Contracts;
 using Microsoft.Graph;
+using Newtonsoft.Json;
 using System.Reflection;
 using File = System.IO.File;
 
@@ -60,7 +62,7 @@ namespace hassio_onedrive_backup.Graph
         {
             try
             {
-                ConsoleLogger.LogInfo($"Deleting File: {filePath}");
+                ConsoleLogger.LogInfo($"Deleting file: {filePath}");
                 await _userClient.Drive.Special.AppRoot.ItemWithPath(filePath).Request().DeleteAsync();
             }
             catch (Exception ex)
@@ -72,7 +74,7 @@ namespace hassio_onedrive_backup.Graph
             return true;
         }
 
-        public async Task<bool> UploadFileAsync(string filePath, string? destinationFileName = null)
+        public async Task<bool> UploadFileAsync(string filePath, DateTime date, string? destinationFileName = null)
         {
             if (File.Exists(filePath) == false)
             {
@@ -85,7 +87,7 @@ namespace hassio_onedrive_backup.Graph
             string originalFileName = Path.GetFileNameWithoutExtension(filePath);
             var uploadSession = await _userClient.Drive.Special.AppRoot.ItemWithPath(destinationFileName).CreateUploadSession(new DriveItemUploadableProperties
             {
-                Description = originalFileName
+                Description = SerializeBackupDescription(originalFileName, date)
             }
                 
             ).Request().PostAsync();
@@ -95,7 +97,8 @@ namespace hassio_onedrive_backup.Graph
             var fileUploadTask = new LargeFileUploadTask<DriveItem>(uploadSession, fileStream, maxSlizeSize);
             IProgress<long> progress = new Progress<long>(prog =>
             {
-                ConsoleLogger.LogInfo($"Uploaded {prog} bytes of {totalFileLength} bytes");
+                double percentage = Math.Round((prog / (double)totalFileLength), 2);
+                ConsoleLogger.LogInfo($"Uploaded {percentage}%");
             });
 
             int uploadAttempt = 0;
@@ -103,7 +106,7 @@ namespace hassio_onedrive_backup.Graph
             {
                 try
                 {
-                    ConsoleLogger.LogInfo($"Attempting File Upload (Attempt {uploadAttempt}/{UploadRetryCount})");
+                    ConsoleLogger.LogInfo($"Attempting file upload. (Size:{totalFileLength} bytes. Attempt: {uploadAttempt}/{UploadRetryCount})");
                     UploadResult<DriveItem> uploadResult;
                     if (uploadAttempt > 1)
                     {
@@ -116,12 +119,12 @@ namespace hassio_onedrive_backup.Graph
 
                     if (uploadResult.UploadSucceeded)
                     {
-                        ConsoleLogger.LogInfo("Upload Completed Successfully");
+                        ConsoleLogger.LogInfo("Upload completed successfully");
                         break;
                     }
                     else
                     {
-                        ConsoleLogger.LogError("Upload Failed");
+                        ConsoleLogger.LogError("Upload failed");
                     }
                 }
                 catch (ServiceException ex)
@@ -132,6 +135,17 @@ namespace hassio_onedrive_backup.Graph
             }
 
             return true;
+        }
+
+        private string SerializeBackupDescription(string originalFileName, DateTime date)
+        {
+            var description = new OnedriveItemDescription
+            {
+                Slug = originalFileName,
+                BackupDate = date
+            };
+
+            return JsonConvert.SerializeObject(description);
         }
 
         private AuthenticationRecord GetAuthenticationRecordFromCredential()
@@ -153,7 +167,7 @@ namespace hassio_onedrive_backup.Graph
         {
             if (File.Exists(PersistentAuthRecordFullPath) == false)
             {
-                ConsoleLogger.LogWarning("Token Cache is Empty");
+                ConsoleLogger.LogWarning("Token cache is empty");
                 return null;
             }
 

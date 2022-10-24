@@ -31,22 +31,16 @@ namespace hassio_onedrive_backup
         private static void WriteLog(LogLevel level, string msg)
         {
             var timestamp = DateTime.Now;
-            Console.Write($"{timestamp} ");
-            switch (level)
-            {
-                case LogLevel.Warning:
-                    Console.ForegroundColor = ConsoleColor.Yellow;
-                    break;
-                case LogLevel.Error:
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    break;
-                default:
-                    Console.ForegroundColor = ConsoleColor.Gray;
-                    break;
-            }
+            string logMsg = $"{timestamp} {level}: {msg}";
 
-            Console.WriteLine($"{level}: {msg}");
-            Console.ForegroundColor = ConsoleColor.Gray;
+            if (level == LogLevel.Error)
+            {
+                Console.Error.WriteLine(logMsg);
+            }
+            else
+            {
+                Console.WriteLine(logMsg);
+            }
         }
 
         public enum LogLevel

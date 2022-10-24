@@ -11,5 +11,7 @@ namespace hassio_onedrive_backup.Hass
         Task<bool> CreateBackupAsync(string backupName, bool compressed = true, string? password = null);
 
         Task<bool> DeleteBackupAsync(Backup backup);
+
+        Task UpdateHassEntityState(string entityId, string payload);
     }
 }

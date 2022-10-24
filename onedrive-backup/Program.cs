@@ -27,7 +27,6 @@ namespace hassio_onedrive_backup
 
             var addonOptions = AddonOptionsReader.ReadOptions();
             var backupManager = new BackupManager(addonOptions, graphHelper, hassIoClient);
-            await hassIoClient.SendPersistentNotificationAsync("Test Notification");
             TimeSpan intervalDelay = TimeSpan.FromHours(Math.Max(1, addonOptions.BackupIntervalHours / 2));
             while (true)
             {
@@ -38,10 +37,11 @@ namespace hassio_onedrive_backup
 
                     ConsoleLogger.LogInfo("Checking backups");
                     await backupManager.PerformBackupsAsync();
+                    ConsoleLogger.LogInfo("Interval Completed.");
                 }
                 catch (Exception ex)
                 {
-                    ConsoleLogger.LogError($"Unexpected Error. {ex}");
+                    ConsoleLogger.LogError($"Unexpected error. {ex}");
                 }
 
                 await Task.Delay(intervalDelay);

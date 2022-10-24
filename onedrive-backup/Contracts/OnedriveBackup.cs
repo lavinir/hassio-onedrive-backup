@@ -2,14 +2,17 @@
 {
     internal class OnedriveBackup
     {
-        public OnedriveBackup(string slug, string fileName)
+        public OnedriveBackup(string fileName, OnedriveItemDescription itemDescription)
         {
-            Slug = slug ?? String.Empty;
             FileName = fileName;
+            Slug = itemDescription.Slug;
+            BackupDate = itemDescription.BackupDate;
         }
 
         public string Slug { get; }
 
         public string FileName { get; }
+
+        public DateTime BackupDate { get; set; }
     }
 }

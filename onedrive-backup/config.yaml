@@ -24,7 +24,7 @@ schema:
   local_backup_num_to_keep : "int(0,)"
   onedrive_backup_num_to_keep : "int(1,100)"
   backup_interval_days : "float(0,)"
-  backup_passwd : "password?"
+  backup_passwd : "password"
   backup_name : "match([a-zA-Z_]*)"
   notify_on_error : bool
 hassio_role : "backup"
