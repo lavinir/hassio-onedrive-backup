@@ -8,13 +8,13 @@ FROM mcr.microsoft.com/dotnet/sdk:$SDK_IMAGE_ARCH_TAG AS build
 ARG BUILD_ARCH
 WORKDIR /src
 COPY ["hassio-onedrive-backup.csproj", "."]
-RUN dotnet restore "./hassio-onedrive-backup.csproj"
+RUN dotnet restore "./hassio-onedrive-backup.csproj" -r $BUILD_ARCH
 COPY . .
 WORKDIR "/src/."
-RUN dotnet build "hassio-onedrive-backup.csproj" -c Release -o /app/build -r $BUILD_ARCH --self-contained false
+RUN dotnet build "hassio-onedrive-backup.csproj" -c Release -o /app/build -r $BUILD_ARCH 
 
 FROM build AS publish
-RUN dotnet publish "hassio-onedrive-backup.csproj" -c Release -o /app/publish /p:UseAppHost=false --self-contained false
+RUN dotnet publish "hassio-onedrive-backup.csproj" -c Release -o /app/publish /p:UseAppHost=false 
 
 FROM base AS final
 WORKDIR /app

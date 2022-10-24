@@ -1,7 +1,5 @@
 ﻿using hassio_onedrive_backup.Contracts;
 using hassio_onedrive_backup.Graph;
-using Microsoft.Graph;
-using Microsoft.IdentityModel.Abstractions;
 using static hassio_onedrive_backup.Contracts.HassBackupsResponse;
 
 namespace hassio_onedrive_backup.Hass
@@ -10,25 +8,25 @@ namespace hassio_onedrive_backup.Hass
     {
         private const string BackupFolder = "/backup";
         private AddonOptions _addonOptions;
-        private GraphHelper _graphHelper;
-        private HassioClient _hassIoClient;
+        private IGraphHelper _graphHelper;
+        private IHassioClient _hassIoClient;
 
-        public BackupManager(AddonOptions addonOptions, GraphHelper graphHelper, HassioClient hassIoClient)
+        public BackupManager(AddonOptions addonOptions, IGraphHelper graphHelper, IHassioClient hassIoClient)
         {
             _addonOptions = addonOptions;
             _graphHelper = graphHelper;
             _hassIoClient = hassIoClient;
         }
 
-        public async Task PerformBackups()
+        public async Task PerformBackupsAsync()
         {
             var now = DateTime.Now;
 
             // Get existing local backups
-            var localBackups = await _hassIoClient.GetBackupsAsync();
+            var localBackups = await _hassIoClient.GetBackupsAsync(backup => backup.Name.Equals(_addonOptions.BackupName, StringComparison.OrdinalIgnoreCase));
 
             // Create local backups if needed
-            DateTime lastBackupTime = localBackups.Max(backup => backup.Date);
+            DateTime lastBackupTime = localBackups.Any() ? localBackups.Max(backup => backup.Date) : DateTime.MinValue;
             if ((now - lastBackupTime).TotalHours >= _addonOptions.BackupIntervalHours)
             {
                 ConsoleLogger.LogInfo($"Creating new Backup");
@@ -44,10 +42,10 @@ namespace hassio_onedrive_backup.Hass
             }
 
             // Get existing online backups
-            var onlineBackups = await GetOnlineBackups();
+            var onlineBackups = await GetOnlineBackupsAsync();
 
             // Get Online backup candidates
-            var onlineBackupCandiates = await GetOnlineBackupCandidates(localBackups, onlineBackups);
+            var onlineBackupCandiates = await GetOnlineBackupCandidatesAsync(localBackups, onlineBackups);
 
             // Get Online Backups Candidates that have not yet been uploaded
             var backupsToUpload = onlineBackupCandiates
@@ -89,12 +87,12 @@ namespace hassio_onedrive_backup.Hass
             }
 
             // Delete Old Local Backups
-            if (localBackups.Length <= _addonOptions.MaxLocalBackups)
+            if (localBackups.Count <= _addonOptions.MaxLocalBackups)
             {
                 return;
             }
 
-            int numOfLocalBackupsToRemove = localBackups.Length - _addonOptions.MaxLocalBackups;
+            int numOfLocalBackupsToRemove = localBackups.Count - _addonOptions.MaxLocalBackups;
             var localBackupsToRemove = localBackups
                 .OrderBy(backup => backup.Date)
                 .Take(numOfLocalBackupsToRemove)
@@ -103,21 +101,12 @@ namespace hassio_onedrive_backup.Hass
             ConsoleLogger.LogInfo($"Removing {numOfLocalBackupsToRemove} local backups");
             foreach (var localBackup in localBackupsToRemove)
             {
-                string backupFilePath = GetBackupFilePath(localBackup);
-                try
+                bool deleteSuccess = await _hassIoClient.DeleteBackupAsync(localBackup);
+                if (deleteSuccess == false && _addonOptions.NotifyOnError)
                 {
-                    System.IO.File.Delete(backupFilePath);
-                }
-                catch (Exception ex)
-                {
-                    ConsoleLogger.LogError($"Error Deleting Local Backup {backupFilePath}. {ex}");
-                    if (_addonOptions.NotifyOnError)
-                    {
-                        await _hassIoClient.SendPersistentNotificationAsync("Error Deleting Local Backup. Check Addon logs for more details");
-                    }
+                    await _hassIoClient.SendPersistentNotificationAsync("Error Deleting Local Backup. Check Addon logs for more details");
                 }
             }
-
         }
 
         private static string GetBackupFilePath(Backup backup)
@@ -125,13 +114,13 @@ namespace hassio_onedrive_backup.Hass
             return $"{BackupFolder}/{backup.Slug}.tar";
         }
 
-        private async Task<List<OnedriveBackup>> GetOnlineBackups()
+        private async Task<List<OnedriveBackup>> GetOnlineBackupsAsync()
         {
-            var onlineBackups = (await _graphHelper.GetItemsInAppFolder()).Select(item => new OnedriveBackup(item.Description, item.Name)).ToList();
+            var onlineBackups = (await _graphHelper.GetItemsInAppFolderAsync()).Select(item => new OnedriveBackup(item.Description, item.Name)).ToList();
             return onlineBackups;
         }
 
-        private Task<List<Backup>> GetOnlineBackupCandidates(IEnumerable<Backup> localBackups, IEnumerable<OnedriveBackup> onlineBackups)
+        private Task<List<Backup>> GetOnlineBackupCandidatesAsync(IEnumerable<Backup> localBackups, IEnumerable<OnedriveBackup> onlineBackups)
         {
             var filteredLocalBackups = localBackups
                 .Where(backup => backup.Compressed)

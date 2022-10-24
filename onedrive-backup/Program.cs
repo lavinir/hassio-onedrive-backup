@@ -12,34 +12,39 @@ namespace hassio_onedrive_backup
 
         static async Task Main(string[] args)
         {
+#if DEBUG
+            IHassioClient hassIoClient = new HassioClientMock();
+#else
             Directory.SetCurrentDirectory(addonDirectory);
-            var graphHelper = new GraphHelper(scopes, clientId, (info, cancel) =>
+            string supervisorToken = Environment.GetEnvironmentVariable("SUPERVISOR_TOKEN")!;
+            IHassioClient hassIoClient = new HassioClient(supervisorToken);
+#endif
+            IGraphHelper graphHelper = new GraphHelper(scopes, clientId, (info, cancel) =>
             {
                 Console.WriteLine(info.Message);
                 return Task.FromResult(0);
             });
 
-            string supervisorToken = Environment.GetEnvironmentVariable("SUPERVISOR_TOKEN")!;
-            var hassIoClient = new HassioClient(supervisorToken);
             var addonOptions = AddonOptionsReader.ReadOptions();
             var backupManager = new BackupManager(addonOptions, graphHelper, hassIoClient);
             await hassIoClient.SendPersistentNotificationAsync("Test Notification");
-
+            TimeSpan intervalDelay = TimeSpan.FromHours(Math.Max(1, addonOptions.BackupIntervalHours / 2));
             while (true)
             {
                 try
                 {
                     // Refresh Graph Token
-                    await graphHelper.GetUserTokenAsync();
+                    await graphHelper.GetAndCacheUserTokenAsync();
 
                     ConsoleLogger.LogInfo("Checking backups");
-                    await backupManager.PerformBackups();
+                    await backupManager.PerformBackupsAsync();
                 }
                 catch (Exception ex)
                 {
                     ConsoleLogger.LogError($"Unexpected Error. {ex}");
                 }
 
+                await Task.Delay(intervalDelay);
             }
         }
     }

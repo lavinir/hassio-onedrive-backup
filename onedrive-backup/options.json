@@ -1,7 +1,7 @@
 {
   "local_backup_num_to_keep": 3,
   "onedrive_backup_num_to_keep": 2,
-  "backup_interval_days": 1.5,
+  "backup_interval_days": 0.04,
   "backup_passwd": "alsdkfjslajfk",
   "backup_name": "hass_backup",
   "notify_on_error": true

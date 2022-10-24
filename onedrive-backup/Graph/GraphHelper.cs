@@ -6,7 +6,7 @@ using File = System.IO.File;
 
 namespace hassio_onedrive_backup.Graph
 {
-    internal class GraphHelper
+    internal class GraphHelper : IGraphHelper
     {
         private const string AuthRecordFile = "record.auth";
         private const int UploadRetryCount = 3;
@@ -30,30 +30,9 @@ namespace hassio_onedrive_backup.Graph
             _persistentDataPath = persistentDataPath;
         }
 
-        public string PersistentAuthRecordFullPath => Path.Combine(_persistentDataPath, AuthRecordFile);
+        private string PersistentAuthRecordFullPath => Path.Combine(_persistentDataPath, AuthRecordFile);
 
-        public async Task InitializeGraphForUserAuthAsync()
-        {
-            AuthenticationRecord? authRecord = await ReadPersistedAuthenticationRecord();
-            var deviceCodeCredOptions = new DeviceCodeCredentialOptions
-            {
-                ClientId = _clientId,
-                DeviceCodeCallback = _deviceCodePrompt,
-                TenantId = "common",
-                AuthenticationRecord = authRecord,
-                TokenCachePersistenceOptions = new TokenCachePersistenceOptions
-                {
-                    Name = "hassio-onedrive-backup",
-                    UnsafeAllowUnencryptedStorage = true
-                }
-            };
-
-            _deviceCodeCredential = new DeviceCodeCredential(deviceCodeCredOptions);
-            _userClient = new GraphServiceClient(_deviceCodeCredential, _scopes);
-            _userClient.HttpProvider.OverallTimeout = TimeSpan.FromMinutes(GraphRequestTimeoutMinutes);
-        }
-
-        public async Task<string> GetUserTokenAsync()
+        public async Task<string> GetAndCacheUserTokenAsync()
         {
             if (_deviceCodeCredential == null)
             {
@@ -67,11 +46,11 @@ namespace hassio_onedrive_backup.Graph
 
             var context = new TokenRequestContext(_scopes.ToArray());
             var response = await _deviceCodeCredential.GetTokenAsync(context);
-            await PersistAuthenticationRecord(GetAuthenticationRecordFromCredential());
+            await PersistAuthenticationRecordAsync(GetAuthenticationRecordFromCredential());
             return response.Token;
         }
 
-        public async Task<List<DriveItem>> GetItemsInAppFolder()
+        public async Task<List<DriveItem>> GetItemsInAppFolderAsync()
         {
             var items = await _userClient.Drive.Special.AppRoot.Children.Request().GetAsync();
             return items.ToList();
@@ -164,13 +143,13 @@ namespace hassio_onedrive_backup.Graph
             return record;
         }
 
-        private async Task PersistAuthenticationRecord(AuthenticationRecord record)
+        private async Task PersistAuthenticationRecordAsync(AuthenticationRecord record)
         {
             using var authRecordStream = new FileStream(PersistentAuthRecordFullPath, FileMode.Create, FileAccess.Write);
             await record.SerializeAsync(authRecordStream);
         }
 
-        private async Task<AuthenticationRecord?> ReadPersistedAuthenticationRecord()
+        private async Task<AuthenticationRecord?> ReadPersistedAuthenticationRecordAsync()
         {
             if (File.Exists(PersistentAuthRecordFullPath) == false)
             {
@@ -182,5 +161,27 @@ namespace hassio_onedrive_backup.Graph
             var record = await AuthenticationRecord.DeserializeAsync(authRecordStream);
             return record;
         }
+
+        private async Task InitializeGraphForUserAuthAsync()
+        {
+            AuthenticationRecord? authRecord = await ReadPersistedAuthenticationRecordAsync();
+            var deviceCodeCredOptions = new DeviceCodeCredentialOptions
+            {
+                ClientId = _clientId,
+                DeviceCodeCallback = _deviceCodePrompt,
+                TenantId = "common",
+                AuthenticationRecord = authRecord,
+                TokenCachePersistenceOptions = new TokenCachePersistenceOptions
+                {
+                    Name = "hassio-onedrive-backup",
+                    UnsafeAllowUnencryptedStorage = true
+                }
+            };
+
+            _deviceCodeCredential = new DeviceCodeCredential(deviceCodeCredOptions);
+            _userClient = new GraphServiceClient(_deviceCodeCredential, _scopes);
+            _userClient.HttpProvider.OverallTimeout = TimeSpan.FromMinutes(GraphRequestTimeoutMinutes);
+        }
+
     }
 }

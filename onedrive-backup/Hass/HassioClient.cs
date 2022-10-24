@@ -7,31 +7,48 @@ using static hassio_onedrive_backup.Contracts.HassBackupsResponse;
 
 namespace hassio_onedrive_backup.Hass
 {
-    internal class HassioClient
+    internal class HassioClient : IHassioClient
     {
         private const string Supervisor_Base_Uri_Str = "http://supervisor";
         private const string Hass_Base_Uri_Str = "http://supervisor/core/api";
         private readonly HttpClient _httpClient;
 
-        public HassioClient(string token)
+        public HassioClient(string token) 
         {
             _httpClient = new HttpClient();
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             _httpClient.Timeout = TimeSpan.FromMinutes(30);
         }
 
-        public async Task<Backup[]> GetBackupsAsync()
+        public async Task<bool> DeleteBackupAsync(Backup backup)
+        {
+            try
+            {
+                Uri uri = new Uri(Supervisor_Base_Uri_Str + $"/backups/{backup.Slug}");
+                await _httpClient.DeleteAsync(uri);
+
+            }
+            catch (Exception ex)
+            {
+                ConsoleLogger.LogError($"Error deleting backup {backup.Slug}. {ex}");
+                return false;
+            }
+
+            return true;
+        }
+
+        public async Task<List<Backup>> GetBackupsAsync(Predicate<Backup> filter)
         {
             Uri uri = new Uri(Supervisor_Base_Uri_Str + "/backups");
-            string rawResponse = await _httpClient.GetStringAsync(uri);
-            Console.WriteLine($"Raw Response : { rawResponse}");
             var response = await GetJsonResponseAsync<HassBackupsResponse>(new Uri(Supervisor_Base_Uri_Str + "/backups"));
             if (response.Result.Equals("ok", StringComparison.OrdinalIgnoreCase) == false)
             {
                 throw new InvalidOperationException($"Failed getting Backups from Supervisor. Result: {response.Result}");
             }
 
-            return response.DataProperty.Backups;
+            var backups = response.DataProperty.Backups;
+
+            return filter != null ? backups.Where(backup => filter(backup)).ToList() : backups.ToList();
         }
 
         public async Task<bool> CreateBackupAsync(string backupName, bool compressed = true, string? password = null)
