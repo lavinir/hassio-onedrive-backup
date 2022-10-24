@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace hassio_onedrive_backup.Hass
 {
@@ -25,6 +26,7 @@ namespace hassio_onedrive_backup.Hass
             return _instance!;
         }
 
+        [JsonConverter(typeof(StringEnumConverter))]
         public BackupState State { get; set; }
 
         public DateTime? LastLocalBackupDate { get; set; }
