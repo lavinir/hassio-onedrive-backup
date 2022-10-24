@@ -95,10 +95,16 @@ namespace hassio_onedrive_backup.Graph
             int maxSlizeSize = (320 * 1024) * 10;
             long totalFileLength = fileStream.Length;
             var fileUploadTask = new LargeFileUploadTask<DriveItem>(uploadSession, fileStream, maxSlizeSize);
+            double lastPercentage = 0;
             IProgress<long> progress = new Progress<long>(prog =>
             {
-                double percentage = Math.Round((prog / (double)totalFileLength), 2);
-                ConsoleLogger.LogInfo($"Uploaded {percentage}%");
+                double percentage = Math.Round((prog / (double)totalFileLength), 2) * 100;
+                if (percentage - lastPercentage >= 10)
+                {
+                    ConsoleLogger.LogInfo($"Uploaded {percentage}%");
+                }
+
+                lastPercentage = percentage;
             });
 
             int uploadAttempt = 0;
