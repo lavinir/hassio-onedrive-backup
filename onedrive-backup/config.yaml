@@ -2,7 +2,7 @@ name: "Onedrive Backup"
 version: "0.1"
 slug: hassio_onedrive_backup
 description: >-
-  "Automatic backups from Home Assistant to Onedrive"
+  Automatic backups from Home Assistant to Onedrive
 arch:
   - amd64
   - armhf

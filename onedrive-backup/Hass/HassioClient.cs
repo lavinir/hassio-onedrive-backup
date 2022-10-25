@@ -1,5 +1,7 @@
 ﻿using hassio_onedrive_backup.Contracts;
+using Microsoft.Graph;
 using Newtonsoft.Json;
+using System.Formats.Asn1;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
@@ -105,6 +107,20 @@ namespace hassio_onedrive_backup.Hass
         {
             Uri uri = new Uri(Hass_Base_Uri_Str + "/states/sensor.onedrivebackup");
             await _httpClient.PostAsync(uri, new StringContent(payload, Encoding.UTF8, "application/json"));
+        }
+
+        public async Task<string> DownloadBackup(string backupSlug)
+        {            
+            ConsoleLogger.LogInfo($"Fetching Local Backup (Slug:{backupSlug})");
+            Uri uri = new Uri(Supervisor_Base_Uri_Str + $"/backups/{backupSlug}/download");
+            var fileInfo = new FileInfo($"{backupSlug}.tar");
+            var response = await _httpClient.GetAsync(uri);
+            await using var memStream = await response.Content.ReadAsStreamAsync();
+            using var fileStream = System.IO.File.Create(fileInfo.FullName);
+            memStream.Seek(0, SeekOrigin.Begin);
+            await memStream.CopyToAsync(fileStream);
+            ConsoleLogger.LogInfo($"Backup ({backupSlug}) fetched successfully");
+            return fileInfo.FullName;
         }
 
         private async Task<T> GetJsonResponseAsync<T>(Uri uri) 

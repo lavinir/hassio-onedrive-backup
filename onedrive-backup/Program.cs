@@ -21,13 +21,14 @@ namespace hassio_onedrive_backup
 #endif
             IGraphHelper graphHelper = new GraphHelper(scopes, clientId, (info, cancel) =>
             {
-                Console.WriteLine(info.Message);
+                ConsoleLogger.LogInfo(info.Message);
                 return Task.FromResult(0);
             });
 
             var addonOptions = AddonOptionsReader.ReadOptions();
             var backupManager = new BackupManager(addonOptions, graphHelper, hassIoClient);
             TimeSpan intervalDelay = TimeSpan.FromHours(Math.Max(1, addonOptions.BackupIntervalHours / 2));
+            ConsoleLogger.LogInfo($"Backup interval configured to every {addonOptions.BackupIntervalHours} hours");
             while (true)
             {
                 try

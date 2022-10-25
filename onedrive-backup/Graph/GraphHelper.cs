@@ -74,7 +74,7 @@ namespace hassio_onedrive_backup.Graph
             return true;
         }
 
-        public async Task<bool> UploadFileAsync(string filePath, DateTime date, string? destinationFileName = null)
+        public async Task<bool> UploadFileAsync(string filePath, DateTime date, string? destinationFileName = null, Action<int>? progressCallback = null)
         {
             if (File.Exists(filePath) == false)
             {
@@ -82,7 +82,7 @@ namespace hassio_onedrive_backup.Graph
                 return false;
             }
 
-            using var fileStream = System.IO.File.OpenRead(filePath);
+            using var fileStream = File.OpenRead(filePath);
             destinationFileName = destinationFileName ?? Path.GetFileName(filePath);
             string originalFileName = Path.GetFileNameWithoutExtension(filePath);
             var uploadSession = await _userClient.Drive.Special.AppRoot.ItemWithPath(destinationFileName).CreateUploadSession(new DriveItemUploadableProperties
@@ -95,16 +95,17 @@ namespace hassio_onedrive_backup.Graph
             int maxSlizeSize = (320 * 1024) * 10;
             long totalFileLength = fileStream.Length;
             var fileUploadTask = new LargeFileUploadTask<DriveItem>(uploadSession, fileStream, maxSlizeSize);
-            double lastPercentage = 0;
+            var lastPercentageHolder = new UploadProgressHolder();
             IProgress<long> progress = new Progress<long>(prog =>
             {
                 double percentage = Math.Round((prog / (double)totalFileLength), 2) * 100;
-                if (percentage - lastPercentage >= 10)
+                if (percentage - lastPercentageHolder.Percentage >= 10)
                 {
                     ConsoleLogger.LogInfo($"Uploaded {percentage}%");
                 }
 
-                lastPercentage = percentage;
+                lastPercentageHolder.Percentage = percentage;
+                progressCallback?.Invoke((int)percentage);
             });
 
             int uploadAttempt = 0;
@@ -112,7 +113,7 @@ namespace hassio_onedrive_backup.Graph
             {
                 try
                 {
-                    ConsoleLogger.LogInfo($"Attempting file upload. (Size:{totalFileLength} bytes. Attempt: {uploadAttempt}/{UploadRetryCount})");
+                    ConsoleLogger.LogInfo($"Starting file upload. (Size:{totalFileLength} bytes. Attempt: {uploadAttempt}/{UploadRetryCount})");
                     UploadResult<DriveItem> uploadResult;
                     if (uploadAttempt > 1)
                     {
@@ -123,6 +124,7 @@ namespace hassio_onedrive_backup.Graph
                         uploadResult = await fileUploadTask.UploadAsync(progress);
                     }
 
+                    await Task.Delay(TimeSpan.FromSeconds(2));
                     if (uploadResult.UploadSucceeded)
                     {
                         ConsoleLogger.LogInfo("Upload completed successfully");
@@ -203,5 +205,9 @@ namespace hassio_onedrive_backup.Graph
             _userClient.HttpProvider.OverallTimeout = TimeSpan.FromMinutes(GraphRequestTimeoutMinutes);
         }
 
+        private class UploadProgressHolder
+        {
+            public double Percentage { get; set; } = 0;
+        }
     }
 }

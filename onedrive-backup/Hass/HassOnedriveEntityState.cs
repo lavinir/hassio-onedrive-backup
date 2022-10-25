@@ -8,6 +8,11 @@ namespace hassio_onedrive_backup.Hass
         private const string Entity_ID = "sensor.onedrivebackup";
         private IHassioClient? _hassioClient;
         private static HassOnedriveEntityState? _instance;
+        private BackupState state;
+        private List<JsonConverter> entityStateConverters = new List<JsonConverter>
+        {
+            new StringEnumConverter()
+        };
 
         private HassOnedriveEntityState()
         {
@@ -27,7 +32,18 @@ namespace hassio_onedrive_backup.Hass
         }
 
         [JsonConverter(typeof(StringEnumConverter))]
-        public BackupState State { get; set; }
+        public BackupState State
+        {
+            get => state;
+            set
+            {
+                state = value;
+                if (state != BackupState.Syncing)
+                {
+                    UploadPercentage = null;
+                }
+            }
+        }
 
         public DateTime? LastLocalBackupDate { get; set; }
 
@@ -36,6 +52,8 @@ namespace hassio_onedrive_backup.Hass
         public int BackupsInHomeAssistant { get; set; }
 
         public int BackupsInOnedrive { get; set; }
+
+        public int? UploadPercentage { get; set; }
 
         public async Task UpdateEntityInHass()
         {
@@ -51,7 +69,12 @@ namespace hassio_onedrive_backup.Hass
                 }
             };
 
-            string payloadStr = JsonConvert.SerializeObject(payload);
+            string payloadStr = JsonConvert.SerializeObject(payload, new JsonSerializerSettings
+            {
+                NullValueHandling = NullValueHandling.Ignore,
+                Converters = entityStateConverters
+            });
+
             await _hassioClient.UpdateHassEntityState(Entity_ID, payloadStr);
         }
 

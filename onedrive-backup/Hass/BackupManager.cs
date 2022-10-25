@@ -75,11 +75,21 @@ namespace hassio_onedrive_backup.Hass
                 {
                     ConsoleLogger.LogInfo($"Uploading {backup.Name} ({backup.Date})");
                     string destinationFileName = $"{_addonOptions.BackupName}_{backup.Date.ToString("yyyy-MM-dd-HH-mm")}.tar";
-                    var uploadSuccessful = await _graphHelper.UploadFileAsync(GetBackupFilePath(backup), backup.Date, destinationFileName);
+                    string tempBackupFilePath = await _hassIoClient.DownloadBackup(backup.Slug);
+                    var uploadSuccessful = await _graphHelper.UploadFileAsync(tempBackupFilePath, backup.Date, destinationFileName,
+                        async (prog) =>
+                        {
+                            _hassEntityState.UploadPercentage = prog;
+                            await _hassEntityState.UpdateEntityInHass();
+
+                        });
                     if (uploadSuccessful == false && _addonOptions.NotifyOnError)
                     {
                         await _hassIoClient.SendPersistentNotificationAsync("Failed uploading backup to onedrive. Check Addon logs for more details");
                     }
+
+                    // Delete temporary backup file
+                    File.Delete(tempBackupFilePath);
                 }
             }
             else

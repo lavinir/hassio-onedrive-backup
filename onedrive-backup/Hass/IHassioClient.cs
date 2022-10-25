@@ -13,5 +13,7 @@ namespace hassio_onedrive_backup.Hass
         Task<bool> DeleteBackupAsync(Backup backup);
 
         Task UpdateHassEntityState(string entityId, string payload);
+
+        Task<string> DownloadBackup(string backupSlug);
     }
 }

@@ -37,6 +37,13 @@ namespace hassio_onedrive_backup.Hass
             return Task.FromResult(false);
         }
 
+        public Task<string> DownloadBackup(string backupSlug)
+        {
+            string backupFile = "./mockBackup.tar";
+            File.WriteAllText(backupFile, "Don't Restore Me");
+            return Task.FromResult(backupFile);
+        }
+
         public Task<List<Backup>> GetBackupsAsync(Predicate<Backup> filter)
         {
             return Task.FromResult(_backups);
