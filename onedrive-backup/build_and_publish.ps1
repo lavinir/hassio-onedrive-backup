@@ -1,14 +1,49 @@
 param(
     [Parameter(Mandatory)]
-    [string]$version
+    [string]$version,
+
+    [Parameter()]
+    [bool]$shouldSign = $false,
+
+    [Parameter()]
+    [string]$casApiKey
 )
 
-Write-Host "Building and Publishing linux-x64"
-docker build -t "ghcr.io/lavinir/amd64-hassonedrive:$($version)" --build-arg BUILD_ARCH=linux-x64 --build-arg SDK_IMAGE_ARCH_TAG=6.0-alpine --build-arg RUNTIME_IMAGE_ARCH_TAG=6.0.10-alpine3.16-amd64 . && docker push "ghcr.io/lavinir/amd64-hassonedrive:$($version)"
+$env:CAS_API_KEY = $casApiKey
 
-Write-Host "Building and Publishing linux-arm"
-docker build -t "ghcr.io/lavinir/armv7-hassonedrive:$($version)" --build-arg SDK_IMAGE_ARCH_TAG=6.0-alpine --build-arg RUNTIME_IMAGE_ARCH_TAG=6.0.10-bullseye-slim-arm32v7 --build-arg BUILD_ARCH=linux-arm  . && docker push "ghcr.io/lavinir/armv7-hassonedrive:$($version)" `
-docker build -t "ghcr.io/lavinir/armhf-hassonedrive:$($version)" --build-arg SDK_IMAGE_ARCH_TAG=6.0-alpine --build-arg RUNTIME_IMAGE_ARCH_TAG=6.0.10-alpine3.16-arm32v7 --build-arg BUILD_ARCH=linux-arm  . && docker push "ghcr.io/lavinir/armhf-hassonedrive:$($version)"
-   
-Write-Host "Building and Publishing linux-arm64"
-docker build -t "ghcr.io/lavinir/aarch64-hassonedrive:$($version)" --build-arg SDK_IMAGE_ARCH_TAG=6.0-alpine --build-arg RUNTIME_IMAGE_ARCH_TAG=6.0.10-alpine3.16-arm64v8 --build-arg  BUILD_ARCH=linux-arm64 . && docker push "ghcr.io/lavinir/aarch64-hassonedrive:$($version)"
+##################  linux-x64
+Write-Host "Building linux-x64"
+docker build -t "ghcr.io/lavinir/amd64-hassonedrive:$($version)" --build-arg BUILD_ARCH=linux-x64 --build-arg SDK_IMAGE_ARCH_TAG=6.0-alpine --build-arg RUNTIME_IMAGE_ARCH_TAG=6.0.10-alpine3.16-amd64 . 
+
+if ($shouldSign) {
+    Write-Host "Signing linux-x64 Image"
+    & cas-v1.0.3-windows-amd64.exe notarize --bom "docker://ghcr.io/lavinir/amd64-hassonedrive:$($version)"
+}
+
+Write-Host "Publishing linux-x64 Image"
+docker push "ghcr.io/lavinir/amd64-hassonedrive:$($version)"
+
+##################  linux-arm
+Write-Host "Building linux-arm"
+docker build -t "ghcr.io/lavinir/armv7-hassonedrive:$($version)" --build-arg SDK_IMAGE_ARCH_TAG=6.0-alpine --build-arg RUNTIME_IMAGE_ARCH_TAG=6.0.10-bullseye-slim-arm32v7 --build-arg BUILD_ARCH=linux-arm  .  
+docker build -t "ghcr.io/lavinir/armhf-hassonedrive:$($version)" --build-arg SDK_IMAGE_ARCH_TAG=6.0-alpine --build-arg RUNTIME_IMAGE_ARCH_TAG=6.0.10-alpine3.16-arm32v7 --build-arg BUILD_ARCH=linux-arm  . 
+
+if ($shouldSign) {
+    Write-Host "Signing linux-arm Images"
+    & cas-v1.0.3-windows-amd64.exe notarize --bom "docker://ghcr.io/lavinir/armv7-hassonedrive:$($version)"
+    & cas-v1.0.3-windows-amd64.exe notarize --bom "docker://ghcr.io/lavinir/armhf-hassonedrive:$($version)"
+}
+Write-Host "Publishing linux-arm Images"
+docker push "ghcr.io/lavinir/armhf-hassonedrive:$($version)"
+docker push "ghcr.io/lavinir/armv7-hassonedrive:$($version)" 
+
+##################  linux-arm64
+Write-Host "Building linux-arm64"
+docker build -t "ghcr.io/lavinir/aarch64-hassonedrive:$($version)" --build-arg SDK_IMAGE_ARCH_TAG=6.0-alpine --build-arg RUNTIME_IMAGE_ARCH_TAG=6.0.10-alpine3.16-arm64v8 --build-arg  BUILD_ARCH=linux-arm64 . 
+
+if ($shouldSign) {
+    Write-Host "Signing linux-arm64 Image"
+    & cas-v1.0.3-windows-amd64.exe notarize --bom "docker://ghcr.io/lavinir/aarch64-hassonedrive:$($version)"
+}
+Write-Host "Publishing linux-arm64 Image"
+docker push "ghcr.io/lavinir/aarch64-hassonedrive:$($version)"

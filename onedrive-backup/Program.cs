@@ -27,7 +27,8 @@ namespace hassio_onedrive_backup
 
             var addonOptions = AddonOptionsReader.ReadOptions();
             var backupManager = new BackupManager(addonOptions, graphHelper, hassIoClient);
-            TimeSpan intervalDelay = TimeSpan.FromHours(Math.Max(1, addonOptions.BackupIntervalHours / 2));
+            int syncIntervalHours = addonOptions.SyncIntervalHours > addonOptions.BackupIntervalHours ? 1 : addonOptions.SyncIntervalHours;
+            TimeSpan intervalDelay = TimeSpan.FromHours(syncIntervalHours);
             ConsoleLogger.LogInfo($"Backup interval configured to every {addonOptions.BackupIntervalHours} hours");
             while (true)
             {

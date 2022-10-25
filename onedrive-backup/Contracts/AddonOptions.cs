@@ -23,6 +23,9 @@ namespace hassio_onedrive_backup.Contracts
         [JsonProperty("notify_on_error")]
         public bool NotifyOnError { get; set; }
 
+        [JsonProperty("sync_interval_hours")]
+        public int SyncIntervalHours { get; set; }
+
         [JsonIgnore]
         public float BackupIntervalHours => BackupIntervalDays * 24;
     }

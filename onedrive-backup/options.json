@@ -4,5 +4,6 @@
   "backup_interval_days": 0.04,
   "backup_passwd": "alsdkfjslajfk",
   "backup_name": "hass_backup",
-  "notify_on_error": true
+  "notify_on_error": true,
+  "sync_interval_hours" : 2
 }
