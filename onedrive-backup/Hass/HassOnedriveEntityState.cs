@@ -66,6 +66,7 @@ namespace hassio_onedrive_backup.Hass
                     { BackupStateAttribute.LastOnedriveBackupDate, LastOnedriveBackupDate?.ToString() },
                     { BackupStateAttribute.BackupsInHomeAssistant, BackupsInHomeAssistant.ToString() },
                     { BackupStateAttribute.BackupsInOnedrive, BackupsInOnedrive.ToString() },
+                    { BackupStateAttribute.UploadPercentage, $"{UploadPercentage}%" }
                 }
             };
 
@@ -86,7 +87,9 @@ namespace hassio_onedrive_backup.Hass
 
             public const string BackupsInHomeAssistant = "Backups in Home Assistant";
 
-            public const string BackupsInOnedrive = "Backups in Onedrive";
+            public const string BackupsInOnedrive = "Backups in OneDrive";
+
+            public const string UploadPercentage = "Backup upload percentage";
         }
         public enum BackupState
         {
