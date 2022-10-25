@@ -7,7 +7,7 @@ profile hassio_onedrive_backup flags=(attach_disconnected,mediate_deleted) {
   file,
   signal (send) set=(kill,term,int,hup,cont),
 
-  # S6-Overlay
+# S6-Overlay
   /init ix,
   /bin/** ix,
   /usr/bin/** ix,
@@ -20,33 +20,6 @@ profile hassio_onedrive_backup flags=(attach_disconnected,mediate_deleted) {
   /run/{,**} rwk,
   /dev/tty rw,
 
-  # Bashio
-  /usr/lib/bashio/** ix,
-  /tmp/** rwk,
-
-  # Access to options.json and other files within your addon
+# Addon Data
   /data/** rw,
-
-  # Start new profile for service
-  /usr/bin/myprogram cx -> myprogram,
-
-  profile myprogram flags=(attach_disconnected,mediate_deleted) {
-    #include <abstractions/base>
-
-    # Receive signals from S6-Overlay
-    signal (receive) peer=*_ADDON_SLUG,
-
-    # Access to options.json and other files within your addon
-    /data/** rw,
-
-    # Access to mapped volumes specified in config.json
-    /share/** rw,
-
-    # Access required for service functionality
-    /usr/bin/myprogram r,
-    /bin/bash rix,
-    /bin/echo ix,
-    /etc/passwd r,
-    /dev/tty rw,
-  }
 }

@@ -60,13 +60,13 @@ namespace hassio_onedrive_backup.Hass
             var payload = new
             {
                 state = State,
-                attributes = new Dictionary<string, string>
+                attributes = new Dictionary<string, string?>
                 {
                     { BackupStateAttribute.LastLocalBackupDate, LastLocalBackupDate?.ToString() },
                     { BackupStateAttribute.LastOnedriveBackupDate, LastOnedriveBackupDate?.ToString() },
                     { BackupStateAttribute.BackupsInHomeAssistant, BackupsInHomeAssistant.ToString() },
                     { BackupStateAttribute.BackupsInOnedrive, BackupsInOnedrive.ToString() },
-                    { BackupStateAttribute.UploadPercentage, $"{UploadPercentage}%" }
+                    { BackupStateAttribute.UploadPercentage, UploadPercentage == null ? null : $"{UploadPercentage}%" }
                 }
             };
 
@@ -89,7 +89,7 @@ namespace hassio_onedrive_backup.Hass
 
             public const string BackupsInOnedrive = "Backups in OneDrive";
 
-            public const string UploadPercentage = "Backup upload percentage";
+            public const string UploadPercentage = "Current backup upload percentage";
         }
         public enum BackupState
         {
