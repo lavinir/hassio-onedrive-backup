@@ -10,6 +10,7 @@ param(
 )
 
 $env:CAS_API_KEY = $casApiKey
+& cas-v1.0.3-windows-amd64.exe login
 
 ##################  linux-x64
 Write-Host "Building linux-x64"
