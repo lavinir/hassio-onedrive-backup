@@ -66,6 +66,9 @@ The App Folder for the add-on is mapped to : <kbd>**[onedriveroot]/Apps/hassio-o
 ## Home Assistant sensor
 The add-on creates a native Home Assistant Sensor entity <kbd>sensor.onedrivebackup</kbd> which allows convinient visibility to the backup status as well as allows you to create automations on these values as needed.
 
+![sensor_snapshot]("https://raw.githubusercontent.com/lavinir/hassio-onedrive-backup/main/onedrive-backup/images/sensor_dashboard.png")
+
+
 ### Sensor State
 There are 5 possible states for the sensor:
 
