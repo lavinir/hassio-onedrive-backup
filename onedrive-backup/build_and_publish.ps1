@@ -3,7 +3,7 @@ param(
     [string]$version,
 
     [Parameter()]
-    [bool]$shouldSign = $false,
+    [switch]$signImages,
 
     [Parameter()]
     [string]$casApiKey
@@ -15,7 +15,7 @@ $env:CAS_API_KEY = $casApiKey
 Write-Host "Building linux-x64"
 docker build -t "ghcr.io/lavinir/amd64-hassonedrive:$($version)" --build-arg BUILD_ARCH=linux-x64 --build-arg SDK_IMAGE_ARCH_TAG=6.0-alpine --build-arg RUNTIME_IMAGE_ARCH_TAG=6.0.10-alpine3.16-amd64 . 
 
-if ($shouldSign) {
+if ($signImages.IsPresent) {
     Write-Host "Signing linux-x64 Image"
     & cas-v1.0.3-windows-amd64.exe notarize --bom "docker://ghcr.io/lavinir/amd64-hassonedrive:$($version)"
 }
@@ -28,7 +28,7 @@ Write-Host "Building linux-arm"
 docker build -t "ghcr.io/lavinir/armv7-hassonedrive:$($version)" --build-arg SDK_IMAGE_ARCH_TAG=6.0-alpine --build-arg RUNTIME_IMAGE_ARCH_TAG=6.0.10-bullseye-slim-arm32v7 --build-arg BUILD_ARCH=linux-arm  .  
 docker build -t "ghcr.io/lavinir/armhf-hassonedrive:$($version)" --build-arg SDK_IMAGE_ARCH_TAG=6.0-alpine --build-arg RUNTIME_IMAGE_ARCH_TAG=6.0.10-alpine3.16-arm32v7 --build-arg BUILD_ARCH=linux-arm  . 
 
-if ($shouldSign) {
+if ($signImages.IsPresent) {
     Write-Host "Signing linux-arm Images"
     & cas-v1.0.3-windows-amd64.exe notarize --bom "docker://ghcr.io/lavinir/armv7-hassonedrive:$($version)"
     & cas-v1.0.3-windows-amd64.exe notarize --bom "docker://ghcr.io/lavinir/armhf-hassonedrive:$($version)"
@@ -41,7 +41,7 @@ docker push "ghcr.io/lavinir/armv7-hassonedrive:$($version)"
 Write-Host "Building linux-arm64"
 docker build -t "ghcr.io/lavinir/aarch64-hassonedrive:$($version)" --build-arg SDK_IMAGE_ARCH_TAG=6.0-alpine --build-arg RUNTIME_IMAGE_ARCH_TAG=6.0.10-alpine3.16-arm64v8 --build-arg  BUILD_ARCH=linux-arm64 . 
 
-if ($shouldSign) {
+if ($signImages.IsPresent) {
     Write-Host "Signing linux-arm64 Image"
     & cas-v1.0.3-windows-amd64.exe notarize --bom "docker://ghcr.io/lavinir/aarch64-hassonedrive:$($version)"
 }

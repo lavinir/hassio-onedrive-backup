@@ -38,8 +38,8 @@ namespace hassio_onedrive_backup.Hass
             var onlineBackups = await GetOnlineBackupsAsync();
 
             // Create local backups if needed
-            DateTime lastBackupTime = localBackups.Any() ? localBackups.Max(backup => backup.Date) : DateTime.MinValue;
-            if ((now - lastBackupTime).TotalHours >= _addonOptions.BackupIntervalHours)
+            DateTime lastLocalBackupTime = localBackups.Any() ? localBackups.Max(backup => backup.Date) : DateTime.MinValue;
+            if ((now - lastLocalBackupTime).TotalHours >= _addonOptions.BackupIntervalHours)
             {
                 ConsoleLogger.LogInfo($"Creating new backup");
                 bool backupCreated = await _hassIoClient.CreateBackupAsync(
@@ -97,20 +97,26 @@ namespace hassio_onedrive_backup.Hass
                 ConsoleLogger.LogInfo("Online backups synced. No upload required");
             }
 
+            // Refresh Online Backups
+            onlineBackups = await GetOnlineBackupsAsync();
+            int numOfOnlineBackups = onlineBackups.Count;
+            int numOfOnlineBackupsToDelete = Math.Max(0, onlineBackups.Count - _addonOptions.MaxOnedriveBackups);
+
             // Delete Old Online Backups
             var backupsToDelete = onlineBackups
-                .Where(onlineBackup => onlineBackupCandiates.Any(backupCandidate => backupCandidate.Slug.Equals(onlineBackup.Slug, StringComparison.OrdinalIgnoreCase)) == false)
+                .OrderBy(onlineBackup => onlineBackup.BackupDate)
+                .Take(numOfOnlineBackupsToDelete)
                 .ToList();
 
             if (backupsToDelete.Any())
             {
-                ConsoleLogger.LogInfo($"Found {backupsToDelete.Count()} backups to delete from Onedrive.");
+                ConsoleLogger.LogInfo($"Found {backupsToDelete.Count()} backups to delete from OneDrive.");
                 foreach (var backupToDelete in backupsToDelete)
                 {
                     bool deleteSuccessfull = await _graphHelper.DeleteFileFromAppFolderAsync(backupToDelete.FileName);
                     if (deleteSuccessfull == false && _addonOptions.NotifyOnError)
                     {
-                        await _hassIoClient.SendPersistentNotificationAsync("Failed deleting old backup from Onedrive. Check Addon logs for more details");
+                        await _hassIoClient.SendPersistentNotificationAsync("Failed deleting old backup from OneDrive. Check Addon logs for more details");
                     }
                 }
             }
@@ -199,7 +205,7 @@ namespace hassio_onedrive_backup.Hass
                 .Where(backup => backup.Compressed)
                 .OrderByDescending(backup => backup.Date);
 
-            return Task.FromResult(filteredLocalBackups.Take(_addonOptions.MaxOnedriveBackups).ToList());
+            return Task.FromResult(filteredLocalBackups.ToList());
         }
     }
 }

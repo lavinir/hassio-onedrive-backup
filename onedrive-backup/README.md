@@ -1,10 +1,10 @@
 # Home Assistant Addon: OneDrive Backup
 
-Simple Onedrive integration for seamless Home Assistant Backups to the cloud.
+Simple OneDrive integration for seamless Home Assistant Backups to the cloud.
 
 
 ### Current Features
-- Schedule backup creation
+- Set backup creation schedule
 - Syncs backups to OneDrive
 - Supports backup retention for removing older backups
 - Support Home Assistant Persistent Notifications 

@@ -83,7 +83,7 @@ namespace hassio_onedrive_backup.Hass
         {
             public const string LastLocalBackupDate = "Last Local backup date";
 
-            public const string LastOnedriveBackupDate = "Last Onedrive backup date";
+            public const string LastOnedriveBackupDate = "Last OneDrive backup date";
 
             public const string BackupsInHomeAssistant = "Backups in Home Assistant";
 
