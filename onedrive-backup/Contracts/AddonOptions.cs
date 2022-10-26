@@ -28,5 +28,8 @@ namespace hassio_onedrive_backup.Contracts
 
         [JsonIgnore]
         public float BackupIntervalHours => BackupIntervalDays * 24;
+
+        [JsonIgnore]
+        public string BackupNameSafe => string.IsNullOrEmpty(BackupName) ? "hass_backup" : BackupName;
     }
 }
