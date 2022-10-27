@@ -39,8 +39,12 @@ namespace hassio_onedrive_backup.Hass
 
         public Task<string> DownloadBackup(string backupSlug)
         {
-            // todo: Remove
-            string backupFile = @"C:\Users\nirlavi\Downloads\mockbackup.tar";
+            string backupFile = $"./mockBackup_{Guid.NewGuid()}.tar";
+            
+            // 100MB File
+            byte[] data = new byte[100 * 1024 * 1024];
+            new Random().NextBytes(data);
+            File.WriteAllBytes(backupFile, data); 
             return Task.FromResult(backupFile);
         }
 

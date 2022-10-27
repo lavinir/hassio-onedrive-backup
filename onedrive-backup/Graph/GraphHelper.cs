@@ -92,6 +92,7 @@ namespace hassio_onedrive_backup.Graph
                 
             ).Request().PostAsync();
 
+            // todo: allow settings this in advanced configuration
             int maxSlizeSize = (320 * 1024) * 10;
             long totalFileLength = fileStream.Length;
             var fileUploadTask = new LargeFileUploadTask<DriveItem>(uploadSession, fileStream, maxSlizeSize);
