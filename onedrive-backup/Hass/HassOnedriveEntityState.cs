@@ -98,6 +98,7 @@ namespace hassio_onedrive_backup.Hass
             Backed_Up_Onedrive,
             Backed_Up,
             Stale,
+            RecoveryMode,
             Unknown,
         }
     }

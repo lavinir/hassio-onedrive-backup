@@ -35,7 +35,7 @@ namespace hassio_onedrive_backup.Hass
 
             // Get existing online backups
             ConsoleLogger.LogInfo("Retrieving existing online backups...");
-            var onlineBackups = await GetOnlineBackupsAsync(_addonOptions.BackupNameSafe);
+            var onlineBackups = await GetOnlineBackupsAsync();
 
             // Create local backups if needed
             DateTime lastLocalBackupTime = localBackups.Any() ? localBackups.Max(backup => backup.Date) : DateTime.MinValue;
@@ -98,7 +98,7 @@ namespace hassio_onedrive_backup.Hass
             }
 
             // Refresh Online Backups
-            onlineBackups = await GetOnlineBackupsAsync(_addonOptions.BackupNameSafe);
+            onlineBackups = await GetOnlineBackupsAsync();
             int numOfOnlineBackups = onlineBackups.Count;
             int numOfOnlineBackupsToDelete = Math.Max(0, onlineBackups.Count - _addonOptions.MaxOnedriveBackups);
 
@@ -144,10 +144,22 @@ namespace hassio_onedrive_backup.Hass
             await UpdateHassEntity();
         }
 
+        public async Task SyncCloudBackupsAsync()
+        {
+            _hassEntityState.State = HassOnedriveEntityState.BackupState.RecoveryMode;
+            await _hassEntityState.UpdateEntityInHass();
+            var onlineBackups = await GetOnlineBackupsAsync();
+            var localBackupNum = await _hassIoClient.GetBackupsAsync(backup => backup.Name.Equals(_addonOptions.BackupNameSafe, StringComparison.OrdinalIgnoreCase));
+
+            var backupsToDownload = onlineBackups
+                .OrderByDescending(backup => backup.BackupDate)
+                .Take(_addonOptions.MaxLocalBackups)
+        }
+
         private async Task UpdateHassEntity()
         {
             var localBackups = await _hassIoClient.GetBackupsAsync(backup => backup.Name.Equals(_addonOptions.BackupNameSafe, StringComparison.OrdinalIgnoreCase));
-            var onlineBackups = await GetOnlineBackupsAsync(_addonOptions.BackupNameSafe);
+            var onlineBackups = await GetOnlineBackupsAsync();
             _hassEntityState.BackupsInHomeAssistant = localBackups.Count;
             _hassEntityState.BackupsInOnedrive = onlineBackups.Count;
             _hassEntityState.LastLocalBackupDate = localBackups.Any() ? localBackups.Max(backup => backup.Date) : null;
@@ -167,7 +179,11 @@ namespace hassio_onedrive_backup.Hass
             }
 
             HassOnedriveEntityState.BackupState state = HassOnedriveEntityState.BackupState.Unknown;
-            if (onedriveSynced && localSynced)
+            if (_addonOptions.RecoveryMode)
+            {
+                state = HassOnedriveEntityState.BackupState.RecoveryMode;
+            }
+            else if (onedriveSynced && localSynced)
             {
                 state = HassOnedriveEntityState.BackupState.Backed_Up;
             }
@@ -188,7 +204,7 @@ namespace hassio_onedrive_backup.Hass
             await _hassEntityState.UpdateEntityInHass();
         }
 
-        private async Task<List<OnedriveBackup>> GetOnlineBackupsAsync(string backupName)
+        private async Task<List<OnedriveBackup>> GetOnlineBackupsAsync()
         {
             var onlineBackups = (await _graphHelper.GetItemsInAppFolderAsync()).Select(item => new OnedriveBackup(item.Name, JsonConvert.DeserializeObject<OnedriveItemDescription>(item.Description)!)).ToList();
             return onlineBackups;
