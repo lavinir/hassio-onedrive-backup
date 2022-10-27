@@ -12,19 +12,22 @@ This addon enables easy Home Assistant backup creation and sync to OneDrive.
 - Includes Sensor Entity for Dashboards / Automations
 
 >This is a free addon but if you enjoy this addon and would like to support the development it >would be much appreciated :)
->[<img src ="https://raw.githubusercontent.com/lavinir/hassio-onedrive-backup/main/onedrive-backup/images/bmc.svg" width="150">](https://www.buymeacoffee.com/snirlavis)
+
+>[<img src ="https://raw.githubusercontent.com/lavinir/hassio-onedrive-backup/main/onedrive-backup/images/bmc.svg" width="120">](https://www.buymeacoffee.com/snirlavis)
 
 ## Installation Instructions
 >If you've installed Add-ons before this will be pretty straightforward and you can skip reading thorugh all the steps below **except the initial authentication parts in steps 7 and 8**.
-1. From the Home Assistant frontend navigate to the Add-on Store ( **Settings** -> **Add-ons** -> **Add-on Store** ) ![addon-store-button]("https://raw.githubusercontent.com/lavinir/hassio-onedrive-backup/main/onedrive-backup/images/add-on-store.png")
-2. Select the **Repositories** option from the 3-dot menu in the top right corner and add this repository url: <https://github.com/lavinir/hassio-onedrive-backup> ![repositories-menu]("https://raw.githubusercontent.com/lavinir/hassio-onedrive-backup/main/onedrive-backup/images/addon-repo-menu.png") 
-![add-repo]("https://raw.githubusercontent.com/lavinir/hassio-onedrive-backup/main/onedrive-backup/images/add-repo.png")
+1. From the Home Assistant frontend navigate to the Add-on Store ( **Settings** -> **Add-ons** -> **Add-on Store** [bottom right])
+ 
+2. Select the **Repositories** option from the 3-dot menu in the top right corner and add this repository url: <https://github.com/lavinir/hassio-onedrive-backup> ![repositories-menu](/onedrive-backup/images/addon-repo-menu.png) 
+![add-repo](/onedrive-backup/images/add-repo.png)
 3. Reload the Add-on page and scroll down. You should now see a new section titled **Home Assistant Onedrive Backup Repository** that contains the **OneDrive Backup** addon.
 4. Click **Install** and wait a few minutes for the addon to download
 5. Before you are able to start the addon, you will be asked to set a password for your Home Assistant backups (I've currently made this mandatory for security best practices). Either navigate to **Configuration** in the addon menu on top or attempt to **Start** it (which will navigate to the **Configuration** section for you and ask you to input a Backup password)
 6. **Start** the addon and wait a few seconds for it to start.
 7. You will need to **Authenticate** with OneDrive one time to allow the addon access to a dedicated backup folder in your OneDrive account. (If you're interested in the addon permissions and the authentication flow you can see more details below under [Security and Privacy](#security-and-privacy)). Open the Addon **Logs** from the Add-on menu on top and you should see the following lines: <kbd>To sign in, use a web browser to open the page https://microsoft.com/devicelogin and enter the code ********* to authenticate. </kbd>
-8. Copy the code and navigate to the url as instructed. You will be asked to login to your Microsoft account and grant permissions to the App that will allow it to store your backups. ![consent]("https://raw.githubusercontent.com/lavinir/hassio-onedrive-backup/main/onedrive-backup/images/consent.png"). After consent has been granted you're good to go (you can verify in the logs that authentication has indeed succeeded)
+8. Copy the code and navigate to the url as instructed. You will be asked to login to your Microsoft account and grant permissions to the App that will allow it to store your backups. ![consent](/onedrive-backup/images/consent.png). </br>
+After consent has been granted you're good to go (you can verify in the logs that authentication has indeed succeeded)
 
 ## Configuration
 All configuration options for the addon can be found in the native **Configuration** section of the addon in Home Assistant. 
@@ -66,7 +69,7 @@ The App Folder for the add-on is mapped to : <kbd>**[onedriveroot]/Apps/hassio-o
 ## Home Assistant sensor
 The add-on creates a native Home Assistant Sensor entity <kbd>sensor.onedrivebackup</kbd> which allows convinient visibility to the backup status as well as allows you to create automations on these values as needed.
 
-![sensor_snapshot]("https://raw.githubusercontent.com/lavinir/hassio-onedrive-backup/main/onedrive-backup/images/sensor_dashboard.png")
+![sensor_snapshot](onedrive-backup/images/sensor_dashboard.png)
 
 
 ### Sensor State
@@ -122,7 +125,7 @@ The only things stored locally are:
 Outside the backups uploaded to your OneDrive account, no data is sent anywhere else. 
 
 ## Feedback / Feature requests
-If you use and like this addon and want to show support you could do so by starring the official [Repo on GitHub]("https://github.com/lavinir/hassio-onedrive-backup") or [<img src ="https://raw.githubusercontent.com/lavinir/hassio-onedrive-backup/main/onedrive-backup/images/bmc.svg" width="150">](https://www.buymeacoffee.com/snirlavis)
+If you use and like this addon and want to show support you could do so by starring the official [Repo on GitHub]("https://github.com/lavinir/hassio-onedrive-backup") or [<img src ="https://raw.githubusercontent.com/lavinir/hassio-onedrive-backup/main/onedrive-backup/images/bmc.svg" height = 25>](https://www.buymeacoffee.com/snirlavis)
 
 For Bugs / Issues please open an [Issue on GitHub]("https://github.com/lavinir/hassio-onedrive-backup/issues")
 
