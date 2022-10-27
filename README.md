@@ -20,7 +20,7 @@ This addon enables easy Home Assistant backup creation and sync to OneDrive.
  
 2. Select the **Repositories** option from the 3-dot menu in the top right corner and add this repository url: <https://github.com/lavinir/hassio-onedrive-backup> </br> ![repositories-menu](/onedrive-backup/images/addon-repo-menu.png) 
 ![add-repo](/onedrive-backup/images/add-repo.png)
-3. Reload the Add-on page and scroll down. You should now see a new section titled **Home Assistant Onedrive Backup Repository** that contains the **OneDrive Backup** addon.
+3. Reload the Add-on page (hard refresh might be required) and scroll down. You should now see a new section titled **Home Assistant Onedrive Backup Repository** that contains the **OneDrive Backup** addon.
 4. Click **Install** and wait a few minutes for the addon to download
 5. Before you are able to start the addon, you will be asked to set a password for your Home Assistant backups (I've currently made this mandatory for security best practices). Either navigate to **Configuration** in the addon menu on top or attempt to **Start** it (which will navigate to the **Configuration** section for you and ask you to input a Backup password)
 6. **Start** the addon and wait a few seconds for it to start.
