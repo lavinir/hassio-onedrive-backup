@@ -188,16 +188,9 @@ namespace hassio_onedrive_backup.Hass
             await _hassEntityState.UpdateEntityInHass();
         }
 
-        private static string GetBackupFilePath(Backup backup)
-        {
-            return $"{BackupFolder}/{backup.Slug}.tar";
-        }
-
         private async Task<List<OnedriveBackup>> GetOnlineBackupsAsync(string backupName)
         {
-            var onlineBackups = (await _graphHelper.GetItemsInAppFolderAsync())
-                .Where(item => item.Name.StartsWith($"{backupName}_"))
-                .Select(item => new OnedriveBackup( item.Name, JsonConvert.DeserializeObject<OnedriveItemDescription>(item.Description)!)).ToList();
+            var onlineBackups = (await _graphHelper.GetItemsInAppFolderAsync()).Select(item => new OnedriveBackup(item.Name, JsonConvert.DeserializeObject<OnedriveItemDescription>(item.Description)!)).ToList();
             return onlineBackups;
         }
 
