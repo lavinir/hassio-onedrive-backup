@@ -108,6 +108,10 @@ Number of backups that exist in OneDrive
 #### <kbd>**Current backup upload percentage**</kbd>
 When a backup upload is in progress this will show the progress of the upload.
 
+## Restoring from Backup
+Currently to restore from a backup that only exists in OneDrive you will need to copy it manually from OneDrive to Home Assistant (using the method /addon  of your choice - SSH, SMB, VScode) under the **/backup** folder.
+Once there, Home Assistant will pick it up and it will be visible in the **System** -> **Backups** menu.
+> I have plans to make this process more seamless in the next update. 
 
 ## Security and Privacy
 
