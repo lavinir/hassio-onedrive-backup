@@ -105,7 +105,7 @@ namespace hassio_onedrive_backup.Hass
 
         public async Task UpdateHassEntityState(string entityId, string payload)
         {
-            Uri uri = new Uri(Hass_Base_Uri_Str + "/states/sensor.onedrivebackup");
+            Uri uri = new Uri(Hass_Base_Uri_Str + $"/states/{entityId}");
             await _httpClient.PostAsync(uri, new StringContent(payload, Encoding.UTF8, "application/json"));
         }
 
@@ -114,10 +114,8 @@ namespace hassio_onedrive_backup.Hass
             ConsoleLogger.LogInfo($"Fetching Local Backup (Slug:{backupSlug})");
             Uri uri = new Uri(Supervisor_Base_Uri_Str + $"/backups/{backupSlug}/download");
             var fileInfo = new FileInfo($"{backupSlug}.tar");
-            var response = await _httpClient.GetAsync(uri);
-            await using var memStream = await response.Content.ReadAsStreamAsync();
+            await using var memStream =  await _httpClient.GetStreamAsync(uri);
             using var fileStream = System.IO.File.Create(fileInfo.FullName);
-            memStream.Seek(0, SeekOrigin.Begin);
             await memStream.CopyToAsync(fileStream);
             ConsoleLogger.LogInfo($"Backup ({backupSlug}) fetched successfully");
             return fileInfo.FullName;

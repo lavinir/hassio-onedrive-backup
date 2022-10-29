@@ -1,5 +1,6 @@
 ﻿using hassio_onedrive_backup.Contracts;
 using hassio_onedrive_backup.Graph;
+using Microsoft.Graph;
 using Newtonsoft.Json;
 using static hassio_onedrive_backup.Contracts.HassBackupsResponse;
 
@@ -7,7 +8,6 @@ namespace hassio_onedrive_backup.Hass
 {
     internal class BackupManager
     {
-        private const string BackupFolder = "/backup";
         private AddonOptions _addonOptions;
         private IGraphHelper _graphHelper;
         private IHassioClient _hassIoClient;
@@ -28,7 +28,7 @@ namespace hassio_onedrive_backup.Hass
 
             // Set Home Assistant Entity state to Syncing
             _hassEntityState.State = HassOnedriveEntityState.BackupState.Syncing;
-            await _hassEntityState.UpdateEntityInHass();
+            await _hassEntityState.UpdateBackupEntityInHass();
 
             // Get existing local backups
             var localBackups = await _hassIoClient.GetBackupsAsync(backup => backup.Name.Equals(_addonOptions.BackupNameSafe, StringComparison.OrdinalIgnoreCase));
@@ -80,7 +80,7 @@ namespace hassio_onedrive_backup.Hass
                         async (prog) =>
                         {
                             _hassEntityState.UploadPercentage = prog;
-                            await _hassEntityState.UpdateEntityInHass();
+                            await _hassEntityState.UpdateBackupEntityInHass();
 
                         });
                     if (uploadSuccessful == false && _addonOptions.NotifyOnError)
@@ -89,7 +89,7 @@ namespace hassio_onedrive_backup.Hass
                     }
 
                     // Delete temporary backup file
-                    File.Delete(tempBackupFilePath);
+                    System.IO.File.Delete(tempBackupFilePath);
                 }
             }
             else
@@ -144,16 +144,41 @@ namespace hassio_onedrive_backup.Hass
             await UpdateHassEntity();
         }
 
-        public async Task SyncCloudBackupsAsync()
+        public async Task DownloadCloudBackupsAsync()
         {
             _hassEntityState.State = HassOnedriveEntityState.BackupState.RecoveryMode;
-            await _hassEntityState.UpdateEntityInHass();
+            await _hassEntityState.UpdateBackupEntityInHass();
             var onlineBackups = await GetOnlineBackupsAsync();
-            var localBackupNum = await _hassIoClient.GetBackupsAsync(backup => backup.Name.Equals(_addonOptions.BackupNameSafe, StringComparison.OrdinalIgnoreCase));
+            var localBackupNum = (await _hassIoClient.GetBackupsAsync(backup => backup.Name.Equals(_addonOptions.BackupNameSafe, StringComparison.OrdinalIgnoreCase))).Count();
+            int numberOfBackupsToDownload = Math.Max(0, _addonOptions.MaxLocalBackups - localBackupNum);
+            if (numberOfBackupsToDownload == 0)
+            {
+                ConsoleLogger.LogWarning(
+                    $"Local backups at maximum configured number ({_addonOptions.MaxLocalBackups}). To sync additional backups from OneDrive either delete some local backups or increase the configured maximum");
+            }
 
             var backupsToDownload = onlineBackups
                 .OrderByDescending(backup => backup.BackupDate)
-                .Take(_addonOptions.MaxLocalBackups)
+                .Take(numberOfBackupsToDownload)
+                .ToList();
+
+            foreach (var onlineBackup in backupsToDownload)
+            {
+                string? backupFile = await _graphHelper.DownloadFileAsync(onlineBackup.FileName, async (prog) =>
+                {
+                    _hassEntityState.DownloadPercentage = prog;
+                    await _hassEntityState.UpdateBackupEntityInHass();
+                });
+
+                if (backupFile == null)
+                {
+                    ConsoleLogger.LogError($"Error downloading backup {onlineBackup.FileName}");
+                    continue;
+                }
+
+                // Upload backup to Home Assistant
+
+            }
         }
 
         private async Task UpdateHassEntity()
@@ -201,13 +226,29 @@ namespace hassio_onedrive_backup.Hass
             }
 
             _hassEntityState.State = state;
-            await _hassEntityState.UpdateEntityInHass();
+            await _hassEntityState.UpdateBackupEntityInHass();
         }
 
         private async Task<List<OnedriveBackup>> GetOnlineBackupsAsync()
         {
-            var onlineBackups = (await _graphHelper.GetItemsInAppFolderAsync()).Select(item => new OnedriveBackup(item.Name, JsonConvert.DeserializeObject<OnedriveItemDescription>(item.Description)!)).ToList();
+            var onlineBackups = (await _graphHelper.GetItemsInAppFolderAsync()).Select(CheckIfFileIsBackup).ToList();
+            onlineBackups.RemoveAll(item => item == null);
             return onlineBackups;
+        }
+
+        private OnedriveBackup? CheckIfFileIsBackup(DriveItem item)
+        {
+            OnedriveBackup ret = null;
+            try
+            {
+                ret = new OnedriveBackup(item.Name, JsonConvert.DeserializeObject<OnedriveItemDescription>(item.Description)!);
+            }
+            catch (Exception ex)
+            {
+                ConsoleLogger.LogWarning($"Unrecognized file found in backup folder : {item.Name}");
+            }
+
+            return ret;
         }
 
         private Task<List<Backup>> GetOnlineBackupCandidatesAsync(IEnumerable<Backup> localBackups, IEnumerable<OnedriveBackup> onlineBackups)

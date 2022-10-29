@@ -12,13 +12,16 @@ namespace hassio_onedrive_backup.Graph
     {
         private const string AuthRecordFile = "record.auth";
         private const int UploadRetryCount = 3;
+        private const int DownloadRetryCount = 3;
         private const int GraphRequestTimeoutMinutes = 2;
+        private const int ChunkSize = (320 * 1024) * 10;
         private DeviceCodeCredential? _deviceCodeCredential;
         private GraphServiceClient? _userClient;
         private IEnumerable<string> _scopes;
         private string _clientId;
         private Func<DeviceCodeInfo, CancellationToken, Task> _deviceCodePrompt;
         private string _persistentDataPath;
+        private HttpClient _downloadHttpClient;
 
         public GraphHelper(
             IEnumerable<string> scopes,
@@ -93,7 +96,7 @@ namespace hassio_onedrive_backup.Graph
             ).Request().PostAsync();
 
             // todo: allow settings this in advanced configuration
-            int maxSlizeSize = (320 * 1024) * 10;
+            int maxSlizeSize = ChunkSize;
             long totalFileLength = fileStream.Length;
             var fileUploadTask = new LargeFileUploadTask<DriveItem>(uploadSession, fileStream, maxSlizeSize);
             var lastShownPercentageHolder = new UploadProgressHolder();
@@ -144,6 +147,55 @@ namespace hassio_onedrive_backup.Graph
             }
 
             return true;
+        }
+
+        public async Task<int?> GetFreeSpaceInGB()
+        {
+            var drive = await _userClient.Drive.Request().GetAsync();
+            long? ret = drive.Quota.Remaining == null ? null : drive.Quota.Remaining.Value / (long)Math.Pow(1024, 3);
+            return (int?)ret;
+        }
+
+        public async Task<string?> DownloadFileAsync(string fileName, Action<int>? progressCallback) 
+        {
+            var item = await _userClient.Drive.Special.AppRoot.ItemWithPath(fileName).Request().GetAsync();
+            if (item.AdditionalData.TryGetValue("@microsoft.graph.downloadUrl", out var downloadUrl) == false)
+            {
+                ConsoleLogger.LogError($"Failed getting file download data. ${fileName}");
+                return null;
+            }
+
+            var fileInfo = new FileInfo(fileName);
+            using var fileStream = File.Create(fileInfo.FullName);
+
+            _downloadHttpClient = _downloadHttpClient ?? new HttpClient();
+            long position = 0;
+            int attempt = 1;
+            while (position < item.Size)
+            {
+                try
+                {
+                    long chunkSize = Math.Min(position + ChunkSize, item.Size.Value - 1);
+                    _downloadHttpClient.DefaultRequestHeaders.Range = new System.Net.Http.Headers.RangeHeaderValue(position, chunkSize);
+                    var contentStream = await _downloadHttpClient.GetStreamAsync(downloadUrl.ToString());
+                    await contentStream.CopyToAsync(fileStream);
+                    progressCallback?.Invoke((int)(position * 100 / item.Size.Value));
+                    position = chunkSize + 1;
+                }
+                catch (Exception ex)
+                {
+                    if (attempt >= DownloadRetryCount)
+                    {
+                        ConsoleLogger.LogError($"Failed downloading file {fileName}. {ex}");
+                        return null;
+                    }
+
+                    await Task.Delay(5000);
+                }            
+            }
+
+            ConsoleLogger.LogInfo($"{fileName} downloaded successfully");
+            return fileName;
         }
 
         private string SerializeBackupDescription(string originalFileName, DateTime date)

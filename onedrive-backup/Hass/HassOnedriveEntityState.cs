@@ -5,7 +5,8 @@ namespace hassio_onedrive_backup.Hass
 {
     internal class HassOnedriveEntityState
     {
-        private const string Entity_ID = "sensor.onedrivebackup";
+        private const string OneDrive_Backup_Entity_ID = "sensor.onedrivebackup";
+
         private IHassioClient? _hassioClient;
         private static HassOnedriveEntityState? _instance;
         private BackupState state;
@@ -55,7 +56,9 @@ namespace hassio_onedrive_backup.Hass
 
         public int? UploadPercentage { get; set; }
 
-        public async Task UpdateEntityInHass()
+        public int? DownloadPercentage { get; set; }
+
+        public async Task UpdateBackupEntityInHass()
         {
             var payload = new
             {
@@ -66,7 +69,8 @@ namespace hassio_onedrive_backup.Hass
                     { BackupStateAttribute.LastOnedriveBackupDate, LastOnedriveBackupDate?.ToString() },
                     { BackupStateAttribute.BackupsInHomeAssistant, BackupsInHomeAssistant.ToString() },
                     { BackupStateAttribute.BackupsInOnedrive, BackupsInOnedrive.ToString() },
-                    { BackupStateAttribute.UploadPercentage, UploadPercentage == null ? null : $"{UploadPercentage}%" }
+                    { BackupStateAttribute.UploadPercentage, UploadPercentage == null ? null : $"{UploadPercentage}%" },
+                    { BackupStateAttribute.DownloadPercentage, DownloadPercentage == null ? null : $"{DownloadPercentage}%" }
                 }
             };
 
@@ -76,7 +80,7 @@ namespace hassio_onedrive_backup.Hass
                 Converters = entityStateConverters
             });
 
-            await _hassioClient.UpdateHassEntityState(Entity_ID, payloadStr);
+            await _hassioClient.UpdateHassEntityState(OneDrive_Backup_Entity_ID, payloadStr);
         }
 
         public class BackupStateAttribute
@@ -90,6 +94,8 @@ namespace hassio_onedrive_backup.Hass
             public const string BackupsInOnedrive = "Backups in OneDrive";
 
             public const string UploadPercentage = "Current backup upload percentage";
+
+            public const string DownloadPercentage = "Backup download percentage";
         }
         public enum BackupState
         {

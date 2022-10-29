@@ -6,5 +6,6 @@
   "backup_name": "hass_backup",
   "notify_on_error": true,
   "sync_interval_hours": 2,
-  "restore_mode" :  false
+  "recovery_mode": true,
+  "hass_api_timeout_minutes": 30
 }

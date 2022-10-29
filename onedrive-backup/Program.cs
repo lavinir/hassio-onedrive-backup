@@ -48,8 +48,18 @@ namespace hassio_onedrive_backup
                     // Refresh Graph Token
                     await graphHelper.GetAndCacheUserTokenAsync();
 
+                    // Update OneDrive Freespace Sensor
+                    int? freeSpaceGB = await graphHelper.GetFreeSpaceInGB();
+                    await HassOnedriveFreeSpaceEntityState.UpdateOneDriveFreespaceSensorInHass(freeSpaceGB, hassIoClient);
+
                     if (addonOptions.RecoveryMode)
                     {
+                        await backupManager.DownloadCloudBackupsAsync();
+                        Console.WriteLine();
+                        //string? fileName = await graphHelper.DownloadFileAsync("Ferdinand.2017.720p.BluRay.x264-DRONES-HebDub-WWW.MoriDim.tv.mkv", (prog) =>
+                        //{
+                        //    Console.WriteLine($"{prog}%");
+                        //});
                         // todo: start recovery mode
                     }
                     else
