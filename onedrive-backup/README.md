@@ -6,9 +6,10 @@ Simple OneDrive integration for seamless Home Assistant Backups to the cloud.
 ### Current Features
 - Set backup creation schedule
 - Syncs backups to OneDrive
+- Recovery mode for loading backups back from OneDrive to Home Assistant
 - Supports backup retention for removing older backups
 - Support Home Assistant Persistent Notifications 
-- Includes Sensor Entity for Dashboards / Automations
+- Includes Sensor Entities for Dashboards / Automations
 
 Full documentation available on project page at [GitHub](https://github.com/lavinir/hassio-onedrive-backup)
 

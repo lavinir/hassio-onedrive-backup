@@ -1,9 +1,7 @@
 ﻿using hassio_onedrive_backup.Contracts;
-using Microsoft.Graph;
+using hassio_onedrive_backup.Storage;
 using Newtonsoft.Json;
-using System.Formats.Asn1;
 using System.Net.Http.Headers;
-using System.Net.Http.Json;
 using System.Text;
 using static hassio_onedrive_backup.Contracts.HassBackupsResponse;
 
@@ -42,7 +40,7 @@ namespace hassio_onedrive_backup.Hass
         public async Task<List<Backup>> GetBackupsAsync(Predicate<Backup> filter)
         {
             Uri uri = new Uri(Supervisor_Base_Uri_Str + "/backups");
-            var response = await GetJsonResponseAsync<HassBackupsResponse>(new Uri(Supervisor_Base_Uri_Str + "/backups"));
+            var response = await GetJsonResponseAsync<HassBackupsResponse>(uri);
             if (response.Result.Equals("ok", StringComparison.OrdinalIgnoreCase) == false)
             {
                 throw new InvalidOperationException($"Failed getting Backups from Supervisor. Result: {response.Result}");
@@ -53,30 +51,82 @@ namespace hassio_onedrive_backup.Hass
             return filter != null ? backups.Where(backup => filter(backup)).ToList() : backups.ToList();
         }
 
-        public async Task<bool> CreateBackupAsync(string backupName, bool compressed = true, string? password = null)
+        public async Task<bool> CreateBackupAsync(string backupName, bool appendTimestamp = true, bool compressed = true, string? password = null, IEnumerable<string>? folders = null, IEnumerable<string>? addons = null)
         {
-            Uri uri = new Uri(Supervisor_Base_Uri_Str + "/backups/new/full");
-            var payload = new
-            {
-                name = backupName,
-                compressed = compressed,
-                password = password
-            };
+            DateTime timeStamp = DateTime.Now;
+            string? payloadStr = null;
+            Uri? uri = null;
 
-            string payloadStr = JsonConvert.SerializeObject(payload, new JsonSerializerSettings
+            // Full Backup
+            if (folders == null && addons == null)
             {
-                NullValueHandling = NullValueHandling.Ignore
-            });
+                uri = new Uri(Supervisor_Base_Uri_Str + "/backups/new/full");
+                string finalBackupName = appendTimestamp ? $"{backupName}_{timeStamp.ToString("yyyy-MM-dd-HH-mm")}" : backupName;
+                var fullPayload = new
+                {
+                    name = finalBackupName,
+                    compressed = compressed,
+                    password = password
+                };
+
+                payloadStr = JsonConvert.SerializeObject(fullPayload, new JsonSerializerSettings
+                {
+                    NullValueHandling = NullValueHandling.Ignore
+                });
+
+                ConsoleLogger.LogInfo("Starting full local backup");
+            }
+            // Partial Backup
+            else
+            {
+                uri = new Uri(Supervisor_Base_Uri_Str + "/backups/new/partial");
+                string finalBackupName = appendTimestamp ? $"{backupName}_{timeStamp.ToString("yyyy-MM-dd-HH-mm")}" : backupName;
+                var partialPayload = new
+                {
+                    name = finalBackupName,
+                    compressed = compressed,
+                    password = password,
+                    homeassistant = true,
+                    addons = addons,
+                    folders = folders
+                };
+
+                payloadStr = JsonConvert.SerializeObject(partialPayload, new JsonSerializerSettings
+                {
+                    NullValueHandling = NullValueHandling.Ignore
+                });
+
+                ConsoleLogger.LogInfo("Starting partial local backup");
+            }
 
             try
             {
-                ConsoleLogger.LogInfo("Starting full local backup");
                 await _httpClient.PostAsync(uri, new StringContent(payloadStr, Encoding.UTF8, "application/json"));
                 ConsoleLogger.LogInfo("Backup complete");
             }
             catch (Exception ex)
             {
                 ConsoleLogger.LogError($"Failed creating new backup. {ex}");
+                return false;
+            }
+                     
+            return true;
+        }
+
+        public async Task<bool> UploadBackupAsync(string filePath)
+        {
+            try
+            {
+                Uri uri = new Uri(Supervisor_Base_Uri_Str + "/backups/new/upload");
+                using var multiPartFormContent = new MultipartFormDataContent();
+                var fsContent = new StreamContent(System.IO.File.OpenRead(filePath));
+                multiPartFormContent.Add(fsContent, name: "file", fileName: filePath);
+                var response = await _httpClient.PostAsync(uri, multiPartFormContent);
+                response.EnsureSuccessStatusCode();
+            }
+            catch (Exception ex)
+            {
+                ConsoleLogger.LogError($"Error uploading backup to Home Assistant. {ex}");
                 return false;
             }
 
@@ -103,6 +153,14 @@ namespace hassio_onedrive_backup.Hass
             }
         }
 
+        public async Task<List<string>> GetAddons()
+        {
+            Uri uri = new Uri(Supervisor_Base_Uri_Str + "/addons");
+            var response = await GetJsonResponseAsync<HassAddonsResponse>(uri);
+            var ret = response.DataProperty.Addons.Select(addon => addon.Slug).ToList();
+            return ret;
+        }
+
         public async Task UpdateHassEntityState(string entityId, string payload)
         {
             Uri uri = new Uri(Hass_Base_Uri_Str + $"/states/{entityId}");
@@ -113,7 +171,7 @@ namespace hassio_onedrive_backup.Hass
         {            
             ConsoleLogger.LogInfo($"Fetching Local Backup (Slug:{backupSlug})");
             Uri uri = new Uri(Supervisor_Base_Uri_Str + $"/backups/{backupSlug}/download");
-            var fileInfo = new FileInfo($"{backupSlug}.tar");
+            var fileInfo = new FileInfo($"{LocalStorage.TempFolder}/{backupSlug}.tar");
             await using var memStream =  await _httpClient.GetStreamAsync(uri);
             using var fileStream = System.IO.File.Create(fileInfo.FullName);
             await memStream.CopyToAsync(fileStream);

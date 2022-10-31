@@ -11,12 +11,12 @@ namespace hassio_onedrive_backup.Hass
     {
         private const string OneDrive_FreeSpace_Entity_ID = "sensor.onedrivefreespace";
 
-        public static async Task UpdateOneDriveFreespaceSensorInHass(int? freeSpaceGB, IHassioClient hassioClient)
+        public static async Task UpdateOneDriveFreespaceSensorInHass(double? freeSpaceGB, IHassioClient hassioClient)
         {
             var payload = new
             {
-                state = freeSpaceGB == null ? "-" : freeSpaceGB.ToString(),
-                attributes = new Dictionary<string, string?>
+                state = freeSpaceGB == null ? "-" : freeSpaceGB.Value.ToString("0.00"),
+                attributes = new Dictionary<string, string>
                 {
                     { "unit_of_measurement", "GB" }
                 }

@@ -1,4 +1,5 @@
-﻿using hassio_onedrive_backup.Graph;
+﻿using hassio_onedrive_backup.Contracts;
+using hassio_onedrive_backup.Graph;
 using hassio_onedrive_backup.Hass;
 using hassio_onedrive_backup.Storage;
 
@@ -12,16 +13,17 @@ namespace hassio_onedrive_backup
 
         static async Task Main(string[] args)
         {
-            var addonOptions = AddonOptionsReader.ReadOptions();
 
 #if DEBUG
             IHassioClient hassIoClient = new HassioClientMock();
+            var addonOptions = AddonOptionsReader.ReadOptions();
 #else
             Directory.SetCurrentDirectory(addonDirectory);
+            var addonOptions = AddonOptionsReader.ReadOptions();
             string supervisorToken = Environment.GetEnvironmentVariable("SUPERVISOR_TOKEN")!;
             IHassioClient hassIoClient = new HassioClient(supervisorToken, TimeSpan.FromMinutes(addonOptions.HassAPITimeoutMinutes));
 #endif
-
+            LocalStorage.InitializeTempStorage();
             IGraphHelper graphHelper = new GraphHelper(scopes, clientId, (info, cancel) =>
             {
                 ConsoleLogger.LogInfo(info.Message);
@@ -34,7 +36,7 @@ namespace hassio_onedrive_backup
 
             if (addonOptions.RecoveryMode)
             {
-                ConsoleLogger.LogInfo($"Addon Started in Recovery Mode! Any existing backups in OneDrive will be synced locally and no addiitonal local backups will be created");
+                ConsoleLogger.LogInfo($"Addon Started in Recovery Mode! Any existing backups in OneDrive will be synced locally and no additional local backups will be created");
             }
             else
             {
@@ -49,33 +51,37 @@ namespace hassio_onedrive_backup
                     await graphHelper.GetAndCacheUserTokenAsync();
 
                     // Update OneDrive Freespace Sensor
-                    int? freeSpaceGB = await graphHelper.GetFreeSpaceInGB();
+                    double? freeSpaceGB = await graphHelper.GetFreeSpaceInGB();
                     await HassOnedriveFreeSpaceEntityState.UpdateOneDriveFreespaceSensorInHass(freeSpaceGB, hassIoClient);
+                    ConsoleLogger.LogInfo("Checking backups");
 
                     if (addonOptions.RecoveryMode)
                     {
                         await backupManager.DownloadCloudBackupsAsync();
                         Console.WriteLine();
-                        //string? fileName = await graphHelper.DownloadFileAsync("Ferdinand.2017.720p.BluRay.x264-DRONES-HebDub-WWW.MoriDim.tv.mkv", (prog) =>
-                        //{
-                        //    Console.WriteLine($"{prog}%");
-                        //});
-                        // todo: start recovery mode
                     }
                     else
                     {
-                        ConsoleLogger.LogInfo("Checking backups");
                         await backupManager.PerformBackupsAsync();
                     }
 
-                    ConsoleLogger.LogInfo("Interval Completed.");
                 }
                 catch (Exception ex)
                 {
                     ConsoleLogger.LogError($"Unexpected error. {ex}");
                 }
 
-                await Task.Delay(intervalDelay);
+                if (addonOptions.RecoveryMode)
+                {
+                    ConsoleLogger.LogInfo("Recovery run done. New scan will begin in 10 minutes");
+                    ConsoleLogger.LogInfo($"To switch back to Normal backup mode please stop the addon, disable Recovery_Mode in the configuration and restart");
+                    await Task.Delay(TimeSpan.FromMinutes(10));
+                }
+                else
+                {
+                    ConsoleLogger.LogInfo("Interval Completed.");
+                    await Task.Delay(intervalDelay);
+                }
             }
         }
     }

@@ -6,9 +6,10 @@ This addon enables easy Home Assistant backup creation and sync to OneDrive.
 ## Current Features
 - Set backup creation schedule
 - Syncs backups to OneDrive
+- Recovery mode for loading backups back from OneDrive to Home Assistant
 - Supports backup retention for removing older backups
 - Support Home Assistant Persistent Notifications 
-- Includes Sensor Entity for Dashboards / Automations
+- Includes Sensor Entities for Dashboards / Automations
 
 >This is a free addon but if you enjoy this addon and would like to support the development it >would be much appreciated :)
 
@@ -31,6 +32,12 @@ After consent has been granted you're good to go (you can verify in the logs tha
 ## Configuration
 All configuration options for the addon can be found in the native **Configuration** section of the addon in Home Assistant. 
 
+### **recovery_mode**
+When this settings is toggled on, the add-on will not perform any backups and sync mode will reverse from OneDrive back to Home Assistant.
+This will still respect the [maximum local backups](#local_backup_num_to_keep) set and will try to sync back the latest backups that exist in OneDrive while remaining under the set limit.
+
+> See [Restoring from backup](#restoring-from-backup) for additional information on how to recover from a backup.
+
 ### **local_backup_num_to_keep**
 The maximum amount of backups to keep locally in Home Assistant
 > Note that the number of the actual backups can temporarly exceed the set maximum by one due to the fact deletion occurs only after a new backup is created.
@@ -52,27 +59,48 @@ The addon periodically "wakes up" to make sure backups are synced and created ac
 
 ### **backup_name**
 Name to use for the backups created by the add-on.
+> To avoid collision with backups created outside this addon please use a unique name here.
 
 ### **backup_passwd**
 The password to use to protect the backups created and uploaded to OneDrive.
 > Currently this is mandatory to set as I don't think it makes sense to store these unprotected.
 
+### **hass_api_timeout_minutes**
+This allows you to set the timeout configured when calling the Home Assistant APIs. 
+> This applies to how long your backups take to create. If you experience timeouts during backup creation, increase this value.
+
 ### **notify_on_error**
 Enables persistent notifications in Home Assistant to notify of backup failures.
+
+### **exclude_media_folder**
+When enabled, a partial backup will be created without the *media* folder
+### **exclude_ssl_folder**
+When enabled, a partial backup will be created without the *ssl* folder
+
+### **exclude_share_folder**
+When enabled, a partial backup will be created without the *share* folder
+
+### **exclude_local_addons_folder**
+When enabled, a partial backup will be created without the *addons/local* folder
 
 ## Backup Location in OneDrive
 The add-on has specific permissions to a single folder in your OneDrive known as the **App Folder**. (More details can be found in the [Security and Privacy](#security-and-privacy) section.)
 
 The App Folder for the add-on is mapped to : <kbd>**[onedriveroot]/Apps/hassio-onedrive-backup**</kbd>
 
+## OneDrive free space Sensor
+The add-on creates a native Home Assistant Sensor entity <kbd>sensor.onedrivefreespace</kbd> that will show you the amount of free space in your OneDrive account.
+
+![freespace_sensor_snapshot](onedrive-backup/images/sensor_freespace.png)
+
+
 ## Home Assistant sensor
 The add-on creates a native Home Assistant Sensor entity <kbd>sensor.onedrivebackup</kbd> which allows convinient visibility to the backup status as well as allows you to create automations on these values as needed.
 
 ![sensor_snapshot](onedrive-backup/images/sensor_dashboard.png)
 
-
 ### Sensor State
-There are 5 possible states for the sensor:
+There are 5 possible states for the sensor: 
 
 #### <kbd>**Backed_Up**</kbd>
    
@@ -108,10 +136,20 @@ Number of backups that exist in OneDrive
 #### <kbd>**Current backup upload percentage**</kbd>
 When a backup upload is in progress this will show the progress of the upload.
 
-## Restoring from Backup
-Currently to restore from a backup that only exists in OneDrive you will need to copy it manually from OneDrive to Home Assistant (using the method /addon  of your choice - SSH, SMB, VScode) under the **/backup** folder.
-Once there, Home Assistant will pick it up and it will be visible in the **System** -> **Backups** menu.
-> I have plans to make this process more seamless in the next update. 
+#### <kbd>**Backup download percentage**</kbd>
+When a backup download is in progress (Recovery Mode), this shows the progres of the download.
+
+## Restoring from Backup 
+To restore a backup head to the **Settings** -> **System** -> **Backups** menu. From there you should see all your local backups. You can choose any one from the list and recover Home Assistant from them.
+> For backups in OneDrive only, you will first want to sync them back locally. See [Recovery Mode](#recovery-mode) below for details.
+
+### Recovery Mode
+Recovery Mode can be enabled from the add-on configuration panel. Once enabled, the add-on will cease all backup creation and syncing from Home Assistant to OneDrive. Instead, it will attempt to sync back the latest backups from OneDrive to Home Assistant. 
+The number of backups that will sync back will be capped by the amount of [maximum local backups](#local_backup_num_to_keep) configured. 
+
+> In case you cannot sync the backup you want because it is too old and you are unable to sync all the newer backups to Home Assistant because of storage capacity (or just prefer not to) you can manually download the backup from OneDrive and upload the backup from this screen by clicking the 3-dot menu on the top right and choosing the **Upload Backup** option.
+
+![upload_backup](onedrive-backup/images/upload_backup.png)
 
 ## Security and Privacy
 

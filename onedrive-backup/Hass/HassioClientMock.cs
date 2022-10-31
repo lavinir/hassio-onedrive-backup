@@ -9,14 +9,16 @@ namespace hassio_onedrive_backup.Hass
     {
         private List<Backup> _backups = new List<Backup>();
 
-        public Task<bool> CreateBackupAsync(string backupName, bool compressed = true, string? password = null)
+        public Task<bool> CreateBackupAsync(string backupName, bool appendTimestamp = true, bool compressed = true, string? password = null, IEnumerable<string>? folders = null, IEnumerable<string>? addons = null)
         {
+            DateTime timeStamp = DateTime.Now;
+            string finalBackupName = appendTimestamp ? $"{backupName}_{timeStamp.ToString("yyyy-MM-dd-HH-mm")}" : backupName;
             var backup = new Backup
             {
                 Compressed = compressed,
                 Name = backupName,
                 Protected = !string.IsNullOrEmpty(password),
-                Type = "Full",
+                Type = folders == null && addons == null ? "Full" : "Partial",
                 Date = DateTime.Now,
                 Slug = Guid.NewGuid().ToString()
             };
@@ -48,6 +50,15 @@ namespace hassio_onedrive_backup.Hass
             return Task.FromResult(backupFile);
         }
 
+        public Task<List<string>> GetAddons()
+        {
+            return Task.FromResult(new List<string>()
+            {
+                "Addon1",
+                "Addon2"
+            });
+        }
+
         public Task<List<Backup>> GetBackupsAsync(Predicate<Backup> filter)
         {
             return Task.FromResult(_backups);
@@ -70,6 +81,17 @@ namespace hassio_onedrive_backup.Hass
         {
             Debug.WriteLine($"EntityId: {entityId}. State: {payload}");
             return Task.CompletedTask;
+        }
+
+        public Task<bool> UploadBackupAsync(string filePath)
+        {
+            _backups.Add(new Backup
+            {
+                Name = Path.GetFileNameWithoutExtension(filePath),
+                Slug = Guid.NewGuid().ToString()
+            });
+
+            return Task.FromResult(true);
         }
     }
 }

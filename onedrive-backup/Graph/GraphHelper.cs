@@ -1,6 +1,7 @@
 ﻿using Azure.Core;
 using Azure.Identity;
 using hassio_onedrive_backup.Contracts;
+using hassio_onedrive_backup.Storage;
 using Microsoft.Graph;
 using Newtonsoft.Json;
 using System.Reflection;
@@ -149,14 +150,14 @@ namespace hassio_onedrive_backup.Graph
             return true;
         }
 
-        public async Task<int?> GetFreeSpaceInGB()
+        public async Task<double?> GetFreeSpaceInGB()
         {
             var drive = await _userClient.Drive.Request().GetAsync();
-            long? ret = drive.Quota.Remaining == null ? null : drive.Quota.Remaining.Value / (long)Math.Pow(1024, 3);
-            return (int?)ret;
+            double? ret = drive.Quota.Remaining == null ? null : drive.Quota.Remaining.Value / (double)Math.Pow(1024, 3);
+            return (double?)ret;
         }
 
-        public async Task<string?> DownloadFileAsync(string fileName, Action<int>? progressCallback) 
+        public async Task<string?> DownloadFileAsync(string fileName, Action<int?>? progressCallback) 
         {
             var item = await _userClient.Drive.Special.AppRoot.ItemWithPath(fileName).Request().GetAsync();
             if (item.AdditionalData.TryGetValue("@microsoft.graph.downloadUrl", out var downloadUrl) == false)
@@ -165,7 +166,7 @@ namespace hassio_onedrive_backup.Graph
                 return null;
             }
 
-            var fileInfo = new FileInfo(fileName);
+            var fileInfo = new FileInfo($"{LocalStorage.TempFolder}/{fileName}");
             using var fileStream = File.Create(fileInfo.FullName);
 
             _downloadHttpClient = _downloadHttpClient ?? new HttpClient();
@@ -179,23 +180,25 @@ namespace hassio_onedrive_backup.Graph
                     _downloadHttpClient.DefaultRequestHeaders.Range = new System.Net.Http.Headers.RangeHeaderValue(position, chunkSize);
                     var contentStream = await _downloadHttpClient.GetStreamAsync(downloadUrl.ToString());
                     await contentStream.CopyToAsync(fileStream);
-                    progressCallback?.Invoke((int)(position * 100 / item.Size.Value));
                     position = chunkSize + 1;
+                    progressCallback?.Invoke((int)(position * 100 / item.Size.Value));
                 }
                 catch (Exception ex)
                 {
                     if (attempt >= DownloadRetryCount)
                     {
                         ConsoleLogger.LogError($"Failed downloading file {fileName}. {ex}");
+                        progressCallback?.Invoke(null);
                         return null;
                     }
 
                     await Task.Delay(5000);
-                }            
+                }
             }
 
+            progressCallback?.Invoke(null);
             ConsoleLogger.LogInfo($"{fileName} downloaded successfully");
-            return fileName;
+            return fileInfo.FullName;
         }
 
         private string SerializeBackupDescription(string originalFileName, DateTime date)

@@ -7,5 +7,9 @@
   "notify_on_error": true,
   "sync_interval_hours": 2,
   "recovery_mode": true,
-  "hass_api_timeout_minutes": 30
+  "hass_api_timeout_minutes": 30,
+  "exclude_media_folder": false,
+  "exclude_ssl_folder": false,
+  "exclude_share_folder": true,
+  "exclude_local_addons_folder": false
 }

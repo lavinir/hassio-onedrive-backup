@@ -13,25 +13,33 @@ map:
   - config
   - ssl
 options:
+  recovery_mode : false
   local_backup_num_to_keep : 2
   onedrive_backup_num_to_keep : 2
   backup_interval_days : 3
   sync_interval_hours : 1
-  notify_on_error : true
   backup_name : "hass_backup"
-  recovery_mode : false
   hass_api_timeout_minutes: 30
+  notify_on_error : true
+  exclude_media_folder: false
+  exclude_ssl_folder: false
+  exclude_share_folder: false
+  exclude_local_addons_folder: false
 
 schema:
+  recovery_mode : bool
   local_backup_num_to_keep : "int(0,)"
   onedrive_backup_num_to_keep : "int(1,100)"
   backup_interval_days : "float(0,)"
   sync_interval_hours : "int(1,)?"
-  backup_passwd : "password"
   backup_name : "match([a-zA-Z_]*)"
-  notify_on_error : bool
-  recovery_mode : bool
+  backup_passwd : "password"
   hass_api_timeout_minutes : "int(30,)"
+  notify_on_error : bool
+  exclude_media_folder: bool
+  exclude_ssl_folder: bool
+  exclude_share_folder: bool
+  exclude_local_addons_folder: bool
 
 hassio_role : "backup"
 codenotary: "snirlavi@gmail.com"

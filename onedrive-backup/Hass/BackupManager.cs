@@ -31,21 +31,38 @@ namespace hassio_onedrive_backup.Hass
             await _hassEntityState.UpdateBackupEntityInHass();
 
             // Get existing local backups
-            var localBackups = await _hassIoClient.GetBackupsAsync(backup => backup.Name.Equals(_addonOptions.BackupNameSafe, StringComparison.OrdinalIgnoreCase));
+            ConsoleLogger.LogInfo("Retrieving existing local backups...");
+            var localBackups = await _hassIoClient.GetBackupsAsync(IsOwnedBackup);
 
             // Get existing online backups
             ConsoleLogger.LogInfo("Retrieving existing online backups...");
             var onlineBackups = await GetOnlineBackupsAsync();
 
-            // Create local backups if needed
             DateTime lastLocalBackupTime = localBackups.Any() ? localBackups.Max(backup => backup.Date) : DateTime.MinValue;
-            if ((now - lastLocalBackupTime).TotalHours >= _addonOptions.BackupIntervalHours)
+            ConsoleLogger.LogInfo($"Last local backup Date: {(lastLocalBackupTime == DateTime.MinValue ? "None" : lastLocalBackupTime)}");
+
+            DateTime lastOnlineBackupTime = onlineBackups.Any() ? onlineBackups.Max(backup => backup.BackupDate) : DateTime.MinValue;
+            ConsoleLogger.LogInfo($"Last online backup Date: {(lastOnlineBackupTime== DateTime.MinValue ? "None" : lastOnlineBackupTime)}");
+
+            // Create local backups if needed
+            if ((now - lastLocalBackupTime).TotalHours >= _addonOptions.BackupIntervalHours && (now - lastOnlineBackupTime).TotalHours >= _addonOptions.BackupIntervalHours)
             {
+                List<string>? addons = null;
+                List<string>? folders = null;
+
                 ConsoleLogger.LogInfo($"Creating new backup");
+                if (_addonOptions.IsPartialBackup)
+                {
+                    addons = await _hassIoClient.GetAddons();
+                    folders = _addonOptions.IncludedFolderList;
+                }
+
                 bool backupCreated = await _hassIoClient.CreateBackupAsync(
                     _addonOptions.BackupNameSafe,
-                    true,
-                    String.IsNullOrEmpty(_addonOptions.BackupPassword) ? null : _addonOptions.BackupPassword);
+                    compressed: true,
+                    password: String.IsNullOrEmpty(_addonOptions.BackupPassword) ? null : _addonOptions.BackupPassword,
+                    addons: addons,
+                    folders: folders);
 
                 if (backupCreated == false && _addonOptions.NotifyOnError)
                 {
@@ -55,7 +72,7 @@ namespace hassio_onedrive_backup.Hass
                 //Refresh local backup list
                 if (backupCreated)
                 {
-                    localBackups = await _hassIoClient.GetBackupsAsync(backup => backup.Name.Equals(_addonOptions.BackupNameSafe, StringComparison.OrdinalIgnoreCase));
+                    localBackups = await _hassIoClient.GetBackupsAsync(IsOwnedBackup);
                 }
             }
 
@@ -74,7 +91,7 @@ namespace hassio_onedrive_backup.Hass
                 foreach (var backup in backupsToUpload)
                 {
                     ConsoleLogger.LogInfo($"Uploading {backup.Name} ({backup.Date})");
-                    string destinationFileName = $"{_addonOptions.BackupNameSafe}_{backup.Date.ToString("yyyy-MM-dd-HH-mm")}.tar";
+                    string destinationFileName = $"{backup.Name}.tar";
                     string tempBackupFilePath = await _hassIoClient.DownloadBackup(backup.Slug);
                     var uploadSuccessful = await _graphHelper.UploadFileAsync(tempBackupFilePath, backup.Date, destinationFileName,
                         async (prog) =>
@@ -149,41 +166,70 @@ namespace hassio_onedrive_backup.Hass
             _hassEntityState.State = HassOnedriveEntityState.BackupState.RecoveryMode;
             await _hassEntityState.UpdateBackupEntityInHass();
             var onlineBackups = await GetOnlineBackupsAsync();
-            var localBackupNum = (await _hassIoClient.GetBackupsAsync(backup => backup.Name.Equals(_addonOptions.BackupNameSafe, StringComparison.OrdinalIgnoreCase))).Count();
+            var localBackups = await _hassIoClient.GetBackupsAsync(IsOwnedBackup);
+
+            if (onlineBackups.Count > 0)
+            {
+                ConsoleLogger.LogInfo($"Found {onlineBackups.Count} backups in OneDrive");
+            }
+            else
+            {
+                ConsoleLogger.LogWarning($"No backups found in OneDrive");
+                return;
+            }
+
+            var localBackupNum = localBackups.Count;
             int numberOfBackupsToDownload = Math.Max(0, _addonOptions.MaxLocalBackups - localBackupNum);
             if (numberOfBackupsToDownload == 0)
             {
                 ConsoleLogger.LogWarning(
                     $"Local backups at maximum configured number ({_addonOptions.MaxLocalBackups}). To sync additional backups from OneDrive either delete some local backups or increase the configured maximum");
+                return;
             }
 
             var backupsToDownload = onlineBackups
                 .OrderByDescending(backup => backup.BackupDate)
+                .Where(backup => localBackups.Any(local => local.Slug.Equals(backup.Slug, StringComparison.OrdinalIgnoreCase)) == false)
                 .Take(numberOfBackupsToDownload)
                 .ToList();
 
+            if (backupsToDownload.Count == 0)
+            {
+                ConsoleLogger.LogInfo($"All {Math.Min(numberOfBackupsToDownload, onlineBackups.Count)} latest backups already exist locally");
+            }
+
             foreach (var onlineBackup in backupsToDownload)
             {
-                string? backupFile = await _graphHelper.DownloadFileAsync(onlineBackup.FileName, async (prog) =>
+                try
                 {
-                    _hassEntityState.DownloadPercentage = prog;
-                    await _hassEntityState.UpdateBackupEntityInHass();
-                });
+                    ConsoleLogger.LogInfo($"Downloading backup {onlineBackup.FileName}");
+                    string? backupFile = await _graphHelper.DownloadFileAsync(onlineBackup.FileName, async (prog) =>
+                    {
+                        _hassEntityState.DownloadPercentage = prog;
+                        await _hassEntityState.UpdateBackupEntityInHass();
+                    });
 
-                if (backupFile == null)
-                {
-                    ConsoleLogger.LogError($"Error downloading backup {onlineBackup.FileName}");
-                    continue;
+                    if (backupFile == null)
+                    {
+                        ConsoleLogger.LogError($"Error downloading backup {onlineBackup.FileName}");
+                        continue;
+                    }
+
+                    // Upload backup to Home Assistant
+                    ConsoleLogger.LogInfo($"Loading backup {onlineBackup.FileName} to Home Assisant");
+                    await _hassIoClient.UploadBackupAsync(backupFile);
+                    System.IO.File.Delete(backupFile);
                 }
-
-                // Upload backup to Home Assistant
-
+                catch (Exception ex)
+                {
+                    ConsoleLogger.LogError($"Error fetching backup {onlineBackup.FileName} from Onedrive to Home Assistant. {ex}");
+                }
             }
         }
 
         private async Task UpdateHassEntity()
         {
-            var localBackups = await _hassIoClient.GetBackupsAsync(backup => backup.Name.Equals(_addonOptions.BackupNameSafe, StringComparison.OrdinalIgnoreCase));
+            var localBackups = await _hassIoClient.GetBackupsAsync(IsOwnedBackup);
             var onlineBackups = await GetOnlineBackupsAsync();
             _hassEntityState.BackupsInHomeAssistant = localBackups.Count;
             _hassEntityState.BackupsInOnedrive = onlineBackups.Count;
@@ -258,6 +304,11 @@ namespace hassio_onedrive_backup.Hass
                 .OrderByDescending(backup => backup.Date);
 
             return Task.FromResult(filteredLocalBackups.ToList());
+        }
+
+        private bool IsOwnedBackup(Backup backup)
+        {
+            return backup.Name.StartsWith(_addonOptions.BackupNameSafe, StringComparison.OrdinalIgnoreCase);
         }
     }
 }
