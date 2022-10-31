@@ -10,6 +10,7 @@ Assistant
 
 ### Fixed
 * **Large backup files** - Fixed failing backups when backup size is over 2GB
+
 ### Security
 Add-on role changed to *manager* to enumerate add-ons to support partial backups. This knocked 1 security point from the addon's previous security rating.
 
