@@ -1,3 +1,9 @@
+## v1.11 [November 1 2022]
+### Fixed
+* **Incorrect Hassio Role** - Role was not actually changed to manager (required for partial backup support)
+* **Small fixes**
+
+
 ## v1.1 [October 31 2022]
 
 ### Added

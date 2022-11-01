@@ -77,11 +77,12 @@ namespace hassio_onedrive_backup.Hass
             }
 
             // Get Online backup candidates
-            var onlineBackupCandiates = await GetOnlineBackupCandidatesAsync(localBackups, onlineBackups);
+            var onlineBackupCandiates = await GetOnlineBackupCandidatesAsync(localBackups);
 
             // Get Online Backups Candidates that have not yet been uploaded
             var backupsToUpload = onlineBackupCandiates
                 .Where(backup => onlineBackups.Any(onlineBackup => onlineBackup.Slug.Equals(backup.Slug, StringComparison.OrdinalIgnoreCase)) == false)
+                .Take(_addonOptions.MaxOnedriveBackups)                
                 .ToList();
 
             // Upload backups
@@ -297,7 +298,7 @@ namespace hassio_onedrive_backup.Hass
             return ret;
         }
 
-        private Task<List<Backup>> GetOnlineBackupCandidatesAsync(IEnumerable<Backup> localBackups, IEnumerable<OnedriveBackup> onlineBackups)
+        private Task<List<Backup>> GetOnlineBackupCandidatesAsync(IEnumerable<Backup> localBackups)
         {
             var filteredLocalBackups = localBackups
                 .Where(backup => backup.Compressed)

@@ -41,7 +41,7 @@ schema:
   exclude_share_folder: bool
   exclude_local_addons_folder: bool
 
-hassio_role : "backup"
+hassio_role : "manager"
 codenotary: "snirlavi@gmail.com"
 apparmor: true
 hassio_api : true
