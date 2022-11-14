@@ -5,7 +5,7 @@ This addon enables easy Home Assistant backup creation and sync to OneDrive.
 
 ## Current Features
 - Set backup creation schedule
-- Syncs backups to OneDrive
+- Syncs backups to OneDrive **(Personal Account only. OneDrive for business not currently supported)**
 - Recovery mode for loading backups back from OneDrive to Home Assistant
 - Supports backup retention for removing older backups
 - Support Home Assistant Persistent Notifications 
