@@ -11,12 +11,12 @@ namespace hassio_onedrive_backup.Hass
 
         public Task<bool> CreateBackupAsync(string backupName, bool appendTimestamp = true, bool compressed = true, string? password = null, IEnumerable<string>? folders = null, IEnumerable<string>? addons = null)
         {
-            DateTime timeStamp = DateTime.Now;
+            DateTime timeStamp = DateTimeHelper.Now;
             string finalBackupName = appendTimestamp ? $"{backupName}_{timeStamp.ToString("yyyy-MM-dd-HH-mm")}" : backupName;
             var backup = new Backup
             {
                 Compressed = compressed,
-                Name = backupName,
+                Name = finalBackupName,
                 Protected = !string.IsNullOrEmpty(password),
                 Type = folders == null && addons == null ? "Full" : "Partial",
                 Date = DateTime.Now,

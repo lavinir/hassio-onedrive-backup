@@ -53,9 +53,10 @@ namespace hassio_onedrive_backup.Hass
 
         public async Task<bool> CreateBackupAsync(string backupName, bool appendTimestamp = true, bool compressed = true, string? password = null, IEnumerable<string>? folders = null, IEnumerable<string>? addons = null)
         {
-            DateTime timeStamp = DateTime.Now;
-            string? payloadStr = null;
-            Uri? uri = null;
+            DateTime timeStamp = DateTimeHelper.Now;
+
+            string? payloadStr;
+            Uri? uri;
 
             // Full Backup
             if (folders == null && addons == null)

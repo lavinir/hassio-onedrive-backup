@@ -24,7 +24,7 @@ namespace hassio_onedrive_backup.Hass
         public async Task PerformBackupsAsync()
         {
             await UpdateHassEntity();
-            var now = DateTime.Now;
+            var now = DateTimeHelper.Now;
 
             // Set Home Assistant Entity state to Syncing
             _hassEntityState.State = HassOnedriveEntityState.BackupState.Syncing;
@@ -230,6 +230,7 @@ namespace hassio_onedrive_backup.Hass
 
         private async Task UpdateHassEntity()
         {
+            var now = DateTimeHelper.Now;
             var localBackups = await _hassIoClient.GetBackupsAsync(IsOwnedBackup);
             var onlineBackups = await GetOnlineBackupsAsync();
             _hassEntityState.BackupsInHomeAssistant = localBackups.Count;
@@ -240,12 +241,12 @@ namespace hassio_onedrive_backup.Hass
             bool onedriveSynced = false;
             bool localSynced = false;
 
-            if (_hassEntityState.LastOnedriveBackupDate != null && (DateTime.Now - _hassEntityState.LastOnedriveBackupDate.Value).TotalHours <= _addonOptions.BackupIntervalHours)
+            if (_hassEntityState.LastOnedriveBackupDate != null && (now - _hassEntityState.LastOnedriveBackupDate.Value).TotalHours <= _addonOptions.BackupIntervalHours)
             {
                 onedriveSynced = true;
             }
 
-            if (_hassEntityState.LastLocalBackupDate != null && (DateTime.Now - _hassEntityState.LastLocalBackupDate.Value).TotalHours <= _addonOptions.BackupIntervalHours)
+            if (_hassEntityState.LastLocalBackupDate != null && (now - _hassEntityState.LastLocalBackupDate.Value).TotalHours <= _addonOptions.BackupIntervalHours)
             {
                 localSynced = true;
             }
