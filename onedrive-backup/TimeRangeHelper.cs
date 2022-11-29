@@ -17,8 +17,12 @@ namespace hassio_onedrive_backup
             var sections = allowedHoursExpression.Split(',', StringSplitOptions.RemoveEmptyEntries);
             foreach (string section in sections)
             {
-                string fromStr = section.Split('-').FirstOrDefault(s => string.IsNullOrWhiteSpace(s) == false, "0");
-                string toStr = section.Split('-').LastOrDefault(s => string.IsNullOrWhiteSpace(s) == false, "23");
+                string fromStr;
+                string toStr;
+
+                fromStr = section.StartsWith('-') ? "0" : section.Split('-').FirstOrDefault(s => string.IsNullOrWhiteSpace(s) == false, "0");
+                toStr = section.EndsWith('-') ? "23" : section.Split('-').LastOrDefault(s => string.IsNullOrWhiteSpace(s) == false, "23");
+
                 int from = int.Parse(fromStr);
                 int to = int.Parse(toStr);
 

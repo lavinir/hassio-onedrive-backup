@@ -1,6 +1,7 @@
 ﻿using hassio_onedrive_backup.Contracts;
 using hassio_onedrive_backup.Storage;
 using Newtonsoft.Json;
+using System.Globalization;
 using System.Net.Http.Headers;
 using System.Text;
 using static hassio_onedrive_backup.Contracts.HassBackupsResponse;
@@ -54,15 +55,17 @@ namespace hassio_onedrive_backup.Hass
         public async Task<bool> CreateBackupAsync(string backupName, bool appendTimestamp = true, bool compressed = true, string? password = null, IEnumerable<string>? folders = null, IEnumerable<string>? addons = null)
         {
             DateTime timeStamp = DateTimeHelper.Now;
+            const string dt_format = "yyyy-MM-dd-HH-mm";
 
             string? payloadStr;
             Uri? uri;
+
+            string finalBackupName = appendTimestamp ? $"{backupName}_{timeStamp.ToString(dt_format, CultureInfo.CurrentCulture)}" : backupName;
 
             // Full Backup
             if (folders == null && addons == null)
             {
                 uri = new Uri(Supervisor_Base_Uri_Str + "/backups/new/full");
-                string finalBackupName = appendTimestamp ? $"{backupName}_{timeStamp.ToString("yyyy-MM-dd-HH-mm")}" : backupName;
                 var fullPayload = new
                 {
                     name = finalBackupName,
@@ -81,7 +84,6 @@ namespace hassio_onedrive_backup.Hass
             else
             {
                 uri = new Uri(Supervisor_Base_Uri_Str + "/backups/new/partial");
-                string finalBackupName = appendTimestamp ? $"{backupName}_{timeStamp.ToString("yyyy-MM-dd-HH-mm")}" : backupName;
                 var partialPayload = new
                 {
                     name = finalBackupName,
@@ -104,6 +106,15 @@ namespace hassio_onedrive_backup.Hass
             {
                 await _httpClient.PostAsync(uri, new StringContent(payloadStr, Encoding.UTF8, "application/json"));
                 ConsoleLogger.LogInfo("Backup complete");
+            }
+            catch (TaskCanceledException tce)
+            {
+                if (tce.InnerException is TimeoutException)
+                {
+                    ConsoleLogger.LogError($"Backup request timed out. {tce}");
+                    ConsoleLogger.LogError($"Increase the timeout value in configuration");
+                    return false;
+                }
             }
             catch (Exception ex)
             {

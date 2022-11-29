@@ -43,7 +43,7 @@ namespace hassio_onedrive_backup
             else
             {
                 ConsoleLogger.LogInfo($"Backup interval configured to every {addonOptions.BackupIntervalHours} hours");
-                ConsoleLogger.LogInfo($"Backups will only be during these hours: {allowedBackupHours.ToAllowedHoursText()}");
+                ConsoleLogger.LogInfo($"Backups will only run during these hours: {allowedBackupHours.ToAllowedHoursText()}");
             }
 
             while (true)

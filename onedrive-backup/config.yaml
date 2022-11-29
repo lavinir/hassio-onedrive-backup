@@ -1,5 +1,5 @@
 name: "OneDrive Backup"
-version: "1.11"
+version: "1.2"
 slug: hassio_onedrive_backup
 description: >-
   Automatic backups from Home Assistant to OneDrive
@@ -38,7 +38,7 @@ schema:
   exclude_ssl_folder: bool
   exclude_share_folder: bool
   exclude_local_addons_folder: bool
-  backup_allowed_hours: "string?"
+  backup_allowed_hours: "str?"
 
 hassio_role : "manager"
 codenotary: "snirlavi@gmail.com"
