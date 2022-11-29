@@ -31,6 +31,11 @@ namespace hassio_onedrive_backup
                 return Task.FromResult(0);
             });
 
+            //
+            var tz = await hassIoClient.GetTimeZoneAsync();
+            ConsoleLogger.LogInfo(tz);
+            //
+
             BitArray allowedBackupHours = TimeRangeHelper.GetAllowedHours(addonOptions.BackupAllowedHours);
             var backupManager = new BackupManager(addonOptions, graphHelper, hassIoClient, allowedBackupHours);
             
@@ -43,7 +48,10 @@ namespace hassio_onedrive_backup
             else
             {
                 ConsoleLogger.LogInfo($"Backup interval configured to every {addonOptions.BackupIntervalHours} hours");
-                ConsoleLogger.LogInfo($"Backups will only run during these hours: {allowedBackupHours.ToAllowedHoursText()}");
+                if (string.IsNullOrWhiteSpace(addonOptions.BackupAllowedHours) == false)
+                {
+                    ConsoleLogger.LogInfo($"Backups will only run during these hours: {allowedBackupHours.ToAllowedHoursText()}");
+                }
             }
 
             while (true)

@@ -20,8 +20,8 @@ namespace hassio_onedrive_backup
             get
             {
                 var now = DateTime.Now;
-                DateTime.SpecifyKind(now, _dateTimeKind);
-                return now.ToLocalTime();
+                var ret = DateTime.SpecifyKind(now, _dateTimeKind);
+                return ret.ToLocalTime();
             }
         }
     }

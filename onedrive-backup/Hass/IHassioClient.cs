@@ -12,12 +12,14 @@ namespace hassio_onedrive_backup.Hass
 
         Task<bool> DeleteBackupAsync(Backup backup);
 
-        Task UpdateHassEntityState(string entityId, string payload);
+        Task UpdateHassEntityStateAsync(string entityId, string payload);
 
-        Task<string> DownloadBackup(string backupSlug);
+        Task<string> DownloadBackupAsync(string backupSlug);
 
         Task<bool> UploadBackupAsync(string filePath);
 
-        Task<List<string>> GetAddons();
+        Task<List<string>> GetAddonsAsync();
+
+        Task<string> GetTimeZoneAsync();
     }
 }

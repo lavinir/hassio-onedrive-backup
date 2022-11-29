@@ -62,7 +62,7 @@ namespace hassio_onedrive_backup.Hass
                     ConsoleLogger.LogInfo($"Creating new backup");
                     if (_addonOptions.IsPartialBackup)
                     {
-                        addons = await _hassIoClient.GetAddons();
+                        addons = await _hassIoClient.GetAddonsAsync();
                         folders = _addonOptions.IncludedFolderList;
                     }
 
@@ -103,7 +103,7 @@ namespace hassio_onedrive_backup.Hass
                 {
                     ConsoleLogger.LogInfo($"Uploading {backup.Name} ({backup.Date})");
                     string destinationFileName = $"{backup.Name}.tar";
-                    string tempBackupFilePath = await _hassIoClient.DownloadBackup(backup.Slug);
+                    string tempBackupFilePath = await _hassIoClient.DownloadBackupAsync(backup.Slug);
                     var uploadSuccessful = await _graphHelper.UploadFileAsync(tempBackupFilePath, backup.Date, destinationFileName,
                         async (prog) =>
                         {

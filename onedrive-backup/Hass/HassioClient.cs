@@ -165,7 +165,7 @@ namespace hassio_onedrive_backup.Hass
             }
         }
 
-        public async Task<List<string>> GetAddons()
+        public async Task<List<string>> GetAddonsAsync()
         {
             Uri uri = new Uri(Supervisor_Base_Uri_Str + "/addons");
             var response = await GetJsonResponseAsync<HassAddonsResponse>(uri);
@@ -173,13 +173,13 @@ namespace hassio_onedrive_backup.Hass
             return ret;
         }
 
-        public async Task UpdateHassEntityState(string entityId, string payload)
+        public async Task UpdateHassEntityStateAsync(string entityId, string payload)
         {
             Uri uri = new Uri(Hass_Base_Uri_Str + $"/states/{entityId}");
             await _httpClient.PostAsync(uri, new StringContent(payload, Encoding.UTF8, "application/json"));
         }
 
-        public async Task<string> DownloadBackup(string backupSlug)
+        public async Task<string> DownloadBackupAsync(string backupSlug)
         {            
             ConsoleLogger.LogInfo($"Fetching Local Backup (Slug:{backupSlug})");
             Uri uri = new Uri(Supervisor_Base_Uri_Str + $"/backups/{backupSlug}/download");
@@ -198,5 +198,12 @@ namespace hassio_onedrive_backup.Hass
             return ret;
         }
 
+        public async Task<string> GetTimeZoneAsync()
+        {
+            Uri uri = new Uri(Supervisor_Base_Uri_Str + "/supervisor/info");
+            var response = await GetJsonResponseAsync<HassSupervisorInfoResponse>(uri);
+            var ret = response.DataProperty.Timezone;
+            return ret;
+        }
     }
 }
