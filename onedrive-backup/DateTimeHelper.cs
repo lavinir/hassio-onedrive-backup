@@ -21,7 +21,7 @@ namespace hassio_onedrive_backup
             {
                 var now = DateTime.Now;
                 DateTime.SpecifyKind(now, _dateTimeKind);
-                return Now;
+                return now;
             }
         }
     }

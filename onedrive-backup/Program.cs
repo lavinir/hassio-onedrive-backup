@@ -2,6 +2,7 @@
 using hassio_onedrive_backup.Graph;
 using hassio_onedrive_backup.Hass;
 using hassio_onedrive_backup.Storage;
+using System.Collections;
 
 namespace hassio_onedrive_backup
 {
@@ -30,9 +31,10 @@ namespace hassio_onedrive_backup
                 return Task.FromResult(0);
             });
 
-            var backupManager = new BackupManager(addonOptions, graphHelper, hassIoClient);
-            int syncIntervalHours = addonOptions.SyncIntervalHours > addonOptions.BackupIntervalHours ? 1 : addonOptions.SyncIntervalHours;
-            TimeSpan intervalDelay = TimeSpan.FromHours(syncIntervalHours);
+            BitArray allowedBackupHours = TimeRangeHelper.GetAllowedHours(addonOptions.BackupAllowedHours);
+            var backupManager = new BackupManager(addonOptions, graphHelper, hassIoClient, allowedBackupHours);
+            
+            TimeSpan intervalDelay = TimeSpan.FromMinutes(5);
 
             if (addonOptions.RecoveryMode)
             {
@@ -41,6 +43,7 @@ namespace hassio_onedrive_backup
             else
             {
                 ConsoleLogger.LogInfo($"Backup interval configured to every {addonOptions.BackupIntervalHours} hours");
+                ConsoleLogger.LogInfo($"Backups will only be during these hours: {allowedBackupHours.ToAllowedHoursText()}");
             }
 
             while (true)

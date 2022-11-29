@@ -2,6 +2,7 @@
 using hassio_onedrive_backup.Graph;
 using Microsoft.Graph;
 using Newtonsoft.Json;
+using System.Collections;
 using static hassio_onedrive_backup.Contracts.HassBackupsResponse;
 
 namespace hassio_onedrive_backup.Hass
@@ -12,13 +13,15 @@ namespace hassio_onedrive_backup.Hass
         private IGraphHelper _graphHelper;
         private IHassioClient _hassIoClient;
         private readonly HassOnedriveEntityState _hassEntityState;
+        private BitArray _allowedHours;
 
-        public BackupManager(AddonOptions addonOptions, IGraphHelper graphHelper, IHassioClient hassIoClient)
+        public BackupManager(AddonOptions addonOptions, IGraphHelper graphHelper, IHassioClient hassIoClient, BitArray allowedHours)
         {
             _addonOptions = addonOptions;
             _graphHelper = graphHelper;
             _hassIoClient = hassIoClient;
             _hassEntityState = HassOnedriveEntityState.Initialize(hassIoClient);
+            _allowedHours = allowedHours;
         }
 
         public async Task PerformBackupsAsync()
@@ -47,32 +50,39 @@ namespace hassio_onedrive_backup.Hass
             // Create local backups if needed
             if ((now - lastLocalBackupTime).TotalHours >= _addonOptions.BackupIntervalHours && (now - lastOnlineBackupTime).TotalHours >= _addonOptions.BackupIntervalHours)
             {
-                List<string>? addons = null;
-                List<string>? folders = null;
-
-                ConsoleLogger.LogInfo($"Creating new backup");
-                if (_addonOptions.IsPartialBackup)
+                if (_allowedHours[now.Hour] == false)
                 {
-                    addons = await _hassIoClient.GetAddons();
-                    folders = _addonOptions.IncludedFolderList;
+                    ConsoleLogger.LogWarning("Not performing backup outside allowed times");
                 }
-
-                bool backupCreated = await _hassIoClient.CreateBackupAsync(
-                    _addonOptions.BackupNameSafe,
-                    compressed: true,
-                    password: String.IsNullOrEmpty(_addonOptions.BackupPassword) ? null : _addonOptions.BackupPassword,
-                    addons: addons,
-                    folders: folders);
-
-                if (backupCreated == false && _addonOptions.NotifyOnError)
+                else
                 {
-                    await _hassIoClient.SendPersistentNotificationAsync("Failed creating local backup. Check Addon logs for more details");
-                }
+                    List<string>? addons = null;
+                    List<string>? folders = null;
 
-                //Refresh local backup list
-                if (backupCreated)
-                {
-                    localBackups = await _hassIoClient.GetBackupsAsync(IsOwnedBackup);
+                    ConsoleLogger.LogInfo($"Creating new backup");
+                    if (_addonOptions.IsPartialBackup)
+                    {
+                        addons = await _hassIoClient.GetAddons();
+                        folders = _addonOptions.IncludedFolderList;
+                    }
+
+                    bool backupCreated = await _hassIoClient.CreateBackupAsync(
+                        _addonOptions.BackupNameSafe,
+                        compressed: true,
+                        password: String.IsNullOrEmpty(_addonOptions.BackupPassword) ? null : _addonOptions.BackupPassword,
+                        addons: addons,
+                        folders: folders);
+
+                    if (backupCreated == false && _addonOptions.NotifyOnError)
+                    {
+                        await _hassIoClient.SendPersistentNotificationAsync("Failed creating local backup. Check Addon logs for more details");
+                    }
+
+                    //Refresh local backup list
+                    if (backupCreated)
+                    {
+                        localBackups = await _hassIoClient.GetBackupsAsync(IsOwnedBackup);
+                    }
                 }
             }
 
