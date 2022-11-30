@@ -170,5 +170,4 @@ If you use and like this addon and want to show support you could do so by starr
 
 For Bugs / Issues please open an [Issue on GitHub]("https://github.com/lavinir/hassio-onedrive-backup/issues")
 
-I do already have some plans for future features but you can also email me at <snirlavi@gmail.com> for any suggestions and other feedback.
-
+For new suggestions / feedback please use the official repo [GitHub Disucssions](https://github.com/lavinir/hassio-onedrive-backup/discussions)
