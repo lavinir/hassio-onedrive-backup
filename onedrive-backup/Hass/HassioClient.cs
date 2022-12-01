@@ -1,6 +1,7 @@
 ﻿using hassio_onedrive_backup.Contracts;
 using hassio_onedrive_backup.Storage;
 using Newtonsoft.Json;
+using System.Globalization;
 using System.Net.Http.Headers;
 using System.Text;
 using static hassio_onedrive_backup.Contracts.HassBackupsResponse;
@@ -53,15 +54,18 @@ namespace hassio_onedrive_backup.Hass
 
         public async Task<bool> CreateBackupAsync(string backupName, bool appendTimestamp = true, bool compressed = true, string? password = null, IEnumerable<string>? folders = null, IEnumerable<string>? addons = null)
         {
-            DateTime timeStamp = DateTime.Now;
-            string? payloadStr = null;
-            Uri? uri = null;
+            DateTime timeStamp = DateTimeHelper.Instance!.Now;
+            const string dt_format = "yyyy-MM-dd-HH-mm";
+
+            string? payloadStr;
+            Uri? uri;
+
+            string finalBackupName = appendTimestamp ? $"{backupName}_{timeStamp.ToString(dt_format, CultureInfo.CurrentCulture)}" : backupName;
 
             // Full Backup
             if (folders == null && addons == null)
             {
                 uri = new Uri(Supervisor_Base_Uri_Str + "/backups/new/full");
-                string finalBackupName = appendTimestamp ? $"{backupName}_{timeStamp.ToString("yyyy-MM-dd-HH-mm")}" : backupName;
                 var fullPayload = new
                 {
                     name = finalBackupName,
@@ -80,7 +84,6 @@ namespace hassio_onedrive_backup.Hass
             else
             {
                 uri = new Uri(Supervisor_Base_Uri_Str + "/backups/new/partial");
-                string finalBackupName = appendTimestamp ? $"{backupName}_{timeStamp.ToString("yyyy-MM-dd-HH-mm")}" : backupName;
                 var partialPayload = new
                 {
                     name = finalBackupName,
@@ -103,6 +106,15 @@ namespace hassio_onedrive_backup.Hass
             {
                 await _httpClient.PostAsync(uri, new StringContent(payloadStr, Encoding.UTF8, "application/json"));
                 ConsoleLogger.LogInfo("Backup complete");
+            }
+            catch (TaskCanceledException tce)
+            {
+                if (tce.InnerException is TimeoutException)
+                {
+                    ConsoleLogger.LogError($"Backup request timed out. {tce}");
+                    ConsoleLogger.LogError($"Increase the timeout value in configuration");
+                    return false;
+                }
             }
             catch (Exception ex)
             {
@@ -153,7 +165,7 @@ namespace hassio_onedrive_backup.Hass
             }
         }
 
-        public async Task<List<string>> GetAddons()
+        public async Task<List<string>> GetAddonsAsync()
         {
             Uri uri = new Uri(Supervisor_Base_Uri_Str + "/addons");
             var response = await GetJsonResponseAsync<HassAddonsResponse>(uri);
@@ -161,13 +173,13 @@ namespace hassio_onedrive_backup.Hass
             return ret;
         }
 
-        public async Task UpdateHassEntityState(string entityId, string payload)
+        public async Task UpdateHassEntityStateAsync(string entityId, string payload)
         {
             Uri uri = new Uri(Hass_Base_Uri_Str + $"/states/{entityId}");
             await _httpClient.PostAsync(uri, new StringContent(payload, Encoding.UTF8, "application/json"));
         }
 
-        public async Task<string> DownloadBackup(string backupSlug)
+        public async Task<string> DownloadBackupAsync(string backupSlug)
         {            
             ConsoleLogger.LogInfo($"Fetching Local Backup (Slug:{backupSlug})");
             Uri uri = new Uri(Supervisor_Base_Uri_Str + $"/backups/{backupSlug}/download");
@@ -179,12 +191,19 @@ namespace hassio_onedrive_backup.Hass
             return fileInfo.FullName;
         }
 
+        public async Task<string> GetTimeZoneAsync()
+        {
+            Uri uri = new Uri(Supervisor_Base_Uri_Str + "/supervisor/info");
+            var response = await GetJsonResponseAsync<HassSupervisorInfoResponse>(uri);
+            var ret = response.DataProperty.Timezone;
+            return ret;
+        }
+
         private async Task<T> GetJsonResponseAsync<T>(Uri uri) 
         { 
             string response = await _httpClient.GetStringAsync(uri);
             T ret = JsonConvert.DeserializeObject<T>(response)!;
             return ret;
         }
-
     }
 }

@@ -80,7 +80,7 @@ namespace hassio_onedrive_backup.Hass
                 Converters = entityStateConverters
             });
 
-            await _hassioClient.UpdateHassEntityState(OneDrive_Backup_Entity_ID, payloadStr);
+            await _hassioClient.UpdateHassEntityStateAsync(OneDrive_Backup_Entity_ID, payloadStr);
         }
 
         public class BackupStateAttribute

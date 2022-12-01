@@ -30,7 +30,7 @@ namespace hassio_onedrive_backup
 
         private static void WriteLog(LogLevel level, string msg)
         {
-            var timestamp = DateTime.Now;
+            var timestamp = DateTimeHelper.Instance?.Now;
             string logMsg = $"{timestamp} {level}: {msg}";
 
             if (level == LogLevel.Error)

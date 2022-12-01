@@ -93,7 +93,7 @@ namespace hassio_onedrive_backup.Graph
             {
                 Description = SerializeBackupDescription(originalFileName, date)
             }
-                
+
             ).Request().PostAsync();
 
             // todo: allow settings this in advanced configuration
@@ -152,11 +152,20 @@ namespace hassio_onedrive_backup.Graph
 
         public async Task<double?> GetFreeSpaceInGB()
         {
-            var drive = await _userClient.Drive.Request().GetAsync();
-            double? ret = drive.Quota.Remaining == null ? null : drive.Quota.Remaining.Value / (double)Math.Pow(1024, 3);
-            return (double?)ret;
-        }
+            try
+            {
+                var drive = await _userClient.Drive.Request().GetAsync();
+                double? ret = drive.Quota.Remaining == null ? null : drive.Quota.Remaining.Value / (double)Math.Pow(1024, 3);
+                return (double?)ret;
 
+            }
+            catch (Exception ex)
+            {
+                ConsoleLogger.LogError($"Error getting free space: {ex}");
+                return null;
+            }
+        }
+    
         public async Task<string?> DownloadFileAsync(string fileName, Action<int?>? progressCallback) 
         {
             var item = await _userClient.Drive.Special.AppRoot.ItemWithPath(fileName).Request().GetAsync();

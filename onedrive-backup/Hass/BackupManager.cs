@@ -2,6 +2,7 @@
 using hassio_onedrive_backup.Graph;
 using Microsoft.Graph;
 using Newtonsoft.Json;
+using System.Collections;
 using static hassio_onedrive_backup.Contracts.HassBackupsResponse;
 
 namespace hassio_onedrive_backup.Hass
@@ -12,19 +13,21 @@ namespace hassio_onedrive_backup.Hass
         private IGraphHelper _graphHelper;
         private IHassioClient _hassIoClient;
         private readonly HassOnedriveEntityState _hassEntityState;
+        private BitArray _allowedHours;
 
-        public BackupManager(AddonOptions addonOptions, IGraphHelper graphHelper, IHassioClient hassIoClient)
+        public BackupManager(AddonOptions addonOptions, IGraphHelper graphHelper, IHassioClient hassIoClient, BitArray allowedHours)
         {
             _addonOptions = addonOptions;
             _graphHelper = graphHelper;
             _hassIoClient = hassIoClient;
             _hassEntityState = HassOnedriveEntityState.Initialize(hassIoClient);
+            _allowedHours = allowedHours;
         }
 
         public async Task PerformBackupsAsync()
         {
             await UpdateHassEntity();
-            var now = DateTime.Now;
+            var now = DateTimeHelper.Instance!.Now;
 
             // Set Home Assistant Entity state to Syncing
             _hassEntityState.State = HassOnedriveEntityState.BackupState.Syncing;
@@ -47,32 +50,39 @@ namespace hassio_onedrive_backup.Hass
             // Create local backups if needed
             if ((now - lastLocalBackupTime).TotalHours >= _addonOptions.BackupIntervalHours && (now - lastOnlineBackupTime).TotalHours >= _addonOptions.BackupIntervalHours)
             {
-                List<string>? addons = null;
-                List<string>? folders = null;
-
-                ConsoleLogger.LogInfo($"Creating new backup");
-                if (_addonOptions.IsPartialBackup)
+                if (_allowedHours[now.Hour] == false)
                 {
-                    addons = await _hassIoClient.GetAddons();
-                    folders = _addonOptions.IncludedFolderList;
+                    ConsoleLogger.LogWarning("Not performing backup outside allowed times");
                 }
-
-                bool backupCreated = await _hassIoClient.CreateBackupAsync(
-                    _addonOptions.BackupNameSafe,
-                    compressed: true,
-                    password: String.IsNullOrEmpty(_addonOptions.BackupPassword) ? null : _addonOptions.BackupPassword,
-                    addons: addons,
-                    folders: folders);
-
-                if (backupCreated == false && _addonOptions.NotifyOnError)
+                else
                 {
-                    await _hassIoClient.SendPersistentNotificationAsync("Failed creating local backup. Check Addon logs for more details");
-                }
+                    List<string>? addons = null;
+                    List<string>? folders = null;
 
-                //Refresh local backup list
-                if (backupCreated)
-                {
-                    localBackups = await _hassIoClient.GetBackupsAsync(IsOwnedBackup);
+                    ConsoleLogger.LogInfo($"Creating new backup");
+                    if (_addonOptions.IsPartialBackup)
+                    {
+                        addons = await _hassIoClient.GetAddonsAsync();
+                        folders = _addonOptions.IncludedFolderList;
+                    }
+
+                    bool backupCreated = await _hassIoClient.CreateBackupAsync(
+                        _addonOptions.BackupNameSafe,
+                        compressed: true,
+                        password: String.IsNullOrEmpty(_addonOptions.BackupPassword) ? null : _addonOptions.BackupPassword,
+                        addons: addons,
+                        folders: folders);
+
+                    if (backupCreated == false && _addonOptions.NotifyOnError)
+                    {
+                        await _hassIoClient.SendPersistentNotificationAsync("Failed creating local backup. Check Addon logs for more details");
+                    }
+
+                    //Refresh local backup list
+                    if (backupCreated)
+                    {
+                        localBackups = await _hassIoClient.GetBackupsAsync(IsOwnedBackup);
+                    }
                 }
             }
 
@@ -93,7 +103,7 @@ namespace hassio_onedrive_backup.Hass
                 {
                     ConsoleLogger.LogInfo($"Uploading {backup.Name} ({backup.Date})");
                     string destinationFileName = $"{backup.Name}.tar";
-                    string tempBackupFilePath = await _hassIoClient.DownloadBackup(backup.Slug);
+                    string tempBackupFilePath = await _hassIoClient.DownloadBackupAsync(backup.Slug);
                     var uploadSuccessful = await _graphHelper.UploadFileAsync(tempBackupFilePath, backup.Date, destinationFileName,
                         async (prog) =>
                         {
@@ -230,6 +240,7 @@ namespace hassio_onedrive_backup.Hass
 
         private async Task UpdateHassEntity()
         {
+            var now = DateTimeHelper.Instance!.Now;
             var localBackups = await _hassIoClient.GetBackupsAsync(IsOwnedBackup);
             var onlineBackups = await GetOnlineBackupsAsync();
             _hassEntityState.BackupsInHomeAssistant = localBackups.Count;
@@ -240,12 +251,12 @@ namespace hassio_onedrive_backup.Hass
             bool onedriveSynced = false;
             bool localSynced = false;
 
-            if (_hassEntityState.LastOnedriveBackupDate != null && (DateTime.Now - _hassEntityState.LastOnedriveBackupDate.Value).TotalHours <= _addonOptions.BackupIntervalHours)
+            if (_hassEntityState.LastOnedriveBackupDate != null && (now - _hassEntityState.LastOnedriveBackupDate.Value).TotalHours <= _addonOptions.BackupIntervalHours)
             {
                 onedriveSynced = true;
             }
 
-            if (_hassEntityState.LastLocalBackupDate != null && (DateTime.Now - _hassEntityState.LastLocalBackupDate.Value).TotalHours <= _addonOptions.BackupIntervalHours)
+            if (_hassEntityState.LastLocalBackupDate != null && (now - _hassEntityState.LastLocalBackupDate.Value).TotalHours <= _addonOptions.BackupIntervalHours)
             {
                 localSynced = true;
             }

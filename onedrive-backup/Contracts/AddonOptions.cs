@@ -27,9 +27,6 @@ namespace hassio_onedrive_backup.Contracts
         [JsonProperty("recovery_mode")]
         public bool RecoveryMode { get; set; }
 
-        [JsonProperty("sync_interval_hours")]
-        public int SyncIntervalHours { get; set; }
-
         [JsonProperty("hass_api_timeout_minutes")]
         public int HassAPITimeoutMinutes { get; set; }
 
@@ -44,6 +41,9 @@ namespace hassio_onedrive_backup.Contracts
 
         [JsonProperty("exclude_local_addons_folder")]
         public bool ExcludeLocalAddonsFolder { get; set; }
+
+        [JsonProperty("backup_allowed_hours")]
+        public string? BackupAllowedHours { get; set; }        
 
         [JsonIgnore]
         public float BackupIntervalHours => BackupIntervalDays * 24;

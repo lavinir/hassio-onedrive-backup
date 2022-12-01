@@ -11,12 +11,12 @@ namespace hassio_onedrive_backup.Hass
 
         public Task<bool> CreateBackupAsync(string backupName, bool appendTimestamp = true, bool compressed = true, string? password = null, IEnumerable<string>? folders = null, IEnumerable<string>? addons = null)
         {
-            DateTime timeStamp = DateTime.Now;
+            DateTime timeStamp = DateTimeHelper.Instance!.Now;
             string finalBackupName = appendTimestamp ? $"{backupName}_{timeStamp.ToString("yyyy-MM-dd-HH-mm")}" : backupName;
             var backup = new Backup
             {
                 Compressed = compressed,
-                Name = backupName,
+                Name = finalBackupName,
                 Protected = !string.IsNullOrEmpty(password),
                 Type = folders == null && addons == null ? "Full" : "Partial",
                 Date = DateTime.Now,
@@ -39,7 +39,7 @@ namespace hassio_onedrive_backup.Hass
             return Task.FromResult(false);
         }
 
-        public Task<string> DownloadBackup(string backupSlug)
+        public Task<string> DownloadBackupAsync(string backupSlug)
         {
             string backupFile = $"./mockBackup_{Guid.NewGuid()}.tar";
             
@@ -50,7 +50,7 @@ namespace hassio_onedrive_backup.Hass
             return Task.FromResult(backupFile);
         }
 
-        public Task<List<string>> GetAddons()
+        public Task<List<string>> GetAddonsAsync()
         {
             return Task.FromResult(new List<string>()
             {
@@ -62,6 +62,11 @@ namespace hassio_onedrive_backup.Hass
         public Task<List<Backup>> GetBackupsAsync(Predicate<Backup> filter)
         {
             return Task.FromResult(_backups);
+        }
+
+        public Task<string> GetTimeZoneAsync()
+        {
+            return Task.FromResult("Local");
         }
 
         public Task SendPersistentNotificationAsync(string message)
@@ -77,7 +82,7 @@ namespace hassio_onedrive_backup.Hass
             return Task.CompletedTask;
         }
 
-        public Task UpdateHassEntityState(string entityId, string payload)
+        public Task UpdateHassEntityStateAsync(string entityId, string payload)
         {
             Debug.WriteLine($"EntityId: {entityId}. State: {payload}");
             return Task.CompletedTask;

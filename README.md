@@ -60,12 +60,6 @@ The backup creation frequency in days.
 
 > **NOTE**: There is a bug in the Home Assistant UI that will light up the value in red (invalid) when you try to use a non whole number here. Ignore this and save the configuration with the value you want.
 
-### **sync_interval_hours**
-The addon periodically "wakes up" to make sure backups are synced and created according to the set schedules. This allows customizing the 'wake up' frequency. 
-> The Add-on will ignore this setting if you set the interval higher than required to maintain the backup schedule set. 
-
-> **NOTE**: Minimum value here is 1 hour. 
-
 ### **backup_name**
 Name to use for the backups created by the add-on.
 > To avoid collision with backups created outside this addon please use a unique name here.
@@ -92,6 +86,16 @@ When enabled, a partial backup will be created without the *share* folder
 ### **exclude_local_addons_folder**
 When enabled, a partial backup will be created without the *addons/local* folder
 
+### backup_allowed_hours (Optional)
+This accepts a range of hours from 0 to 23 for which only during these hours will backups be performed. If a backup is required it will be performed at the first window allowed in the defined hours.
+The format of this is one or more ranges seperated by a comma. A range is specified by a dash <br/>
+```
+Example:
+
+0-2,10,21-     [Allowed hours are 00:00-02:59, 10:00-10:59 and 21:00-23:50]
+
+```
+> You need to toggle the "Show unused optional configuration options" to see it in the Configuration screen.
 ## Backup Location in OneDrive
 The add-on has specific permissions to a single folder in your OneDrive known as the **App Folder**. (More details can be found in the [Security and Privacy](#security-and-privacy) section.)
 

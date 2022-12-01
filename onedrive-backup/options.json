@@ -5,11 +5,11 @@
   "backup_passwd": "alsdkfjslajfk",
   "backup_name": "hass_backup",
   "notify_on_error": true,
-  "sync_interval_hours": 2,
-  "recovery_mode": true,
+  "recovery_mode": false,
   "hass_api_timeout_minutes": 30,
   "exclude_media_folder": false,
   "exclude_ssl_folder": false,
   "exclude_share_folder": true,
-  "exclude_local_addons_folder": false
+  "exclude_local_addons_folder": false,
+  "backup_allowed_hours": "0-5, 8, 21-"
 }

@@ -23,7 +23,7 @@ namespace hassio_onedrive_backup.Hass
             };
 
             string payloadStr = JsonConvert.SerializeObject(payload);
-            await hassioClient.UpdateHassEntityState(OneDrive_FreeSpace_Entity_ID, payloadStr);
+            await hassioClient.UpdateHassEntityStateAsync(OneDrive_FreeSpace_Entity_ID, payloadStr);
         }
 
     }
