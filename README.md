@@ -95,6 +95,7 @@ Example:
 0-2,10,21-     [Allowed hours are 00:00-02:59, 10:00-10:59 and 21:00-23:50]
 
 ```
+> You need to toggle the "Show unused optional configuration options" to see it in the Configuration screen.
 ## Backup Location in OneDrive
 The add-on has specific permissions to a single folder in your OneDrive known as the **App Folder**. (More details can be found in the [Security and Privacy](#security-and-privacy) section.)
 
