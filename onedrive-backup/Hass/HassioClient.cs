@@ -54,7 +54,7 @@ namespace hassio_onedrive_backup.Hass
 
         public async Task<bool> CreateBackupAsync(string backupName, bool appendTimestamp = true, bool compressed = true, string? password = null, IEnumerable<string>? folders = null, IEnumerable<string>? addons = null)
         {
-            DateTime timeStamp = DateTimeHelper.Now;
+            DateTime timeStamp = DateTimeHelper.Instance!.Now;
             const string dt_format = "yyyy-MM-dd-HH-mm";
 
             string? payloadStr;
@@ -191,18 +191,18 @@ namespace hassio_onedrive_backup.Hass
             return fileInfo.FullName;
         }
 
-        private async Task<T> GetJsonResponseAsync<T>(Uri uri) 
-        { 
-            string response = await _httpClient.GetStringAsync(uri);
-            T ret = JsonConvert.DeserializeObject<T>(response)!;
-            return ret;
-        }
-
         public async Task<string> GetTimeZoneAsync()
         {
             Uri uri = new Uri(Supervisor_Base_Uri_Str + "/supervisor/info");
             var response = await GetJsonResponseAsync<HassSupervisorInfoResponse>(uri);
             var ret = response.DataProperty.Timezone;
+            return ret;
+        }
+
+        private async Task<T> GetJsonResponseAsync<T>(Uri uri) 
+        { 
+            string response = await _httpClient.GetStringAsync(uri);
+            T ret = JsonConvert.DeserializeObject<T>(response)!;
             return ret;
         }
     }

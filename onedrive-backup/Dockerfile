@@ -2,6 +2,7 @@
 ARG SDK_IMAGE_ARCH_TAG
 ARG RUNTIME_IMAGE_ARCH_TAG
 FROM mcr.microsoft.com/dotnet/runtime:$RUNTIME_IMAGE_ARCH_TAG AS base
+RUN apk add --no-cache tzdata
 WORKDIR /app
 
 FROM mcr.microsoft.com/dotnet/sdk:$SDK_IMAGE_ARCH_TAG AS build

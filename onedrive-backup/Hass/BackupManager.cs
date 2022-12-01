@@ -27,7 +27,7 @@ namespace hassio_onedrive_backup.Hass
         public async Task PerformBackupsAsync()
         {
             await UpdateHassEntity();
-            var now = DateTimeHelper.Now;
+            var now = DateTimeHelper.Instance!.Now;
 
             // Set Home Assistant Entity state to Syncing
             _hassEntityState.State = HassOnedriveEntityState.BackupState.Syncing;
@@ -240,7 +240,7 @@ namespace hassio_onedrive_backup.Hass
 
         private async Task UpdateHassEntity()
         {
-            var now = DateTimeHelper.Now;
+            var now = DateTimeHelper.Instance!.Now;
             var localBackups = await _hassIoClient.GetBackupsAsync(IsOwnedBackup);
             var onlineBackups = await GetOnlineBackupsAsync();
             _hassEntityState.BackupsInHomeAssistant = localBackups.Count;
