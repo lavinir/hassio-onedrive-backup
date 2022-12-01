@@ -12,8 +12,17 @@ This addon enables easy Home Assistant backup creation and sync to OneDrive.
 - Includes Sensor Entities for Dashboards / Automations
 
 >This is a free addon but if you enjoy this addon and would like to support the development it >would be much appreciated :)
-
 >[<img src ="https://raw.githubusercontent.com/lavinir/hassio-onedrive-backup/main/onedrive-backup/images/bmc.svg" width="120">](https://www.buymeacoffee.com/snirlavis)
+
+## Quick Links
+[Installation Instructions](#installation-instructions)<br/>
+[Configuration](#configuration)<br/>
+[Backup Location in OneDrive](#backup-location-in-onedrive)<br/>
+[OneDrive FreeSpace Sensor](#onedrive-free-space-sensor)<br/>
+[Home Assistant Sensor](#home-assistant-sensor)<br/>
+[Restoring from backup](#restoring-from-backup)<br/>
+[Security and Privacy](#security-and-privacy)<br/>
+[Feedback / Feature requests](#feedback--feature-requests)<br/>
 
 ## Installation Instructions
 >If you've installed Add-ons before this will be pretty straightforward and you can skip reading thorugh all the steps below **except the initial authentication parts in steps 7 and 8**.
@@ -173,5 +182,4 @@ If you use and like this addon and want to show support you could do so by starr
 
 For Bugs / Issues please open an [Issue on GitHub]("https://github.com/lavinir/hassio-onedrive-backup/issues")
 
-I do already have some plans for future features but you can also email me at <snirlavi@gmail.com> for any suggestions and other feedback.
-
+For new suggestions / feedback please use the official repo [GitHub Disucssions](https://github.com/lavinir/hassio-onedrive-backup/discussions)
