@@ -1,21 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace hassio_onedrive_backup
+﻿namespace hassio_onedrive_backup
 {
     internal class DateTimeHelper
     {
         private readonly TimeZoneInfo? _timeZoneInfo = null;
-
-#if DEBUG
-        private static DateTimeKind _dateTimeKind = DateTimeKind.Local;
-#else
-
-        private static DateTimeKind _dateTimeKind = DateTimeKind.Utc;
-#endif
 
         private DateTimeHelper(string timeZoneId)
         {
@@ -42,7 +29,6 @@ namespace hassio_onedrive_backup
             get
             {
                 var now = DateTime.Now;
-                // var ret = DateTime.SpecifyKind(now, _dateTimeKind);
                 var ret = _timeZoneInfo != null ? TimeZoneInfo.ConvertTime(now, _timeZoneInfo) : now;
                 return ret;
             }

@@ -1,3 +1,13 @@
+## v1.2 [December 1 2022]
+See updates below. Also I've enabled **[Discussions](https://github.com/lavinir/hassio-onedrive-backup/discussions)** on the official repo to make it easier to get suggestions and feedback.
+### Added
+* **Allowed backup hours** - You can now specify specific hours during the day that backups will be perfomed. See [allowed_backup_hours](../README.md#backup_allowed_hours-optional)
+
+### Fixed
+* Timestamps are now using the set TimeZone instead of UTC
+### Removed
+* **sync_interval_hours** setting has been removed. This is now handled internally by the add-on.
+
 ## v1.11 [November 1 2022]
 ### Fixed
 * **Incorrect Hassio Role** - Role was not actually changed to manager (required for partial backup support)
