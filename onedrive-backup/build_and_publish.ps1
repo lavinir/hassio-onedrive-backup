@@ -26,7 +26,7 @@ docker push "ghcr.io/lavinir/amd64-hassonedrive:$($version)"
 
 ##################  linux-arm
 Write-Host "Building linux-arm"
-docker build -t "ghcr.io/lavinir/armv7-hassonedrive:$($version)" --build-arg SDK_IMAGE_ARCH_TAG=6.0-alpine --build-arg RUNTIME_IMAGE_ARCH_TAG=6.0.10-bullseye-slim-arm32v7 --build-arg BUILD_ARCH=linux-arm  .  
+docker build -t "ghcr.io/lavinir/armv7-hassonedrive:$($version)" --build-arg SDK_IMAGE_ARCH_TAG=6.0-alpine --build-arg RUNTIME_IMAGE_ARCH_TAG=6.0.10-alpine3.16-arm32v7 --build-arg BUILD_ARCH=linux-arm  .  
 docker build -t "ghcr.io/lavinir/armhf-hassonedrive:$($version)" --build-arg SDK_IMAGE_ARCH_TAG=6.0-alpine --build-arg RUNTIME_IMAGE_ARCH_TAG=6.0.10-alpine3.16-arm32v7 --build-arg BUILD_ARCH=linux-arm  . 
 
 if ($signImages.IsPresent) {

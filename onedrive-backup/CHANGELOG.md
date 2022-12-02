@@ -1,3 +1,8 @@
+## v1.21 [December 2 2022]
+
+### Fixed
+* Fixed ArmV7 image issue with timezone support
+
 ## v1.2 [December 1 2022]
 See updates below. Also I've enabled **[Discussions](https://github.com/lavinir/hassio-onedrive-backup/discussions)** on the official repo to make it easier to get suggestions and feedback.
 ### Added
