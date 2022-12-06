@@ -1,7 +1,8 @@
 ## v1.22 [December 6 2022]
 
 ### Updated
-* "Syncing" sensor state is now only set during actual OneDrive backup taking place and not whenever the add-on is checking whether a backup is needed. (This was done to remove state change noise)
+* Sensor will now only change to "Syncing" during actual OneDrive backup taking place and not whenever the add-on is checking whether a backup is needed. (This was done to remove state change noise)
+
 ## v1.21 [December 2 2022]
 
 ### Fixed
