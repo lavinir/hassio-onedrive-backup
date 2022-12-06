@@ -29,10 +29,6 @@ namespace hassio_onedrive_backup.Hass
             await UpdateHassEntity();
             var now = DateTimeHelper.Instance!.Now;
 
-            // Set Home Assistant Entity state to Syncing
-            _hassEntityState.State = HassOnedriveEntityState.BackupState.Syncing;
-            await _hassEntityState.UpdateBackupEntityInHass();
-
             // Get existing local backups
             ConsoleLogger.LogInfo("Retrieving existing local backups...");
             var localBackups = await _hassIoClient.GetBackupsAsync(IsOwnedBackup);
@@ -99,6 +95,11 @@ namespace hassio_onedrive_backup.Hass
             if (backupsToUpload.Any())
             {
                 ConsoleLogger.LogInfo($"Found {backupsToUpload.Count()} backups to upload.");
+                
+                // Set Home Assistant Entity state to Syncing
+                _hassEntityState.State = HassOnedriveEntityState.BackupState.Syncing;
+                await _hassEntityState.UpdateBackupEntityInHass();
+                
                 foreach (var backup in backupsToUpload)
                 {
                     ConsoleLogger.LogInfo($"Uploading {backup.Name} ({backup.Date})");

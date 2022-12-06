@@ -129,7 +129,7 @@ OneDrive backups are fresh and within defined limits, however this indicates pos
 > Additional visiblity into the full backup state can be found in the [Sensor Attributes](#sensor-attributes) below.
 
 #### <kbd>**Syncing**</kbd>
-Backup creation / syncing to OneDrive is in progress. 
+Syncing to OneDrive is in progress. 
 #### <kbd>**Stale**</kbd>
 All backups (local and OneDrive) are outside the defined backup interval configured.
 
