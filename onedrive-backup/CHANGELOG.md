@@ -1,8 +1,8 @@
 ## v1.3 [December 13 2022]
 
 ### Added
-* [**Multiple instance support!**](../README.md#backup_instance_name-optional) You can now have multiple installations of Home Assistant backing up to the same OneDrive account without overriding each other.
-* [**Event support for backup failures.**](../README.md#events) Native Home Assistant events will now fire to notify you of backup failures.
+* [**Multiple instance support!**](https://github.com/lavinir/hassio-onedrive-backup#backup_instance_name-optional) You can now have multiple installations of Home Assistant backing up to the same OneDrive account without overriding each other.
+* [**Event support for backup failures.**](https://github.com/lavinir/hassio-onedrive-backup#events) Native Home Assistant events will now fire to notify you of backup failures.
 * **Configuration Translations** added for English and German (Thank you [@Kreisverkehr](https://github.com/Kreisverkehr)) 
 
 ## v1.22 [December 6 2022]
