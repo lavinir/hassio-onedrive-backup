@@ -30,7 +30,7 @@ schema:
   local_backup_num_to_keep : "int(0,)"
   onedrive_backup_num_to_keep : "int(1,100)"
   backup_interval_days : "float(0.0417,)"
-  backup_name : "match([a-zA-Z_])"
+  backup_name : "match([a-zA-Z_]*)"
   backup_passwd : "password"
   hass_api_timeout_minutes : "int(30,)"
   notify_on_error : bool
@@ -39,7 +39,7 @@ schema:
   exclude_share_folder: bool
   exclude_local_addons_folder: bool
   backup_allowed_hours: "str?"
-  backup_instance_name: "match([a-zA-Z_])?"
+  backup_instance_name: "match([a-zA-Z_]*)?"
 
 hassio_role : "manager"
 codenotary: "snirlavi@gmail.com"
