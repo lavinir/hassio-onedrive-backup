@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using hassio_onedrive_backup.Hass.Events;
+using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Net.Http;
 using static hassio_onedrive_backup.Contracts.HassBackupsResponse;
@@ -67,6 +68,12 @@ namespace hassio_onedrive_backup.Hass
         public Task<string> GetTimeZoneAsync()
         {
             return Task.FromResult("Local");
+        }
+
+        public Task PublishEventAsync(OneDriveEvents eventType, string payload = "")
+        {
+            Debug.WriteLine($"EventType: {eventType}. Payload: {payload}");
+            return Task.CompletedTask;
         }
 
         public Task SendPersistentNotificationAsync(string message)

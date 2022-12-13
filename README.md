@@ -8,7 +8,9 @@ This addon enables easy Home Assistant backup creation and sync to OneDrive.
 - Syncs backups to OneDrive **(Personal Account only. OneDrive for business not currently supported)**
 - Recovery mode for loading backups back from OneDrive to Home Assistant
 - Supports backup retention for removing older backups
-- Support Home Assistant Persistent Notifications 
+- Supports multiple Home Assistant instances
+- Supports Home Assistant Persistent Notifications 
+- Supports Home Assistant Events
 - Includes Sensor Entities for Dashboards / Automations
 
 >This is a free addon but if you enjoy this addon and would like to support the development it >would be much appreciated :)
@@ -20,8 +22,10 @@ This addon enables easy Home Assistant backup creation and sync to OneDrive.
 [Backup Location in OneDrive](#backup-location-in-onedrive)<br/>
 [OneDrive FreeSpace Sensor](#onedrive-free-space-sensor)<br/>
 [Home Assistant Sensor](#home-assistant-sensor)<br/>
+[Events](#events)<br/>
 [Restoring from backup](#restoring-from-backup)<br/>
 [Security and Privacy](#security-and-privacy)<br/>
+[FAQ](#faq)<br/>
 [Feedback / Feature requests](#feedback--feature-requests)<br/>
 
 ## Installation Instructions
@@ -96,6 +100,11 @@ Example:
 
 ```
 > You need to toggle the "Show unused optional configuration options" to see it in the Configuration screen.
+
+### backup_instance_name (Optional)
+If you have more than one Home Assistant installation you want to backup to the same OneDrive account, you can achieve this by specifying different **instance names** to each installation. Each instance will only look at their own backups and ignore any other instances. 
+> You need to toggle the "Show unused optional configuration options" to see it in the Configuration screen.
+
 ## Backup Location in OneDrive
 The add-on has specific permissions to a single folder in your OneDrive known as the **App Folder**. (More details can be found in the [Security and Privacy](#security-and-privacy) section.)
 
@@ -152,6 +161,21 @@ When a backup upload is in progress this will show the progress of the upload.
 #### <kbd>**Backup download percentage**</kbd>
 When a backup download is in progress (Recovery Mode), this shows the progres of the download.
 
+## Events
+Upon a failure in the backup process, the addon will fire different events you can use in your automations:
+
+### <kbd>onedrive.BackupCreateFailed</kbd>
+This event will fire when a backup could not be created locally.
+
+### <kbd>onedrive.BackupUploadFailed</kbd>
+This event will fire when a backup upload to OneDrive has failed.
+
+### <kbd>onedrive.OneDriveBackupDeleteFailed</kbd>
+This event will fire when deleting a backup from OneDrive (based on [defined retention](#onedrive_backup_num_to_keep)) has failed.
+
+### <kbd>onedrive.LocalBackupDeleteFailed</kbd>
+This event will fire when deleting a local backup from Home Assistant (based on [defined retention](#local_backup_num_to_keep)) has failed.
+
 ## Restoring from Backup 
 To restore a backup head to the **Settings** -> **System** -> **Backups** menu. From there you should see all your local backups. You can choose any one from the list and recover Home Assistant from them.
 > For backups in OneDrive only, you will first want to sync them back locally. See [Recovery Mode](#recovery-mode) below for details.
@@ -177,6 +201,18 @@ The only things stored locally are:
 
 #### Remote
 Outside the backups uploaded to your OneDrive account, no data is sent anywhere else. 
+
+## FAQ
+### **Is OneDrive for Business supported ?**
+No. Currently OneDrive for Business does not support the special **App Folder** mentioned [above](#authentication) which allows restricting the addo-ons access only to it's own folder and would require full access to the the users entire OneDrive.
+### **I'm getting an "Error: Failed creating new backup" message** 
+The default timeout for backup creation is 30 minutes. For large installations, backup creation could exceed this time. You can increase the [timeout value](#hass_api_timeout_minutes) in your configuration.
+
+### **I only want my backups to run at specific hours** 
+This can be done using the [Allowed hours configuration](#backup_allowed_hours-optional)
+
+### **I have more than one Home Assistant installation I want to back up** 
+See how to configure [Instance names](#backup_instance_name-optional)
 
 ## Feedback / Feature requests
 If you use and like this addon and want to show support you could do so by starring the official [Repo on GitHub]("https://github.com/lavinir/hassio-onedrive-backup") or [<img src ="https://raw.githubusercontent.com/lavinir/hassio-onedrive-backup/main/onedrive-backup/images/bmc.svg" height = 25>](https://www.buymeacoffee.com/snirlavis)

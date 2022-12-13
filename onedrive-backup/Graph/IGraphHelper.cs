@@ -10,7 +10,7 @@ namespace hassio_onedrive_backup.Graph
 
         Task<bool> DeleteFileFromAppFolderAsync(string filePath);
 
-        Task<bool> UploadFileAsync(string filePath, DateTime date, string? destinationFileName = null, Action<int>? progressCallback = null);
+        Task<bool> UploadFileAsync(string filePath, DateTime date, string? instanceName, string? destinationFileName = null, Action<int>? progressCallback = null);
 
         Task<string?> DownloadFileAsync(string fileName, Action<int?>? progressCallback);
 

@@ -1,0 +1,43 @@
+configuration:
+  recovery_mode:
+    name: Wiederherstellungsmodus
+    description: Wenn diese Einstellung aktiviert ist, führt das Add-on keine Sicherungen durch und der Synchronisierungsmodus arbeitet umgekehrt, von OneDrive zu Home Assistant. Dies respektiert immer noch die eingestellte maximale Anzahl lokaler Sicherungen und versucht, die neuesten Sicherungen, die in OneDrive vorhanden sind, zu synchronisieren, während es unter dem eingestellten Limit bleibt.
+  local_backup_num_to_keep:
+    name: Anzahl der lokalen Sicherungen
+    description: Die maximale Anzahl von Sicherungen, die lokal im Home Assistant gespeichert werden sollen
+  onedrive_backup_num_to_keep:
+    name: Anzahl der Sicherungen in OneDrive
+    description: Die maximale Anzahl der in OneDrive zu speichernden Sicherungen
+  backup_interval_days:
+    name: Sicherungsintervall (Tage)
+    description: Die Häufigkeit der Sicherungserstellung in Tagen. Um eine untertägige Ausführung festzulegen, können Sie eine Zahl zwischen 0 und 1 verwenden. Wenn der Wert hier z. B. auf 0,5 gesetzt wird, erfolgt die Sicherung alle 12 Stunden.
+  backup_name:
+    name: Name der Sicherung
+    description: Name, der für die vom Add-on erstellten Sicherungen verwendet werden soll.
+  backup_passwd:
+    name: Sicherungskennwort
+    description: Das Kennwort, mit dem die erstellten und auf OneDrive hochgeladenen Sicherungen geschützt werden sollen.
+  notify_on_error:
+    name: Benachrichtigung im Fehlerfall
+    description: Aktiviert dauerhafte Benachrichtigungen im Home Assistant, um über Fehler bei der Datensicherung zu informieren.
+  hass_api_timeout_minutes:
+    name: Hass api timeout (Minuten)
+    description: Hier können Sie die beim Aufruf der Home Assistant-APIs verwendete Zeitüberschreitung einstellen.
+  exclude_media_folder:
+    name: Medienordner ausschließen
+    description: Wenn diese Option aktiviert ist, wird eine Teilsicherung ohne den Ordner "media" erstellt.
+  exclude_ssl_folder:
+    name: ssl-Ordner ausschließen
+    description: Wenn diese Option aktiviert ist, wird eine Teilsicherung ohne den Ordner "ssl" erstellt.
+  exclude_share_folder:
+    name: Freigabeordner ausschließen
+    description: Wenn diese Option aktiviert ist, wird eine Teilsicherung ohne den Ordner "share" erstellt.
+  exclude_local_addons_folder:
+    name: Lokalen Addons-Ordner ausschließen
+    description: Wenn diese Option aktiviert ist, wird eine Teilsicherung ohne den Ordner "addons/local" erstellt.
+  backup_allowed_hours:
+    name: Zulässige Stunden
+    description: Hier kann ein Stundenbereich von 0 bis 23 angegeben werden, in dem nur während dieser Stunden Backups durchgeführt werden. Wenn eine Sicherung erforderlich ist, wird sie im ersten zulässigen Zeitfenster innerhalb der festgelegten Stunden durchgeführt. Das Format ist ein oder mehrere Bereiche, die durch ein Komma getrennt sind. Ein Bereich wird durch einen Bindestrich angegeben.
+  backup_instance_name:
+   name: Name der Sicherungsinstanz
+   description: Dies wird verwendet, um zwischen mehreren Home Assistant-Installationen zu unterscheiden, die auf demselben OneDrive-Konto gesichert werden. OneDrive-Sicherungen werden für jeden „Instanznamen“ getrennt

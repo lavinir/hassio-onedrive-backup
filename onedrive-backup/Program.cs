@@ -31,12 +31,8 @@ namespace hassio_onedrive_backup
                 return Task.FromResult(0);
             });
 
-            //
-
             string timeZoneId = await hassIoClient.GetTimeZoneAsync();
             DateTimeHelper.Initialize(timeZoneId);
-
-            //
 
             BitArray allowedBackupHours = TimeRangeHelper.GetAllowedHours(addonOptions.BackupAllowedHours);
             var backupManager = new BackupManager(addonOptions, graphHelper, hassIoClient, allowedBackupHours);

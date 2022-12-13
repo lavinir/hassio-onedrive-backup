@@ -43,7 +43,10 @@ namespace hassio_onedrive_backup.Contracts
         public bool ExcludeLocalAddonsFolder { get; set; }
 
         [JsonProperty("backup_allowed_hours")]
-        public string? BackupAllowedHours { get; set; }        
+        public string? BackupAllowedHours { get; set; }
+
+        [JsonProperty("backup_instance_name")]
+        public string? InstanceName { get; set; }
 
         [JsonIgnore]
         public float BackupIntervalHours => BackupIntervalDays * 24;
