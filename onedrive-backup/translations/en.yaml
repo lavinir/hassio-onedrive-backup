@@ -1,4 +1,7 @@
 configuration:
+  recovery_mode:
+    name: Recovery mode
+    description: When this settings is toggled on, the add-on will not perform any backups and sync mode will reverse from OneDrive back to Home Assistant. This will still respect the maximum local backups set and will try to sync back the latest backups that exist in OneDrive while remaining under the set limit.
   local_backup_num_to_keep:
     name: Number of local backups
     description: The maximum amount of backups to keep locally in Home Assistant
@@ -7,19 +10,16 @@ configuration:
     description: The maximum amount of backups to keep in OneDrive
   backup_interval_days:
     name: Backup interval (days)
-    description: The backup creation frequency in days. For setting a sub-day frequency you can use a number between 0 and 1, so for example if the value here is set to 0.5, the backup frequency will occur every 12 hours. You should avoid using a value less than 0.083 (~2 hours) as the current enforced minimum sync interval is once an hour.
-  backup_passwd:
-    name: Backup password
-    description: The password to use to protect the backups created and uploaded to OneDrive.
+    description: The backup creation frequency in days. For setting a sub-day frequency you can use a number between 0 and 1, so for example if the value here is set to 0.5, the backup frequency will occur every 12 hours.
   backup_name:
     name: Backup name
     description: Name to use for the backups created by the add-on.
+  backup_passwd:
+    name: Backup password
+    description: The password to use to protect the backups created and uploaded to OneDrive.
   notify_on_error:
     name: Notify on error
     description: Enables persistent notifications in Home Assistant to notify of backup failures.
-  recovery_mode:
-    name: Recovery mode
-    description: When this settings is toggled on, the add-on will not perform any backups and sync mode will reverse from OneDrive back to Home Assistant. This will still respect the maximum local backups set and will try to sync back the latest backups that exist in OneDrive while remaining under the set limit.
   hass_api_timeout_minutes:
     name: Hass api timeout (minutes)
     description: This allows you to set the timeout configured when calling the Home Assistant APIs.
@@ -38,3 +38,6 @@ configuration:
   backup_allowed_hours:
     name: Allowed hours
     description: This accepts a range of hours from 0 to 23 for which only during these hours will backups be performed. If a backup is required it will be performed at the first window allowed in the defined hours. The format of this is one or more ranges seperated by a comma. A range is specified by a dash.
+  backup_instance_name:
+   name: Backup instance name
+   description: This is used to distingiush between multiple Home Assistant installations backing up to the same OneDrive account. OneDrive backups will be seperated for each 'Instance Name'

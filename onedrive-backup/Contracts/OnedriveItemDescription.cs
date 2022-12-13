@@ -11,5 +11,7 @@ namespace hassio_onedrive_backup.Contracts
         public string Slug { get; set; }
 
         public DateTime BackupDate { get; set; }
+
+        public string? InstanceName { get; set; }
     }
 }

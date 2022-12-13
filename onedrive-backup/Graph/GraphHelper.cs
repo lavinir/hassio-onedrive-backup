@@ -78,7 +78,7 @@ namespace hassio_onedrive_backup.Graph
             return true;
         }
 
-        public async Task<bool> UploadFileAsync(string filePath, DateTime date, string? destinationFileName = null, Action<int>? progressCallback = null)
+        public async Task<bool> UploadFileAsync(string filePath, DateTime date, string? instanceName, string? destinationFileName = null, Action<int>? progressCallback = null)
         {
             if (File.Exists(filePath) == false)
             {
@@ -91,7 +91,7 @@ namespace hassio_onedrive_backup.Graph
             string originalFileName = Path.GetFileNameWithoutExtension(filePath);
             var uploadSession = await _userClient.Drive.Special.AppRoot.ItemWithPath(destinationFileName).CreateUploadSession(new DriveItemUploadableProperties
             {
-                Description = SerializeBackupDescription(originalFileName, date)
+                Description = SerializeBackupDescription(originalFileName, date, instanceName)
             }
 
             ).Request().PostAsync();
@@ -210,12 +210,13 @@ namespace hassio_onedrive_backup.Graph
             return fileInfo.FullName;
         }
 
-        private string SerializeBackupDescription(string originalFileName, DateTime date)
+        private string SerializeBackupDescription(string originalFileName, DateTime date, string instanceName)
         {
             var description = new OnedriveItemDescription
             {
                 Slug = originalFileName,
-                BackupDate = date
+                BackupDate = date,
+                InstanceName = instanceName
             };
 
             return JsonConvert.SerializeObject(description);

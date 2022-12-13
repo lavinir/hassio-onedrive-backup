@@ -1,4 +1,5 @@
-﻿using static hassio_onedrive_backup.Contracts.HassBackupsResponse;
+﻿using hassio_onedrive_backup.Hass.Events;
+using static hassio_onedrive_backup.Contracts.HassBackupsResponse;
 
 namespace hassio_onedrive_backup.Hass
 {
@@ -21,5 +22,7 @@ namespace hassio_onedrive_backup.Hass
         Task<List<string>> GetAddonsAsync();
 
         Task<string> GetTimeZoneAsync();
+
+        Task PublishEventAsync(OneDriveEvents eventType, string payload = "");
     }
 }

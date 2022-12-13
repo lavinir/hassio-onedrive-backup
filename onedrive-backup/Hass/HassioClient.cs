@@ -1,4 +1,5 @@
 ﻿using hassio_onedrive_backup.Contracts;
+using hassio_onedrive_backup.Hass.Events;
 using hassio_onedrive_backup.Storage;
 using Newtonsoft.Json;
 using System.Globalization;
@@ -176,6 +177,12 @@ namespace hassio_onedrive_backup.Hass
         public async Task UpdateHassEntityStateAsync(string entityId, string payload)
         {
             Uri uri = new Uri(Hass_Base_Uri_Str + $"/states/{entityId}");
+            await _httpClient.PostAsync(uri, new StringContent(payload, Encoding.UTF8, "application/json"));
+        }
+
+        public async Task PublishEventAsync(OneDriveEvents eventType, string payload = "")
+        {
+            Uri uri = new Uri(Hass_Base_Uri_Str + $"/events/onedrive.{eventType}");
             await _httpClient.PostAsync(uri, new StringContent(payload, Encoding.UTF8, "application/json"));
         }
 
