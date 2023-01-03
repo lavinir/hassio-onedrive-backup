@@ -41,7 +41,7 @@ namespace hassio_onedrive_backup
 
             if (addonOptions.RecoveryMode)
             {
-                ConsoleLogger.LogInfo($"Addon Started in Recovery Mode! Any existing backups in OneDrive will be synced locally and no additional local backups will be created");
+                ConsoleLogger.LogInfo($"Addon Started in Recovery Mode! Any existing backups in OneDrive will be synced locally. No additional local backups will be created. No other syncing will occur.");
             }
             else
             {

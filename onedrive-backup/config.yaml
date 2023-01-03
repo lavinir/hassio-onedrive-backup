@@ -44,6 +44,9 @@ schema:
   exclude_local_addons_folder: bool
   backup_allowed_hours: "str?"
   backup_instance_name: "match([a-zA-Z_]*)?"
+  sync_paths:
+    - path: str
+
 
 hassio_role : "manager"
 codenotary: "snirlavi@gmail.com"

@@ -91,7 +91,7 @@ When enabled, a partial backup will be created without the *share* folder
 When enabled, a partial backup will be created without the *addons/local* folder
 
 ### backup_allowed_hours (Optional)
-This accepts a range of hours from 0 to 23 for which only during these hours will backups be performed. If a backup is required it will be performed at the first window allowed in the defined hours.
+This accepts a range of hours from 0 to 23 for which only during these hours backups / syncs will be performed. If a backup is required or sync is pending it will be performed at the first window allowed in the defined hours. 
 The format of this is one or more ranges seperated by a comma. A range is specified by a dash <br/>
 ```
 Example:

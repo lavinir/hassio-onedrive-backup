@@ -48,6 +48,9 @@ namespace hassio_onedrive_backup.Contracts
         [JsonProperty("backup_instance_name")]
         public string? InstanceName { get; set; }
 
+        [JsonProperty("sync_paths")]
+        public List<string>? SyncPaths { get; set; }
+
         [JsonIgnore]
         public float BackupIntervalHours => BackupIntervalDays * 24;
 
