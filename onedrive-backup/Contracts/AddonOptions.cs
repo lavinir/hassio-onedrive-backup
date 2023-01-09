@@ -60,6 +60,9 @@ namespace hassio_onedrive_backup.Contracts
         [JsonIgnore]
         public bool IsPartialBackup => ExcludeLocalAddonsFolder || ExcludeMediaFolder || ExcludeShareFolder || ExcludeSSLFolder;
 
+        [JsonIgnore]
+        public bool FileSyncEnabled => SyncPaths != null && SyncPaths.Count > 0;
+        
         public List<string> IncludedFolderList
         {
             get

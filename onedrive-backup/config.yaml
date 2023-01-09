@@ -35,7 +35,7 @@ schema:
   onedrive_backup_num_to_keep : "int(1,100)"
   backup_interval_days : "float(0.0417,)"
   backup_name : "match([a-zA-Z_]*)"
-  backup_passwd : "password"
+  backup_passwd : "password?"
   hass_api_timeout_minutes : "int(30,)"
   notify_on_error : bool
   exclude_media_folder: bool
@@ -45,8 +45,7 @@ schema:
   backup_allowed_hours: "str?"
   backup_instance_name: "match([a-zA-Z_]*)?"
   sync_paths:
-    - path: str
-
+    - path: 'match(\/config[\/\w.*-]*|\/ssl[\/\w.*-]*|\/addons[\/\w.*-]*|\/media[\/\w.*-]*|\/share[\/\w.*-]*|)'
 
 hassio_role : "manager"
 codenotary: "snirlavi@gmail.com"

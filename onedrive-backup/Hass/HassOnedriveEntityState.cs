@@ -20,15 +20,18 @@ namespace hassio_onedrive_backup.Hass
             State = BackupState.Unknown;
         }
 
-        public static HassOnedriveEntityState Instance()
+        public static HassOnedriveEntityState Instance
         {
-            _instance = _instance ?? new HassOnedriveEntityState();
-            return _instance;
+            get
+            {
+                _instance = _instance ?? new HassOnedriveEntityState();
+                return _instance;
+            }
         }
 
         public static HassOnedriveEntityState Initialize(IHassioClient hassioClient)
         {
-            Instance()._hassioClient = hassioClient;
+            Instance._hassioClient = hassioClient;
             return _instance!;
         }
 

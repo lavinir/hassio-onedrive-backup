@@ -5,6 +5,8 @@ using hassio_onedrive_backup.Storage;
 using Microsoft.Graph;
 using Newtonsoft.Json;
 using System.Reflection;
+using System.Text;
+using System.Text.Unicode;
 using File = System.IO.File;
 
 namespace hassio_onedrive_backup.Graph
@@ -56,10 +58,30 @@ namespace hassio_onedrive_backup.Graph
             return response.Token;
         }
 
-        public async Task<List<DriveItem>> GetItemsInAppFolderAsync()
+        public async Task<DriveItem?> GetItemInAppFolderAsync(string subPath = "")
         {
-            var items = await _userClient.Drive.Special.AppRoot.Children.Request().GetAsync();
-            return items.ToList();
+            try
+            {
+                var item = await _userClient.Drive.Special.AppRoot.ItemWithPath(subPath).Request().Expand("children").GetAsync();
+                return item;
+                // return item.Children.ToList();
+            }
+            catch (ServiceException se)
+            {
+                if (se.StatusCode != System.Net.HttpStatusCode.NotFound)
+                {
+                    throw;
+                }
+
+                return null;
+            }
+
+        }
+
+        public async Task<List<DriveItem>?> GetItemsInAppFolderAsync(string subPath = "")
+        {
+            var parent = await GetItemInAppFolderAsync(subPath);
+            return parent?.Children?.ToList();
         }
 
         public async Task<bool> DeleteFileFromAppFolderAsync(string filePath)
@@ -78,7 +100,22 @@ namespace hassio_onedrive_backup.Graph
             return true;
         }
 
-        public async Task<bool> UploadFileAsync(string filePath, DateTime date, string? instanceName, string? destinationFileName = null, Action<int>? progressCallback = null)
+        public async Task<DriveItem> GetOrCreateFolder(string folderPath)
+        {
+            var folder = (await GetItemInAppFolderAsync(folderPath)) ??
+                await _userClient.Drive.Special.AppRoot.ItemWithPath(folderPath).Children.Request().AddAsync(new DriveItem
+                {
+                    // Name = Path.GetFileName(folderPath),
+                    // Folder = new Folder { }
+                    File = new Microsoft.Graph.File { },
+                    Name = "temp.txt",
+                    Content = new MemoryStream(Encoding.UTF8.GetBytes("Here's your damn content"))
+                });
+
+            return folder;
+        }
+
+        public async Task<bool> UploadFileAsync(string filePath, DateTime date, string? instanceName, string? destinationFileName = null, Action<int>? progressCallback = null, bool flatten = true, bool omitDescription = false)
         {
             if (File.Exists(filePath) == false)
             {
@@ -87,11 +124,11 @@ namespace hassio_onedrive_backup.Graph
             }
 
             using var fileStream = File.OpenRead(filePath);
-            destinationFileName = destinationFileName ?? Path.GetFileName(filePath);
+            destinationFileName = destinationFileName ?? (flatten ? Path.GetFileName(filePath) : filePath);
             string originalFileName = Path.GetFileNameWithoutExtension(filePath);
             var uploadSession = await _userClient.Drive.Special.AppRoot.ItemWithPath(destinationFileName).CreateUploadSession(new DriveItemUploadableProperties
             {
-                Description = SerializeBackupDescription(originalFileName, date, instanceName)
+                Description = omitDescription ? null : SerializeBackupDescription(originalFileName, date, instanceName)                
             }
 
             ).Request().PostAsync();

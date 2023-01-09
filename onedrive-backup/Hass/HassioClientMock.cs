@@ -44,8 +44,8 @@ namespace hassio_onedrive_backup.Hass
         {
             string backupFile = $"./mockBackup_{Guid.NewGuid()}.tar";
             
-            // 100MB File
-            byte[] data = new byte[100 * 1024 * 1024];
+            // 1MB File
+            byte[] data = new byte[1 * 1024 * 1024];
             new Random().NextBytes(data);
             File.WriteAllBytes(backupFile, data); 
             return Task.FromResult(backupFile);
