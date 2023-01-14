@@ -123,6 +123,8 @@ This allows you to specify a list of paths for the addon to sync to OneDrive so 
  - path: /media/music/*.mp3
  - path: /ssl
 ```
+> Wildcards (*, ?) are supported.
+
 > Currently Sync is only preformed one way (Local -> OneDrive). 
 
 > Paths are not recursive currently
