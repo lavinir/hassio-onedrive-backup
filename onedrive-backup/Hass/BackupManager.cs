@@ -328,6 +328,11 @@ namespace hassio_onedrive_backup.Hass
         private OnedriveBackup? CheckIfFileIsBackup(DriveItem item)
         {
             OnedriveBackup ret = null;
+            if (item.Folder != null && item.Name.Equals("FileSync"))
+            {
+                return ret;
+            }
+
             try
             {
                 ret = new OnedriveBackup(item.Name, JsonConvert.DeserializeObject<OnedriveItemDescription>(item.Description)!);

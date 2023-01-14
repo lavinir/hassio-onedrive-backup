@@ -49,7 +49,7 @@ namespace hassio_onedrive_backup.Contracts
         public string? InstanceName { get; set; }
 
         [JsonProperty("sync_paths")]
-        public List<string>? SyncPaths { get; set; }
+        public List<SyncPath>? SyncPaths { get; set; }
 
         [JsonIgnore]
         public float BackupIntervalHours => BackupIntervalDays * 24;
@@ -91,5 +91,12 @@ namespace hassio_onedrive_backup.Contracts
                 return folders;
             }
         }
+    }
+    
+    public class SyncPath
+    {
+        public string path { get; set; }
+
+        public bool includeSubFolders { get; set; } = false;
     }
 }

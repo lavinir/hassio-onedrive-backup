@@ -42,24 +42,15 @@ namespace hassio_onedrive_backup.Hass
             set
             {
                 state = value;
-                if (state != FileState.Synced)
+                if (state != FileState.Syncing)
                 {
                     UploadPercentage = null;
                 }
             }
         }
 
-        public DateTime? LastLocalBackupDate { get; set; }
-
-        public DateTime? LastOnedriveBackupDate { get; set; }
-
-        public int BackupsInHomeAssistant { get; set; }
-
-        public int BackupsInOnedrive { get; set; }
-
         public int? UploadPercentage { get; set; }
 
-        public int? DownloadPercentage { get; set; }
 
         public async Task UpdateBackupEntityInHass()
         {
@@ -83,7 +74,7 @@ namespace hassio_onedrive_backup.Hass
 
         public class FileStateAttribute
         {
-            public const string UploadPercentage = "Current backup upload percentage";
+            public const string UploadPercentage = "Current file upload percentage";
         }
         
         public enum FileState

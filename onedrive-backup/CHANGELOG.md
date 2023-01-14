@@ -1,3 +1,10 @@
+## v1.4 []
+### Added
+* [**First release of File Syncs!** 🎉](https://github.com/lavinir/hassio-onedrive-backup#sync_paths-optional) This allows file syncing to OneDrive outside of Backups. 
+* New sensor added for File Syncs.
+
+### Updated
+* **Password protection for backups now optional** - Due to multiple requests you can now choose to not protect your backups with a password.
 ## v1.3 [December 13 2022]
 
 ### Added

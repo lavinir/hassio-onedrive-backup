@@ -27,7 +27,8 @@ options:
   exclude_media_folder: false
   exclude_ssl_folder: false
   exclude_share_folder: false
-  exclude_local_addons_folder: false  
+  exclude_local_addons_folder: false
+  sync_paths: []
 
 schema:
   recovery_mode : bool

@@ -86,7 +86,7 @@ namespace hassio_onedrive_backup
                     }
                     else
                     {                             
-                        // await backupManager.PerformBackupsAsync();
+                        await backupManager.PerformBackupsAsync();
                     }
 
                 }

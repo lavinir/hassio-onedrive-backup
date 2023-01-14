@@ -13,6 +13,9 @@
   "exclude_local_addons_folder": false,
   "backup_allowed_hours": "0-23",
   "sync_paths": [
-    "/synctemp/*print*"
+    {
+      "path": "/synctemp/*print*",
+      "includeSubFolders" : true
+    }    
   ]
 }

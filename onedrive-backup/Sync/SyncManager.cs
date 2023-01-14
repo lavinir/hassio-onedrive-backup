@@ -2,17 +2,9 @@
 using hassio_onedrive_backup.Graph;
 using hassio_onedrive_backup.Hass;
 using Microsoft.Graph;
-using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Diagnostics.SymbolStore;
-using System.Linq;
 using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
-using static hassio_onedrive_backup.Contracts.HassBackupsResponse;
 
 namespace hassio_onedrive_backup.Sync
 {
@@ -53,11 +45,12 @@ namespace hassio_onedrive_backup.Sync
                     await HassOnedriveFileSyncEntityState.Instance.UpdateBackupEntityInHass();
 
                     var paths = _addonOptions.SyncPaths;
-                    foreach (string path in paths)
+                    foreach (var syncPath in paths)
                     {
+                        string path = syncPath.path;
                         if (System.IO.Directory.Exists(path))
                         {
-                            await SyncDirectory(path);
+                            await SyncDirectory(path, includeSubFolders: syncPath.includeSubFolders);
                         }
                         else if (System.IO.File.Exists(path))
                         {
@@ -65,7 +58,7 @@ namespace hassio_onedrive_backup.Sync
                         }
                         else if (System.IO.Directory.Exists(Path.GetDirectoryName(path)))
                         {
-                            await SyncDirectory(Path.GetDirectoryName(path), Path.GetFileName(path));
+                            await SyncDirectory(Path.GetDirectoryName(path), filter: Path.GetFileName(path), includeSubFolders: syncPath.includeSubFolders);
                         }
                         else
                         {
@@ -158,15 +151,15 @@ namespace hassio_onedrive_backup.Sync
         //    return Path.Combine(OneDriveFileSyncRootDir, _addonOptions.InstanceName ?? string.Empty) + path;
         //}
 
-        private async Task SyncDirectory(string path, string filter = "*")
+        private async Task SyncDirectory(string path, string filter = "*", bool includeSubFolders = false)
         {
-            var files = System.IO.Directory.GetFiles(path, filter, SearchOption.TopDirectoryOnly);
+            var files = System.IO.Directory.GetFiles(path, filter, includeSubFolders ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
             // var remoteParentFolder = await VerifyRemoteFolderPathExists(path);
             foreach (var file in files)
             {
                 if (System.IO.File.Exists(file))
                 {
-                    await SyncFile(file);
+                     await SyncFile(file);
                 }
             }            
         }
