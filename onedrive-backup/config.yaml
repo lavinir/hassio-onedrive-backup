@@ -1,5 +1,5 @@
 name: "OneDrive Backup"
-version: "1.3"
+version: "1.4"
 slug: hassio_onedrive_backup
 description: >-
   Automatic backups from Home Assistant to OneDrive
@@ -10,8 +10,12 @@ arch:
   - aarch64
 url: "https://github.com/lavinir/hassio-onedrive-backup"
 map:
-  - config
-  - ssl
+  - config:rw
+  - ssl:rw
+  - addons:rw
+  - media:rw
+  - share:rw
+  - backup:rw
 options:
   recovery_mode : false
   local_backup_num_to_keep : 2
@@ -23,7 +27,8 @@ options:
   exclude_media_folder: false
   exclude_ssl_folder: false
   exclude_share_folder: false
-  exclude_local_addons_folder: false  
+  exclude_local_addons_folder: false
+  sync_paths: []
 
 schema:
   recovery_mode : bool
@@ -31,7 +36,7 @@ schema:
   onedrive_backup_num_to_keep : "int(1,100)"
   backup_interval_days : "float(0.0417,)"
   backup_name : "match([a-zA-Z_]*)"
-  backup_passwd : "password"
+  backup_passwd : "password?"
   hass_api_timeout_minutes : "int(30,)"
   notify_on_error : bool
   exclude_media_folder: bool
@@ -40,6 +45,8 @@ schema:
   exclude_local_addons_folder: bool
   backup_allowed_hours: "str?"
   backup_instance_name: "match([a-zA-Z_]*)?"
+  sync_paths:
+    - path: 'match(\/config[\/\w.*-]*|\/ssl[\/\w.*-]*|\/addons[\/\w.*-]*|\/media[\/\w.*-]*|\/share[\/\w.*-]*|)'
 
 hassio_role : "manager"
 codenotary: "snirlavi@gmail.com"

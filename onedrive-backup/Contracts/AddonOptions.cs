@@ -48,6 +48,9 @@ namespace hassio_onedrive_backup.Contracts
         [JsonProperty("backup_instance_name")]
         public string? InstanceName { get; set; }
 
+        [JsonProperty("sync_paths")]
+        public List<SyncPath>? SyncPaths { get; set; }
+
         [JsonIgnore]
         public float BackupIntervalHours => BackupIntervalDays * 24;
 
@@ -57,6 +60,9 @@ namespace hassio_onedrive_backup.Contracts
         [JsonIgnore]
         public bool IsPartialBackup => ExcludeLocalAddonsFolder || ExcludeMediaFolder || ExcludeShareFolder || ExcludeSSLFolder;
 
+        [JsonIgnore]
+        public bool FileSyncEnabled => SyncPaths != null && SyncPaths.Count > 0;
+        
         public List<string> IncludedFolderList
         {
             get
@@ -85,5 +91,12 @@ namespace hassio_onedrive_backup.Contracts
                 return folders;
             }
         }
+    }
+    
+    public class SyncPath
+    {
+        public string path { get; set; }
+
+        public bool includeSubFolders { get; set; } = false;
     }
 }

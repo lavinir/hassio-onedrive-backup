@@ -6,6 +6,7 @@ This addon enables easy Home Assistant backup creation and sync to OneDrive.
 ## Current Features
 - Set backup creation schedule
 - Syncs backups to OneDrive **(Personal Account only. OneDrive for business not currently supported)**
+- Additional File Sync to OneDrive
 - Recovery mode for loading backups back from OneDrive to Home Assistant
 - Supports backup retention for removing older backups
 - Supports multiple Home Assistant instances
@@ -15,13 +16,12 @@ This addon enables easy Home Assistant backup creation and sync to OneDrive.
 
 >This is a free addon but if you enjoy this addon and would like to support the development it >would be much appreciated :)
 >[<img src ="https://raw.githubusercontent.com/lavinir/hassio-onedrive-backup/main/onedrive-backup/images/bmc.svg" width="120">](https://www.buymeacoffee.com/snirlavis)
-
 ## Quick Links
 [Installation Instructions](#installation-instructions)<br/>
-[Configuration](#configuration)<br/>
+[Configuration](#configuration)<br/> 
 [Backup Location in OneDrive](#backup-location-in-onedrive)<br/>
 [OneDrive FreeSpace Sensor](#onedrive-free-space-sensor)<br/>
-[Home Assistant Sensor](#home-assistant-sensor)<br/>
+[Home Assistant Sensor](#home-assistant-backup-sensor)<br/>
 [Events](#events)<br/>
 [Restoring from backup](#restoring-from-backup)<br/>
 [Security and Privacy](#security-and-privacy)<br/>
@@ -36,7 +36,8 @@ This addon enables easy Home Assistant backup creation and sync to OneDrive.
 ![add-repo](/onedrive-backup/images/add-repo.png)
 3. Reload the Add-on page (hard refresh might be required) and scroll down. You should now see a new section titled **Home Assistant Onedrive Backup Repository** that contains the **OneDrive Backup** addon.
 4. Click **Install** and wait a few minutes for the addon to download
-5. Before you are able to start the addon, you will be asked to set a password for your Home Assistant backups (I've currently made this mandatory for security best practices). Either navigate to **Configuration** in the addon menu on top or attempt to **Start** it (which will navigate to the **Configuration** section for you and ask you to input a Backup password)
+5. I recommend setting a backup password for your Home Assistant backups. You can do this in the addon **Configuration**.
+
 6. **Start** the addon and wait a few seconds for it to start.
 7. You will need to **Authenticate** with OneDrive one time to allow the addon access to a dedicated backup folder in your OneDrive account. (If you're interested in the addon permissions and the authentication flow you can see more details below under [Security and Privacy](#security-and-privacy)). Open the Addon **Logs** from the Add-on menu on top and you should see the following lines: <kbd>To sign in, use a web browser to open the page https://microsoft.com/devicelogin and enter the code ********* to authenticate. </kbd>
 8. Copy the code and navigate to the url as instructed. You will be asked to login to your Microsoft account and grant permissions to the App that will allow it to store your backups. ![consent](/onedrive-backup/images/consent.png). </br>
@@ -91,10 +92,12 @@ When enabled, a partial backup will be created without the *share* folder
 When enabled, a partial backup will be created without the *addons/local* folder
 
 ### backup_allowed_hours (Optional)
-This accepts a range of hours from 0 to 23 for which only during these hours will backups be performed. If a backup is required it will be performed at the first window allowed in the defined hours.
+This accepts a range of hours from 0 to 23 for which only during these hours backups / syncs will be performed. If a backup is required or sync is pending it will be performed at the first window allowed in the defined hours. 
 The format of this is one or more ranges seperated by a comma. A range is specified by a dash <br/>
+
+**Example**:
+
 ```
-Example:
 
 0-2,10,21-     [Allowed hours are 00:00-02:59, 10:00-10:59 and 21:00-23:50]
 
@@ -105,6 +108,28 @@ Example:
 If you have more than one Home Assistant installation you want to backup to the same OneDrive account, you can achieve this by specifying different **instance names** to each installation. Each instance will only look at their own backups and ignore any other instances. 
 > You need to toggle the "Show unused optional configuration options" to see it in the Configuration screen.
 
+### sync_paths (optional)
+This allows you to specify a list of paths for the addon to sync to OneDrive so you can for example sync your **Media** folder to OneDrive and exclude it from the Backups allowing you to save storage space (as this will only be stored once). Files are stored under a new directory called **FileSync** under the [**App Folder**](#backup-location-in-onedrive). Source folder structure is maintained under this folder.
+> Sync folders supported are:
+> * /config
+> * /ssl
+> * /share
+> * /media
+> * /addons
+
+**Example**: 
+
+```
+ - path: /media/music/*.mp3
+ - path: /ssl
+```
+> Wildcards (*, ?) are supported.
+
+> Currently Sync is only preformed one way (Local -> OneDrive). 
+
+> Paths are not recursive currently
+
+> No file deletion occurs if you delete any of files locally
 ## Backup Location in OneDrive
 The add-on has specific permissions to a single folder in your OneDrive known as the **App Folder**. (More details can be found in the [Security and Privacy](#security-and-privacy) section.)
 
@@ -116,8 +141,8 @@ The add-on creates a native Home Assistant Sensor entity <kbd>sensor.onedrivefre
 ![freespace_sensor_snapshot](onedrive-backup/images/sensor_freespace.png)
 
 
-## Home Assistant sensor
-The add-on creates a native Home Assistant Sensor entity <kbd>sensor.onedrivebackup</kbd> which allows convinient visibility to the backup status as well as allows you to create automations on these values as needed.
+## Home Assistant backup sensor
+The add-on creates a native Home Assistant Sensor entity <kbd>sensor.onedrivebackup</kbd> which grants visibility to the backup status as well as allows you to create automations on these values as needed.
 
 ![sensor_snapshot](onedrive-backup/images/sensor_dashboard.png)
 
@@ -160,6 +185,28 @@ When a backup upload is in progress this will show the progress of the upload.
 
 #### <kbd>**Backup download percentage**</kbd>
 When a backup download is in progress (Recovery Mode), this shows the progres of the download.
+
+## Home Assistant file sync sensor
+The add-on creates a native Home Assistant Sensor entity <kbd>sensor.onedrivefilesync</kbd> which grants visibility to the file sync status as well as allows you to create automations on these values as needed.
+
+![filesync_sensor_snapshot](onedrive-backup/images/filesync_sensor.png)
+
+### Sensor State
+There are 2 possible states for the sensor: 
+
+#### <kbd>**Synced**</kbd>
+   
+All files specified in the [Sync Paths](#sync_paths-optional) are backed up to OneDrive.
+
+#### <kbd>**Syncing**</kbd>
+
+Files are being synced to OneDrive.
+
+### Sensor Attributes
+The sensor also exposes the following attributes:
+
+#### <kbd>**Current File upload percentage**</kbd>
+When a file upload is in progress this will show the progress of the upload.
 
 ## Events
 Upon a failure in the backup process, the addon will fire different events you can use in your automations:
