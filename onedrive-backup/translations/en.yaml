@@ -39,10 +39,10 @@ configuration:
     name: Allowed hours
     description: This accepts a range of hours from 0 to 23 for which only during these hours will backups be performed. If a backup is required it will be performed at the first window allowed in the defined hours. The format of this is one or more ranges seperated by a comma. A range is specified by a dash.
   backup_instance_name:
-   name: Backup instance name
-   description: This is used to distingiush between multiple Home Assistant installations backing up to the same OneDrive account. OneDrive backups will be seperated for each 'Instance Name'
+    name: Backup instance name
+    description: This is used to distingiush between multiple Home Assistant installations backing up to the same OneDrive account. OneDrive backups will be seperated for each 'Instance Name'
   sync_paths:
-   name: File Sync Paths
-   description: >
-                This allows you to specify a list of paths for the addon to sync to OneDrive so you can for example sync your **Media** folder to OneDrive and exclude it from the Backups allowing you to save storage space (as this will only be stored once). Files are stored under a new directory called **FileSync** under the [**App Folder**](#backup-location-in-onedrive). Source folder structure is maintained under this folder.
+    name: File Sync Paths
+    description: >
+                This allows you to specify a list of paths for the addon to sync to OneDrive so you can for example sync your **Media** folder to OneDrive and exclude it from the Backups allowing you to save storage space (as this will only be stored once). Files are stored under a new directory called "FileSync" under the App Folder root. Source folder structure is maintained under this folder.
                 Sync folders supported are: /config, /ssl, /share, /media, /addons
