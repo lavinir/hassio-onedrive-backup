@@ -189,6 +189,8 @@ When a backup download is in progress (Recovery Mode), this shows the progres of
 ## Home Assistant file sync sensor
 The add-on creates a native Home Assistant Sensor entity <kbd>sensor.onedrivefilesync</kbd> which grants visibility to the file sync status as well as allows you to create automations on these values as needed.
 
+![filesync_sensor_snapshot](onedrive-backup/images/filesync_sensor.png)
+
 ### Sensor State
 There are 2 possible states for the sensor: 
 

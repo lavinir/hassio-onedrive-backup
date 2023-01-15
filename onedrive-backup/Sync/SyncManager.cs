@@ -80,23 +80,6 @@ namespace hassio_onedrive_backup.Sync
             }
         }
 
-        //private async Task<DriveItem> VerifyRemoteFolderPathExists(string path)
-        //{
-        //    var normalizedPath = NormalizeOneDrivePath(path);
-
-        //    await _graphHelper.GetOrCreateFolder(normalizedPath);
-
-        //    string[] pathComponents = normalizedPath.Split('/', '\\');
-        //    DriveItem folder = null;
-        //    for (int i=0; i < pathComponents.Length; i++)
-        //    {
-        //        string currentPath = string.Join('/', pathComponents.Take(i + 1));
-        //        folder = await _graphHelper.GetOrCreateFolder(currentPath);
-        //    }
-
-        //    return folder!;
-        //}
-
         private async Task SyncFile(string path)
         {
             var fileInfo = new FileInfo(path);
@@ -145,11 +128,6 @@ namespace hassio_onedrive_backup.Sync
                 }
             }
         }
-
-        //private string NormalizeOneDrivePath(string path)
-        //{
-        //    return Path.Combine(OneDriveFileSyncRootDir, _addonOptions.InstanceName ?? string.Empty) + path;
-        //}
 
         private async Task SyncDirectory(string path, string filter = "*", bool includeSubFolders = false)
         {
