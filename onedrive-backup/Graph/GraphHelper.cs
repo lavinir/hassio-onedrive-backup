@@ -84,16 +84,16 @@ namespace hassio_onedrive_backup.Graph
             return parent?.Children?.ToList();
         }
 
-        public async Task<bool> DeleteFileFromAppFolderAsync(string filePath)
+        public async Task<bool> DeleteItemFromAppFolderAsync(string itemPath)
         {
             try
             {
-                ConsoleLogger.LogInfo($"Deleting file: {filePath}");
-                await _userClient.Drive.Special.AppRoot.ItemWithPath(filePath).Request().DeleteAsync();
+                ConsoleLogger.LogInfo($"Deleting item: {itemPath}");
+                await _userClient.Drive.Special.AppRoot.ItemWithPath(itemPath).Request().DeleteAsync();
             }
             catch (Exception ex)
             {
-                ConsoleLogger.LogError($"Error deleting {filePath}. {ex}");
+                ConsoleLogger.LogError($"Error deleting {itemPath}. {ex}");
                 return false;
             }
 

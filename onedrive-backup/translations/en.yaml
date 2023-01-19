@@ -14,6 +14,9 @@ configuration:
   backup_name:
     name: Backup name
     description: Name to use for the backups created by the add-on.
+  monitor_all_local_backups:
+    name: Monitor all local backups
+    description: Use this to monitor all locally created backups not just ones created by the Addon. All backup quota rules defined will be applied here including backup deletion when this is enabled.
   backup_passwd:
     name: Backup password
     description: The password to use to protect the backups created and uploaded to OneDrive.
@@ -45,4 +48,10 @@ configuration:
     name: File Sync Paths
     description: >
                 This allows you to specify a list of paths for the addon to sync to OneDrive so you can for example sync your **Media** folder to OneDrive and exclude it from the Backups allowing you to save storage space (as this will only be stored once). Files are stored under a new directory called "FileSync" under the App Folder root. Source folder structure is maintained under this folder.
-                Sync folders supported are: /config, /ssl, /share, /media, /addons
+                Sync (sub)folders supported must be under one of the following roots: /config, /ssl, /share, /media, /addons
+                You can specify an array of items here containing "path" and "recursive".
+                See documentation for full usage details.
+  file_sync_remove_deleted: 
+    name: Remove deleted files during File Sync
+    description: When enabled, the FileSync folder on OneDrive will mirror your included sync_paths meaning any 'extra' content that remains in OneDrive will be removed.
+                
