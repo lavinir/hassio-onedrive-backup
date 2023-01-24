@@ -355,7 +355,7 @@ namespace hassio_onedrive_backup.Hass
 
         private bool IsMonitoredBackup(Backup backup)
         {
-            return _addonOptions.IncludeAllLocalBackups 
+            return _addonOptions.MonitorAllLocalBackups 
                 || backup.Name.StartsWith(_addonOptions.BackupNameSafe, StringComparison.OrdinalIgnoreCase);
         }
     }

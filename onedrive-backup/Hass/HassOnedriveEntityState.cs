@@ -6,7 +6,6 @@ namespace hassio_onedrive_backup.Hass
     internal class HassOnedriveEntityState
     {
         private const string OneDrive_Backup_Entity_ID = "sensor.onedrivebackup";
-
         private IHassioClient? _hassioClient;
         private static HassOnedriveEntityState? _instance;
         private BackupState state;
@@ -68,8 +67,8 @@ namespace hassio_onedrive_backup.Hass
                 state = State,
                 attributes = new Dictionary<string, string?>
                 {
-                    { BackupStateAttribute.LastLocalBackupDate, LastLocalBackupDate?.ToString() },
-                    { BackupStateAttribute.LastOnedriveBackupDate, LastOnedriveBackupDate?.ToString() },
+                    { BackupStateAttribute.LastLocalBackupDate, LastLocalBackupDate?.ToString(DateTimeHelper.DateTimeFormat) },
+                    { BackupStateAttribute.LastOnedriveBackupDate, LastOnedriveBackupDate?.ToString(DateTimeHelper.DateTimeFormat) },
                     { BackupStateAttribute.BackupsInHomeAssistant, BackupsInHomeAssistant.ToString() },
                     { BackupStateAttribute.BackupsInOnedrive, BackupsInOnedrive.ToString() },
                     { BackupStateAttribute.UploadPercentage, UploadPercentage == null ? null : $"{UploadPercentage}%" },

@@ -2,6 +2,7 @@
 {
     internal class DateTimeHelper
     {
+        public const string DateTimeFormat = "yyyy-MM-dd HH:mm:ss";
         private readonly TimeZoneInfo? _timeZoneInfo = null;
 
         private DateTimeHelper(string timeZoneId)
