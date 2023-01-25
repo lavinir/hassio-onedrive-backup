@@ -157,7 +157,12 @@ namespace hassio_onedrive_backup.Sync
             
             if (item.Folder != null)
             {
-                if (System.IO.Directory.Exists(localPath) == false)
+                if (localPath.Equals("/") == false && _addonOptions.SyncPaths.Any(syncPath => (((localPath.StartsWith(syncPath.Path) && syncPath.Recursive) || localPath.Equals(syncPath)) == false)))
+                {
+                    ConsoleLogger.LogInfo($"{localPath} is not included in Sync Paths. Deleting from OneDrive");
+                    await _graphHelper.DeleteItemFromAppFolderAsync(remotePath);
+                }
+                else if (System.IO.Directory.Exists(localPath) == false)
                 {
                     ConsoleLogger.LogInfo($"{localPath} does not exist locally. Deleting from OneDrive");
                     await _graphHelper.DeleteItemFromAppFolderAsync(remotePath);
