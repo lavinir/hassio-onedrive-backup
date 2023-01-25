@@ -157,7 +157,7 @@ namespace hassio_onedrive_backup.Sync
             
             if (item.Folder != null)
             {
-                if (localPath.Equals("/") == false && _addonOptions.SyncPaths.Any(syncPath => (((localPath.StartsWith(syncPath.Path) && syncPath.Recursive) || localPath.Equals(syncPath)) == false)))
+                if (localPath.Equals("/") == false && _addonOptions.SyncPaths.Any(syncPath => (((localPath.StartsWith(syncPath.Path) && syncPath.Recursive) || localPath.Equals(syncPath.Path)) == false)))
                 {
                     ConsoleLogger.LogInfo($"{localPath} is not included in Sync Paths. Deleting from OneDrive");
                     await _graphHelper.DeleteItemFromAppFolderAsync(remotePath);
