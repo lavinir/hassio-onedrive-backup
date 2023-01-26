@@ -32,7 +32,7 @@ namespace hassio_onedrive_backup.Hass
 
             // Get existing local backups
             ConsoleLogger.LogInfo("Retrieving existing local backups...");
-            var localBackups = await _hassIoClient.GetBackupsAsync(IsOwnedBackup);
+            var localBackups = await _hassIoClient.GetBackupsAsync(IsMonitoredBackup);
 
             // Get existing online backups
             ConsoleLogger.LogInfo("Retrieving existing online backups...");
@@ -82,7 +82,7 @@ namespace hassio_onedrive_backup.Hass
                     //Refresh local backup list
                     if (backupCreated)
                     {
-                        localBackups = await _hassIoClient.GetBackupsAsync(IsOwnedBackup);
+                        localBackups = await _hassIoClient.GetBackupsAsync(IsMonitoredBackup);
                     }
                 }
             }
@@ -92,8 +92,8 @@ namespace hassio_onedrive_backup.Hass
 
             // Get Online Backups Candidates that have not yet been uploaded
             var backupsToUpload = onlineBackupCandiates
+                .Take(_addonOptions.MaxOnedriveBackups)
                 .Where(backup => onlineBackups.Any(onlineBackup => onlineBackup.Slug.Equals(backup.Slug, StringComparison.OrdinalIgnoreCase)) == false)
-                .Take(_addonOptions.MaxOnedriveBackups)                
                 .ToList();
 
             // Upload backups
@@ -138,7 +138,6 @@ namespace hassio_onedrive_backup.Hass
 
             // Refresh Online Backups
             onlineBackups = await GetOnlineBackupsAsync(_addonOptions.InstanceName);
-            int numOfOnlineBackups = onlineBackups.Count;
             int numOfOnlineBackupsToDelete = Math.Max(0, onlineBackups.Count - _addonOptions.MaxOnedriveBackups);
 
             // Delete Old Online Backups
@@ -152,7 +151,7 @@ namespace hassio_onedrive_backup.Hass
                 ConsoleLogger.LogInfo($"Found {backupsToDelete.Count()} backups to delete from OneDrive.");
                 foreach (var backupToDelete in backupsToDelete)
                 {
-                    bool deleteSuccessfull = await _graphHelper.DeleteFileFromAppFolderAsync(backupToDelete.FileName);
+                    bool deleteSuccessfull = await _graphHelper.DeleteItemFromAppFolderAsync(backupToDelete.FileName);
                     if (deleteSuccessfull == false)
                     {
                         await _hassIoClient.PublishEventAsync(Events.OneDriveEvents.OneDriveBackupDeleteFailed);
@@ -197,7 +196,7 @@ namespace hassio_onedrive_backup.Hass
             await _hassEntityState.UpdateBackupEntityInHass();
             var onlineBackups = await GetOnlineBackupsAsync("*");
             var onlineInstanceBackups = onlineBackups.Where(backup => string.Equals(backup.InstanceName, _addonOptions.InstanceName, StringComparison.OrdinalIgnoreCase)).ToList();
-            var localBackups = await _hassIoClient.GetBackupsAsync(IsOwnedBackup);
+            var localBackups = await _hassIoClient.GetBackupsAsync(IsMonitoredBackup);
 
             if (onlineInstanceBackups.Count > 0)
             {
@@ -267,7 +266,7 @@ namespace hassio_onedrive_backup.Hass
         private async Task UpdateHassEntity()
         {
             var now = DateTimeHelper.Instance!.Now;
-            var localBackups = await _hassIoClient.GetBackupsAsync(IsOwnedBackup);
+            var localBackups = await _hassIoClient.GetBackupsAsync(IsMonitoredBackup);
             var onlineBackups = await GetOnlineBackupsAsync(_addonOptions.InstanceName);
             _hassEntityState.BackupsInHomeAssistant = localBackups.Count;
             _hassEntityState.BackupsInOnedrive = onlineBackups.Count;
@@ -354,9 +353,10 @@ namespace hassio_onedrive_backup.Hass
             return Task.FromResult(filteredLocalBackups.ToList());
         }
 
-        private bool IsOwnedBackup(Backup backup)
+        private bool IsMonitoredBackup(Backup backup)
         {
-            return backup.Name.StartsWith(_addonOptions.BackupNameSafe, StringComparison.OrdinalIgnoreCase);
+            return _addonOptions.MonitorAllLocalBackups 
+                || backup.Name.StartsWith(_addonOptions.BackupNameSafe, StringComparison.OrdinalIgnoreCase);
         }
     }
 }

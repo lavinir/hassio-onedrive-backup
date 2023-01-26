@@ -46,52 +46,55 @@ After consent has been granted you're good to go (you can verify in the logs tha
 ## Configuration
 All configuration options for the addon can be found in the native **Configuration** section of the addon in Home Assistant. 
 
-### **recovery_mode**
+### **Recovery mode**
 When this settings is toggled on, the add-on will not perform any backups and sync mode will reverse from OneDrive back to Home Assistant.
 This will still respect the [maximum local backups](#local_backup_num_to_keep) set and will try to sync back the latest backups that exist in OneDrive while remaining under the set limit.
 
 > See [Restoring from backup](#restoring-from-backup) for additional information on how to recover from a backup.
 
-### **local_backup_num_to_keep**
+### **Number of local backups**
 The maximum amount of backups to keep locally in Home Assistant
 > Note that the number of the actual backups can temporarly exceed the set maximum by one due to the fact deletion occurs only after a new backup is created.
 
-### **onedrive_backup_num_to_keep**
+### **Number of OneDrive backups**
 The maximum amount of backups to keep in OneDrive
 
-### **backup_interval_days**
+### **Backup interval (days)**
 The backup creation frequency in days.
 > For setting a sub-day frequency you can use a number between 0 and 1, so for example if the value here is set to **0.5**, the backup frequency will occur every 12 hours. You should avoid using a value less than 0.083 (~2 hours) as the [current enforced minimum sync interval](#sync_interval_hours) is once an hour.
 
 > **NOTE**: There is a bug in the Home Assistant UI that will light up the value in red (invalid) when you try to use a non whole number here. Ignore this and save the configuration with the value you want.
 
-### **backup_name**
+### **Backup name**
 Name to use for the backups created by the add-on.
 > To avoid collision with backups created outside this addon please use a unique name here.
 
-### **backup_passwd**
+### **Monitor all local backups**
+When enabled the add-on will monitor all local backups whether created by the addon or not
+
+### **Backup password**
 The password to use to protect the backups created and uploaded to OneDrive.
 > Currently this is mandatory to set as I don't think it makes sense to store these unprotected.
 
-### **hass_api_timeout_minutes**
+### **Hass api timeout (minutes)**
 This allows you to set the timeout configured when calling the Home Assistant APIs. 
 > This applies to how long your backups take to create. If you experience timeouts during backup creation, increase this value.
 
-### **notify_on_error**
+### **Notify on error**
 Enables persistent notifications in Home Assistant to notify of backup failures.
 
-### **exclude_media_folder**
+### **Exclude media folder**
 When enabled, a partial backup will be created without the *media* folder
-### **exclude_ssl_folder**
+### **Exclude ssl folder**
 When enabled, a partial backup will be created without the *ssl* folder
 
-### **exclude_share_folder**
+### **Exclude share folder**
 When enabled, a partial backup will be created without the *share* folder
 
-### **exclude_local_addons_folder**
+### **Exclude local addons folder**
 When enabled, a partial backup will be created without the *addons/local* folder
 
-### backup_allowed_hours (Optional)
+### Allowed hours (Optional)
 This accepts a range of hours from 0 to 23 for which only during these hours backups / syncs will be performed. If a backup is required or sync is pending it will be performed at the first window allowed in the defined hours. 
 The format of this is one or more ranges seperated by a comma. A range is specified by a dash <br/>
 
@@ -104,13 +107,13 @@ The format of this is one or more ranges seperated by a comma. A range is specif
 ```
 > You need to toggle the "Show unused optional configuration options" to see it in the Configuration screen.
 
-### backup_instance_name (Optional)
+### Backup instance name (Optional)
 If you have more than one Home Assistant installation you want to backup to the same OneDrive account, you can achieve this by specifying different **instance names** to each installation. Each instance will only look at their own backups and ignore any other instances. 
 > You need to toggle the "Show unused optional configuration options" to see it in the Configuration screen.
 
-### sync_paths (optional)
+### File Sync Paths (optional)
 This allows you to specify a list of paths for the addon to sync to OneDrive so you can for example sync your **Media** folder to OneDrive and exclude it from the Backups allowing you to save storage space (as this will only be stored once). Files are stored under a new directory called **FileSync** under the [**App Folder**](#backup-location-in-onedrive). Source folder structure is maintained under this folder.
-> Sync folders supported are:
+> Sync (sub)folders supported must be under one of the following roots:
 > * /config
 > * /ssl
 > * /share
@@ -122,14 +125,15 @@ This allows you to specify a list of paths for the addon to sync to OneDrive so 
 ```
  - path: /media/music/*.mp3
  - path: /ssl
+   recursive: true
 ```
+
 > Wildcards (*, ?) are supported.
 
 > Currently Sync is only preformed one way (Local -> OneDrive). 
 
-> Paths are not recursive currently
-
-> No file deletion occurs if you delete any of files locally
+### Remove deleted files during File Sync
+When enabled, the FileSync folder on OneDrive will mirror your included [Sync Paths](#file-sync-paths-optional) meaning any 'extra' content that remains in OneDrive will be removed.
 ## Backup Location in OneDrive
 The add-on has specific permissions to a single folder in your OneDrive known as the **App Folder**. (More details can be found in the [Security and Privacy](#security-and-privacy) section.)
 

@@ -21,6 +21,9 @@ namespace hassio_onedrive_backup.Contracts
         [JsonProperty("backup_name")]
         public string? BackupName { get; set; }
 
+        [JsonProperty("monitor_all_local_backups")]
+        public bool MonitorAllLocalBackups{ get; set; }
+
         [JsonProperty("notify_on_error")]
         public bool NotifyOnError { get; set; }
 
@@ -50,6 +53,10 @@ namespace hassio_onedrive_backup.Contracts
 
         [JsonProperty("sync_paths")]
         public List<SyncPath>? SyncPaths { get; set; }
+
+        [JsonProperty("file_sync_remove_deleted")]
+        public bool FileSyncRemoveDeleted { get; set; } = false;
+
 
         [JsonIgnore]
         public float BackupIntervalHours => BackupIntervalDays * 24;
@@ -95,8 +102,10 @@ namespace hassio_onedrive_backup.Contracts
     
     public class SyncPath
     {
-        public string path { get; set; }
+        [JsonProperty("path")]
+        public string Path { get; set; }
 
-        public bool includeSubFolders { get; set; } = false;
+        [JsonProperty("recursive")]
+        public bool Recursive { get; set; } = false;
     }
 }
