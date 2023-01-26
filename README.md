@@ -120,21 +120,20 @@ This allows you to specify a list of paths for the addon to sync to OneDrive so 
 > * /media
 > * /addons
 
-### Remove deleted files during File Sync
-
 **Example**: 
 
 ```
  - path: /media/music/*.mp3
  - path: /ssl
+   recursive: true
 ```
+
 > Wildcards (*, ?) are supported.
 
 > Currently Sync is only preformed one way (Local -> OneDrive). 
 
-> Paths are not recursive currently
-
-> No file deletion occurs if you delete any of files locally
+### Remove deleted files during File Sync
+When enabled, the FileSync folder on OneDrive will mirror your included [Sync Paths](#file-sync-paths-optional) meaning any 'extra' content that remains in OneDrive will be removed.
 ## Backup Location in OneDrive
 The add-on has specific permissions to a single folder in your OneDrive known as the **App Folder**. (More details can be found in the [Security and Privacy](#security-and-privacy) section.)
 

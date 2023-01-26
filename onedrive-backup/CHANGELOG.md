@@ -1,8 +1,13 @@
-## v1.41 []
+## v1.41 [January 26th 2023]
 ### Added
- * 
+ * [**Monitor *all* backups**](https://github.com/lavinir/hassio-onedrive-backup#monitor-all-local-backups) - You can now optionally choose to have the addon monitor **any** created local backup, treating it as any other and backing them up to OneDrive.
+ * [**FileSync 1**] - Added option to set paths as [recursive](https://github.com/lavinir/hassio-onedrive-backup#sync_paths-optional) enabling syncing all contained subfolders
+ * [**FileSync 2**] - Optional [deletions in OneDrive](https://github.com/lavinir/hassio-onedrive-backup#remove-deleted-files-during-file-sync) for Synced Files that no longer exist / no longer monitored.
 
 ### Fixed
+* [**Allowed Hours**] - Fixed an issue where backup uploads / deletions would still occur outside of allowed hours
+* [**Redundant Uploads**] - Fixed an issue that occured when the configured local backup maximum exceeded the configured OneDrive backup maximum where remaining local uploads would be uploaded and immediately deleted from OneDrive
+* [**Backup Sensor**] - DateTime attributes now in standard international format
 ## v1.4 [January 15th 2023]
 ### Added
 * [**First release of File Syncs!** 🎉](https://github.com/lavinir/hassio-onedrive-backup#sync_paths-optional) This allows file syncing to OneDrive outside of Backups. 
