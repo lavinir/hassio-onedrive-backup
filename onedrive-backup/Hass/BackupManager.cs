@@ -14,6 +14,7 @@ namespace hassio_onedrive_backup.Hass
         private IHassioClient _hassIoClient;
         private readonly HassOnedriveEntityState _hassEntityState;
         private BitArray _allowedHours;
+        private bool _isExecuting = false;
 
         public BackupManager(AddonOptions addonOptions, IGraphHelper graphHelper, IHassioClient hassIoClient, BitArray allowedHours)
         {
@@ -26,6 +27,12 @@ namespace hassio_onedrive_backup.Hass
 
         public async Task PerformBackupsAsync()
         {
+            if (_isExecuting)
+            {
+                ConsoleLogger.LogWarning("Previous backup iteration still executing. Skipping...");
+                return;
+            }
+            
             const int InstanceNameMaxLength = 20;
             await UpdateHassEntity();
             var now = DateTimeHelper.Instance!.Now;

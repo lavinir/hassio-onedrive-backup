@@ -2,7 +2,7 @@
 
 namespace hassio_onedrive_backup.Graph
 {
-    internal interface IGraphHelper
+    public interface IGraphHelper
     {
         Task<string> GetAndCacheUserTokenAsync();
 

@@ -1,6 +1,6 @@
 ﻿namespace hassio_onedrive_backup
 {
-    internal class DateTimeHelper
+    public class DateTimeHelper
     {
         public const string DateTimeFormat = "yyyy-MM-dd HH:mm:ss";
         private readonly TimeZoneInfo? _timeZoneInfo = null;

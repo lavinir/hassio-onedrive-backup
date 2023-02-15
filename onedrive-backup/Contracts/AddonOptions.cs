@@ -57,6 +57,9 @@ namespace hassio_onedrive_backup.Contracts
         [JsonProperty("file_sync_remove_deleted")]
         public bool FileSyncRemoveDeleted { get; set; } = false;
 
+        [JsonProperty("excluded_addons")]
+        public List<Addon> ExcludedAddons { get; set; }
+
 
         [JsonIgnore]
         public float BackupIntervalHours => BackupIntervalDays * 24;
@@ -107,5 +110,11 @@ namespace hassio_onedrive_backup.Contracts
 
         [JsonProperty("recursive")]
         public bool Recursive { get; set; } = false;
+    }
+
+    public class Addon
+    {
+        [JsonProperty("name")]
+        public string Name { get; set; }
     }
 }

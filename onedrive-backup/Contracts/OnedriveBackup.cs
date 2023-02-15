@@ -1,6 +1,6 @@
 ﻿namespace hassio_onedrive_backup.Contracts
 {
-    internal class OnedriveBackup
+    public class OnedriveBackup
     {
         public OnedriveBackup(string fileName, OnedriveItemDescription itemDescription)
         {

@@ -11,7 +11,7 @@ using File = System.IO.File;
 
 namespace hassio_onedrive_backup.Graph
 {
-    internal class GraphHelper : IGraphHelper
+    public class GraphHelper : IGraphHelper
     {
         private const string AuthRecordFile = "record.auth";
         private const int UploadRetryCount = 3;
@@ -19,7 +19,7 @@ namespace hassio_onedrive_backup.Graph
         private const int GraphRequestTimeoutMinutes = 2;
         private const int ChunkSize = (320 * 1024) * 10;
         private DeviceCodeCredential? _deviceCodeCredential;
-        private GraphServiceClient? _userClient;
+        protected GraphServiceClient? _userClient;
         private IEnumerable<string> _scopes;
         private string _clientId;
         private Func<DeviceCodeInfo, CancellationToken, Task> _deviceCodePrompt;
@@ -287,7 +287,7 @@ namespace hassio_onedrive_backup.Graph
             return record;
         }
 
-        private async Task InitializeGraphForUserAuthAsync()
+        protected virtual async Task InitializeGraphForUserAuthAsync()
         {
             AuthenticationRecord? authRecord = await ReadPersistedAuthenticationRecordAsync();
             var deviceCodeCredOptions = new DeviceCodeCredentialOptions

@@ -3,7 +3,7 @@ using static hassio_onedrive_backup.Contracts.HassBackupsResponse;
 
 namespace hassio_onedrive_backup.Hass
 {
-    internal interface IHassioClient
+    public interface IHassioClient
     {
         Task<List<Backup>> GetBackupsAsync(Predicate<Backup> filter);
 
