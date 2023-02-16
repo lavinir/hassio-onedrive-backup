@@ -1,10 +1,10 @@
 #See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
 
-FROM mcr.microsoft.com/dotnet/aspnet:7.0 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:$RUNTIME_IMAGE_ARCH_TAG AS base
 WORKDIR /app
 EXPOSE 8099
 
-FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:$SDK_IMAGE_ARCH_TAG AS build
 WORKDIR /src
 COPY ["onedrive-backup.csproj", "."]
 RUN dotnet restore "./onedrive-backup.csproj"
@@ -19,6 +19,13 @@ FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "onedrive-backup.dll"]
+
+ARG VERSION
+LABEL \
+  io.hass.version="$VERSION" \
+  io.hass.type="addon" \
+  io.hass.arch="armhf|aarch64|amd64|armv7"
+
 
 #ARG SDK_IMAGE_ARCH_TAG
 #ARG RUNTIME_IMAGE_ARCH_TAG
