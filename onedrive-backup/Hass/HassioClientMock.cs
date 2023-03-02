@@ -1,5 +1,6 @@
 ﻿using hassio_onedrive_backup.Hass.Events;
 using Newtonsoft.Json;
+using onedrive_backup.Contracts;
 using System.Diagnostics;
 using System.Net.Http;
 using static hassio_onedrive_backup.Contracts.HassBackupsResponse;
@@ -49,6 +50,18 @@ namespace hassio_onedrive_backup.Hass
             new Random().NextBytes(data);
             File.WriteAllBytes(backupFile, data); 
             return Task.FromResult(backupFile);
+        }
+
+        public Task<HassAddonInfoResponse> GetAddonInfo(string slug)
+        {
+            return Task.FromResult(new HassAddonInfoResponse
+            {
+                DataProperty = new HassAddonInfoResponse.Data
+                {
+                    IngressEntry = "/",
+                    IngressUrl = "/"
+                }
+            });
         }
 
         public Task<List<string>> GetAddonsAsync()

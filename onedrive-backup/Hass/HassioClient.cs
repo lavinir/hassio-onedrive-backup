@@ -2,6 +2,7 @@
 using hassio_onedrive_backup.Hass.Events;
 using hassio_onedrive_backup.Storage;
 using Newtonsoft.Json;
+using onedrive_backup.Contracts;
 using System.Globalization;
 using System.Net.Http.Headers;
 using System.Text;
@@ -211,6 +212,13 @@ namespace hassio_onedrive_backup.Hass
             string response = await _httpClient.GetStringAsync(uri);
             T ret = JsonConvert.DeserializeObject<T>(response)!;
             return ret;
+        }
+
+        public async Task<HassAddonInfoResponse> GetAddonInfo(string slug)
+        {
+            Uri uri = new Uri(Supervisor_Base_Uri_Str + $"/addons/{slug}/info");
+            var response = await GetJsonResponseAsync<HassAddonInfoResponse>(uri);
+            return response;
         }
     }
 }

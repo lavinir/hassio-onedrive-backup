@@ -48,22 +48,29 @@ namespace hassio_onedrive_backup.Sync
                     var paths = _addonOptions.SyncPaths;
                     foreach (var syncPath in paths)
                     {
-                        string path = syncPath.Path;
-                        if (System.IO.Directory.Exists(path))
+                        try
                         {
-                            await SyncDirectory(path, recursive: syncPath.Recursive);
+                            string path = syncPath.Path;
+                            if (System.IO.Directory.Exists(path))
+                            {
+                                await SyncDirectory(path, recursive: syncPath.Recursive);
+                            }
+                            else if (System.IO.File.Exists(path))
+                            {
+                                await SyncFile(path);
+                            }
+                            else if (System.IO.Directory.Exists(Path.GetDirectoryName(path)))
+                            {
+                                await SyncDirectory(Path.GetDirectoryName(path), filter: Path.GetFileName(path), recursive: syncPath.Recursive);
+                            }
+                            else
+                            {
+                                ConsoleLogger.LogError($"Error: Path {path} was not found");
+                            }
                         }
-                        else if (System.IO.File.Exists(path))
+                        catch (Exception ex)
                         {
-                            await SyncFile(path);
-                        }
-                        else if (System.IO.Directory.Exists(Path.GetDirectoryName(path)))
-                        {
-                            await SyncDirectory(Path.GetDirectoryName(path), filter: Path.GetFileName(path), recursive: syncPath.Recursive);
-                        }
-                        else
-                        {
-                            ConsoleLogger.LogError($"Error: Path {path} was not found");
+                            ConsoleLogger.LogError($"Error syncing path {syncPath}: {ex}");                            
                         }
                     }
 
@@ -157,7 +164,7 @@ namespace hassio_onedrive_backup.Sync
             
             if (item.Folder != null)
             {
-                if (localPath.Equals("/") == false && _addonOptions.SyncPaths.Any(syncPath => (((localPath.StartsWith(syncPath.Path) && syncPath.Recursive) || localPath.Equals(syncPath.Path)) == false)))
+                if (localPath.Equals("/") == false && _addonOptions.SyncPaths.Any(syncPath => (((syncPath.Path.StartsWith(localPath)) || (localPath.StartsWith(syncPath.Path) && syncPath.Recursive)) == false)))
                 {
                     ConsoleLogger.LogInfo($"{localPath} is not included in Sync Paths. Deleting from OneDrive");
                     await _graphHelper.DeleteItemFromAppFolderAsync(remotePath);

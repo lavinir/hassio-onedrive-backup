@@ -2,6 +2,8 @@
 using hassio_onedrive_backup.Hass;
 using hassio_onedrive_backup.Storage;
 using Microsoft.AspNetCore.StaticFiles;
+using Newtonsoft.Json;
+using System.Text;
 using static System.Formats.Asn1.AsnWriter;
 
 namespace hassio_onedrive_backup
@@ -13,15 +15,21 @@ namespace hassio_onedrive_backup
         private static readonly List<string> scopes = new() { "Files.ReadWrite.AppFolder" };
 
         private Orchestrator _orchestrator;
-        
-        public void ConfigureServices(IServiceCollection services)
+        private string _pathBase = "";
+        private string _indexContent;
+
+        public async void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
+            _indexContent = File.ReadAllText("ClientApp/public/index.html");
 
 #if DEBUG
             IHassioClient hassIoClient = new HassioClientMock();
             var addonOptions = AddonOptionsReader.ReadOptions();
-#else
+            // Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
+#else            
+            ConsoleLogger.LogInfo(AppDomain.CurrentDomain.BaseDirectory);
+            Directory.EnumerateFiles(AppDomain.CurrentDomain.BaseDirectory, "*", SearchOption.TopDirectoryOnly).ToList().ForEach(ConsoleLogger.LogInfo);
             Directory.SetCurrentDirectory(addonDirectory);
             var addonOptions = AddonOptionsReader.ReadOptions();
             string supervisorToken = Environment.GetEnvironmentVariable("SUPERVISOR_TOKEN")!;
@@ -34,6 +42,11 @@ namespace hassio_onedrive_backup
                 return Task.FromResult(0);
             });
 
+            var addonInfo = await hassIoClient.GetAddonInfo("local_hassio_onedrive_backup");
+            _pathBase = addonInfo.DataProperty.IngressUrl;
+            ConsoleLogger.LogInfo($"Ingress Info. Entry: {addonInfo.DataProperty.IngressEntry}. URL: {addonInfo.DataProperty.IngressUrl}");
+            _indexContent = _indexContent.Replace("**baseurl**", addonInfo.DataProperty.IngressUrl);
+            // File.WriteAllText("index.html", indexContent);
             _orchestrator = new Orchestrator(hassIoClient, graphHelper, addonOptions);
             _orchestrator.Start();
 
@@ -46,18 +59,37 @@ namespace hassio_onedrive_backup
                 app.UseDeveloperExceptionPage();
             }
 
+            app.UsePathBase(_pathBase);
+
+            var staticFileOptions = new StaticFileOptions
+            {
+                OnPrepareResponse = context =>
+                {
+                    // Only for Index.HTML file
+                    if (context.File.Name == "index.html")
+                    {
+                        var response = context.Context.Response;
+                        var str = _indexContent;
+                        // modified stream
+                        var responseData = Encoding.UTF8.GetBytes(str);
+                        var stream = new MemoryStream(responseData);
+                        // set the response body
+                        response.Body = stream;
+                    }
+                }
+            };
             app.UseStaticFiles();
-            app.UseRouting();
             
+            app.UseRouting();
 
             // app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+                // endpoints.MapFallback()
+                endpoints.MapFallbackToFile("index.html");
             });
-
-            //ieb!.MapFallbackToFile("index.html");
-        }
+       }
     }
 }
