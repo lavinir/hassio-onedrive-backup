@@ -58,8 +58,8 @@ namespace hassio_onedrive_backup.Hass
             {
                 DataProperty = new HassAddonInfoResponse.Data
                 {
-                    IngressEntry = "/",
-                    IngressUrl = "/"
+                    IngressEntry = "/duda/",
+                    IngressUrl = "/duda/"
                 }
             });
         }

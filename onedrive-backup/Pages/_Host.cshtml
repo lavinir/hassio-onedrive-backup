@@ -1,15 +1,18 @@
 ﻿@page "/"
 @using Microsoft.AspNetCore.Components.Web
 @using onedrive_backup;
+@using onedrive_backup.Hass;
 @namespace BlazorApp1.Pages
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@inject IngressSettings IngressSettings
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <base href="~/" />
+    <base href="@IngressSettings.IngressUrl" />
+    @*<base href="~/" />*@
     <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
     <link href="css/site.css" rel="stylesheet" />
     <link href="onedrive-backup.styles.css" rel="stylesheet" />

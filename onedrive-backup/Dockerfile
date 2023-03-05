@@ -10,7 +10,6 @@ FROM mcr.microsoft.com/dotnet/sdk:$SDK_IMAGE_ARCH_TAG AS build
 ARG BUILD_ARCH
 WORKDIR /src
 COPY ["onedrive-backup.csproj", "."]
-RUN apk add --no-cache nodejs npm
 RUN dotnet restore "./onedrive-backup.csproj" -r $BUILD_ARCH
 COPY . .
 WORKDIR "/src/."

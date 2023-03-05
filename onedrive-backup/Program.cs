@@ -4,6 +4,8 @@ using hassio_onedrive_backup.Graph;
 using hassio_onedrive_backup.Hass;
 using hassio_onedrive_backup.Storage;
 using hassio_onedrive_backup.Sync;
+using Microsoft.Extensions.FileProviders;
+using onedrive_backup.Hass;
 using System.Collections;
 
 namespace hassio_onedrive_backup
@@ -15,18 +17,21 @@ namespace hassio_onedrive_backup
         private static readonly List<string> scopes = new() { "Files.ReadWrite.AppFolder" };
 
         private static Orchestrator _orchestrator;
-        private string _pathBase = "";
-        private string _indexContent;
+        private static string _pathBase = "";
+        private static string _baseDirectory;
 
         static void Main(string[] args)
         {
 #if DEBUG
             IHassioClient hassIoClient = new HassioClientMock();
             var addonOptions = AddonOptionsReader.ReadOptions();
+            // Directory.SetCurrentDirectory(@"c:\data");
             // Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
-#else            
-            ConsoleLogger.LogInfo(AppDomain.CurrentDomain.BaseDirectory);
-            Directory.EnumerateFiles(AppDomain.CurrentDomain.BaseDirectory, "*", SearchOption.TopDirectoryOnly).ToList().ForEach(ConsoleLogger.LogInfo);
+#else           
+
+            _baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            ConsoleLogger.LogInfo(_baseDirectory);
+            Directory.EnumerateDirectories(AppDomain.CurrentDomain.BaseDirectory, "*", SearchOption.TopDirectoryOnly).ToList().ForEach(ConsoleLogger.LogInfo);
             Directory.SetCurrentDirectory(addonDirectory);
             var addonOptions = AddonOptionsReader.ReadOptions();
             string supervisorToken = Environment.GetEnvironmentVariable("SUPERVISOR_TOKEN")!;
@@ -39,9 +44,9 @@ namespace hassio_onedrive_backup
                 return Task.FromResult(0);
             });
 
-            //var addonInfo = await hassIoClient.GetAddonInfo("local_hassio_onedrive_backup");
-            //_pathBase = addonInfo.DataProperty.IngressUrl;
-            //ConsoleLogger.LogInfo($"Ingress Info. Entry: {addonInfo.DataProperty.IngressEntry}. URL: {addonInfo.DataProperty.IngressUrl}");
+            var addonInfo = hassIoClient.GetAddonInfo("local_hassio_onedrive_backup").Result;
+            _pathBase = addonInfo.DataProperty.IngressUrl;
+            ConsoleLogger.LogInfo($"Ingress Info. Entry: {addonInfo.DataProperty.IngressEntry}. URL: {addonInfo.DataProperty.IngressUrl}");
             //_indexContent = _indexContent.Replace("**baseurl**", addonInfo.DataProperty.IngressUrl);
             // File.WriteAllText("index.html", indexContent);
             _orchestrator = new Orchestrator(hassIoClient, graphHelper, addonOptions);
@@ -54,13 +59,30 @@ namespace hassio_onedrive_backup
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            builder.Logging.AddConsole();
+
             // Add services to the container.
             builder.Services.AddRazorPages();
             builder.Services.AddServerSideBlazor();
             builder.Services.AddSingleton<WeatherForecastService>();
-            builder.WebHost.UseStaticWebAssets();
+            builder.Services.AddSingleton(new IngressSettings { IngressUrl = _pathBase });
+            // builder.WebHost.UseStaticWebAssets();
+            builder.WebHost.UseUrls("http://*:8099");
 
             var app = builder.Build();
+
+            app.UseWhen(ctx => !ctx.Request.Path
+            .StartsWithSegments("/_framework/blazor.server.js"),
+                subApp => subApp.UseStaticFiles(new StaticFileOptions
+                {
+                    FileProvider = new PhysicalFileProvider($"{_baseDirectory}/wwwroot"),
+                    OnPrepareResponse = (context) =>
+                    {
+                        ConsoleLogger.LogInfo($"Got static request for {context.File.Name}. ({context.Context.Response.StatusCode}). Exists: {context.File.Exists}. Physical Path: {context.File.PhysicalPath}");
+                    }
+                }));
+
+            app.UsePathBase($"{_pathBase}");
 
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())
@@ -69,12 +91,14 @@ namespace hassio_onedrive_backup
             }
 
             app.UseStaticFiles();
-            
+            //app.UseStaticFiles(_pathBase.Substring(0, _pathBase.Length -1));
+            //app.UseStaticFiles();
+
+
             app.UseRouting();
 
             app.MapBlazorHub();
             app.MapFallbackToPage("/_Host");
-
             app.Run();
         }
     }
