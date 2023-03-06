@@ -22,16 +22,13 @@ namespace hassio_onedrive_backup
 
         static void Main(string[] args)
         {
+            _baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+
 #if DEBUG
             IHassioClient hassIoClient = new HassioClientMock();
             var addonOptions = AddonOptionsReader.ReadOptions();
-            // Directory.SetCurrentDirectory(@"c:\data");
-            // Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
 #else           
 
-            _baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
-            ConsoleLogger.LogInfo(_baseDirectory);
-            Directory.EnumerateDirectories(AppDomain.CurrentDomain.BaseDirectory, "*", SearchOption.TopDirectoryOnly).ToList().ForEach(ConsoleLogger.LogInfo);
             Directory.SetCurrentDirectory(addonDirectory);
             var addonOptions = AddonOptionsReader.ReadOptions();
             string supervisorToken = Environment.GetEnvironmentVariable("SUPERVISOR_TOKEN")!;
@@ -46,9 +43,7 @@ namespace hassio_onedrive_backup
 
             var addonInfo = hassIoClient.GetAddonInfo("local_hassio_onedrive_backup").Result;
             _pathBase = addonInfo.DataProperty.IngressUrl;
-            ConsoleLogger.LogInfo($"Ingress Info. Entry: {addonInfo.DataProperty.IngressEntry}. URL: {addonInfo.DataProperty.IngressUrl}");
-            //_indexContent = _indexContent.Replace("**baseurl**", addonInfo.DataProperty.IngressUrl);
-            // File.WriteAllText("index.html", indexContent);
+            // ConsoleLogger.LogInfo($"Ingress Info. Entry: {addonInfo.DataProperty.IngressEntry}. URL: {addonInfo.DataProperty.IngressUrl}");
             _orchestrator = new Orchestrator(hassIoClient, graphHelper, addonOptions);
             _orchestrator.Start();
 
@@ -71,16 +66,16 @@ namespace hassio_onedrive_backup
 
             var app = builder.Build();
 
-            app.UseWhen(ctx => !ctx.Request.Path
-            .StartsWithSegments("/_framework/blazor.server.js"),
-                subApp => subApp.UseStaticFiles(new StaticFileOptions
-                {
-                    FileProvider = new PhysicalFileProvider($"{_baseDirectory}/wwwroot"),
-                    OnPrepareResponse = (context) =>
+            if (!app.Environment.IsDevelopment())
+            {
+                app.UseWhen(ctx => !ctx.Request.Path
+                .StartsWithSegments("/_framework/blazor.server.js"),
+                    subApp => subApp.UseStaticFiles(new StaticFileOptions
                     {
-                        ConsoleLogger.LogInfo($"Got static request for {context.File.Name}. ({context.Context.Response.StatusCode}). Exists: {context.File.Exists}. Physical Path: {context.File.PhysicalPath}");
-                    }
-                }));
+                        FileProvider = new PhysicalFileProvider($"{_baseDirectory}/wwwroot")
+                    }));
+            }
+
 
             app.UsePathBase($"{_pathBase}");
 
@@ -91,10 +86,6 @@ namespace hassio_onedrive_backup
             }
 
             app.UseStaticFiles();
-            //app.UseStaticFiles(_pathBase.Substring(0, _pathBase.Length -1));
-            //app.UseStaticFiles();
-
-
             app.UseRouting();
 
             app.MapBlazorHub();
