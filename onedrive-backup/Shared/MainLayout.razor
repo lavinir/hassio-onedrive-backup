@@ -8,18 +8,13 @@
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="nav-item">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="oi oi-home" aria-hidden="true"></span> Home
+            <NavLink class="nav-link" href="main" Match="NavLinkMatch.All">
+                <span class="oi oi-home" aria-hidden="true"></span> Overview
             </NavLink>
         </div>
         <div class="nav-item">
-            <NavLink class="nav-link" href="counter" Match="NavLinkMatch.All">
-                <span class="oi oi-plus" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
-        <div class="nav-item">
-            <NavLink class="nav-link" href="fetchdata" Match="NavLinkMatch.All">
-                <span class="oi oi-list-rich" aria-hidden="true"></span> Fetch data
+            <NavLink class="nav-link" href="about" Match="NavLinkMatch.All">
+                <span class="oi oi-question-mark" aria-hidden="true"></span> About
             </NavLink>
         </div>
     </nav>
@@ -37,13 +32,13 @@
     //[Inject]
     //NavigationManager NavigationManager { get; set; }
 
-    protected override void OnInitialized() => NavigationManager.LocationChanged+= (s, e) => StateHasChanged();
+    //protected override void OnInitialized() => NavigationManager.LocationChanged+= (s, e) => StateHasChanged();
 
-    bool IsActive(string href, NavLinkMatch navLinkMatch = NavLinkMatch.Prefix)
-    {
-        var relativePath = NavigationManager.ToBaseRelativePath(NavigationManager.Uri).ToLower();
-        return navLinkMatch == NavLinkMatch.All ? relativePath == href.ToLower() : relativePath.StartsWith(href.ToLower());
-    }
+    //bool IsActive(string href, NavLinkMatch navLinkMatch = NavLinkMatch.Prefix)
+    //{
+    //    var relativePath = NavigationManager.ToBaseRelativePath(NavigationManager.Uri).ToLower();
+    //    return navLinkMatch == NavLinkMatch.All ? relativePath == href.ToLower() : relativePath.StartsWith(href.ToLower());
+    //}
 
-    string GetActive(string href, NavLinkMatch navLinkMatch = NavLinkMatch.Prefix) => IsActive(href, navLinkMatch) ? "active" : "";
+    //string GetActive(string href, NavLinkMatch navLinkMatch = NavLinkMatch.Prefix) => IsActive(href, navLinkMatch) ? "active" : "";
 }

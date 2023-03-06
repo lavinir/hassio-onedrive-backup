@@ -1,19 +1,13 @@
-/* Set the height of the navbar to 60px /
-nav.navbar {
-height: 60px;
-background-color: #f1f1f1; / add a light gray background color */
-}
-
 
 /* Set the height of the footer and give it a dark background */
 footer {
-height: 80px;
-background-color: #333;
-color: #fff;
-display: flex;
-justify-content: flex-end;
-align-items: center;
-padding-right: 20px; / Adds a comfortable margin to the right */
+    height: 80px;
+    background-color: #333;
+    color: #fff;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding-right: 20px;
 }
 
 /* Style the copyright text in the footer */
@@ -25,6 +19,7 @@ footer p {
 /* Set the min-height of the content area to fill the viewport */
 .container {
     min-height: calc(100vh - 140px);
+    margin: 0;
 }
 
 /*::deep .nav-link {
@@ -44,11 +39,11 @@ footer p {
 
 /* Add blue theme to the navbar */
 ::deep nav.navbar {
-    background-color: #1E90FF;
+    background-color: #fff
 }
 
 ::deep nav.navbar .nav-link {
-    color: #fff;
+    color: #000;
 }
 
 ::deep nav.navbar .nav-link:hover {
@@ -56,6 +51,6 @@ footer p {
 }
 
 ::deep .nav-item .nav-link.active {
-    color: #f1f1f1;
-    background-color: #0066CC;
+    color: #000;
+    background-color: azure
 }
