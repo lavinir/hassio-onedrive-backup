@@ -1,6 +1,7 @@
 ﻿using hassio_onedrive_backup.Contracts;
 using hassio_onedrive_backup.Graph;
 using hassio_onedrive_backup.Hass;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Graph;
 using System.Collections;
 using System.Diagnostics;
@@ -19,13 +20,13 @@ namespace hassio_onedrive_backup.Sync
         private BitArray _allowedHours;
         private HassOnedriveFileSyncEntityState _hassEntityState;
 
-        public SyncManager(AddonOptions addonOptions, IGraphHelper graphHelper, IHassioClient hassIoClient, BitArray allowedHours)
+        public SyncManager(IServiceProvider serviceProvider, BitArray allowedHours)
         {
-            _addonOptions = addonOptions;
-            _graphHelper = graphHelper;
-            _hassIoClient = hassIoClient;
+            _addonOptions = serviceProvider.GetService<AddonOptions>();
+            _graphHelper = serviceProvider.GetService<IGraphHelper>();
+            _hassIoClient = serviceProvider.GetService<IHassioClient>();
+            _hassEntityState = serviceProvider.GetService<HassOnedriveFileSyncEntityState>();
             _allowedHours = allowedHours;
-            _hassEntityState = HassOnedriveFileSyncEntityState.Initialize(hassIoClient);
         }
 
         public async void SyncLoop(CancellationToken ct)
@@ -42,8 +43,8 @@ namespace hassio_onedrive_backup.Sync
                         continue;
                     }
 
-                    HassOnedriveFileSyncEntityState.Instance.State = HassOnedriveFileSyncEntityState.FileState.Syncing;
-                    await HassOnedriveFileSyncEntityState.Instance.UpdateBackupEntityInHass();
+                    _hassEntityState.State = HassOnedriveFileSyncEntityState.FileState.Syncing;
+                    await _hassEntityState.UpdateBackupEntityInHass();
 
                     var paths = _addonOptions.SyncPaths;
                     foreach (var syncPath in paths)
@@ -85,8 +86,8 @@ namespace hassio_onedrive_backup.Sync
                 }
                 finally
                 {
-                    HassOnedriveFileSyncEntityState.Instance.State = HassOnedriveFileSyncEntityState.FileState.Synced;
-                    await HassOnedriveFileSyncEntityState.Instance.UpdateBackupEntityInHass();
+                    _hassEntityState.State = HassOnedriveFileSyncEntityState.FileState.Synced;
+                    await _hassEntityState.UpdateBackupEntityInHass();
                     await Task.Delay(TimeSpan.FromMinutes(5));
                 }
             }
@@ -119,8 +120,8 @@ namespace hassio_onedrive_backup.Sync
                 remotePath,
                 async (prog) =>
                 {
-                    HassOnedriveFileSyncEntityState.Instance.UploadPercentage = prog;
-                    await HassOnedriveFileSyncEntityState.Instance.UpdateBackupEntityInHass();
+                    _hassEntityState.UploadPercentage = prog;
+                    await _hassEntityState.UpdateBackupEntityInHass();
                     Debug.WriteLine($"Progress: {prog}");
 
                 },

@@ -1,4 +1,5 @@
 ﻿using Microsoft.Graph;
+using onedrive_backup.Contracts;
 
 namespace hassio_onedrive_backup.Graph
 {
@@ -16,7 +17,7 @@ namespace hassio_onedrive_backup.Graph
 
         Task<string?> DownloadFileAsync(string fileName, Action<int?>? progressCallback);
 
-        Task<double?> GetFreeSpaceInGB();
+        Task<OneDriveFreeSpaceData> GetFreeSpaceInGB();
 
         Task<DriveItem> GetOrCreateFolder(string path);
     }

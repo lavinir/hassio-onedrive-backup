@@ -1,9 +1,10 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using System.ComponentModel;
 
 namespace hassio_onedrive_backup.Hass
 {
-    internal class HassOnedriveEntityState
+    internal class HassOnedriveEntityState : INotifyPropertyChanged
     {
         private const string OneDrive_Backup_Entity_ID = "sensor.onedrivebackup";
         private IHassioClient? _hassioClient;
@@ -14,23 +15,26 @@ namespace hassio_onedrive_backup.Hass
             new StringEnumConverter()
         };
 
-        private HassOnedriveEntityState()
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        public HassOnedriveEntityState(IHassioClient hassioClient)
         {
+            _hassioClient = hassioClient;
             State = BackupState.Unknown;
         }
 
-        public static HassOnedriveEntityState Instance
-        {
-            get
-            {
-                _instance = _instance ?? new HassOnedriveEntityState();
-                return _instance;
-            }
-        }
+        //public static HassOnedriveEntityState Instance
+        //{
+        //    get
+        //    {
+        //        _instance = _instance ?? new HassOnedriveEntityState();
+        //        return _instance;
+        //    }
+        //}
 
         public static HassOnedriveEntityState Initialize(IHassioClient hassioClient)
         {
-            Instance._hassioClient = hassioClient;
+            //Instance._hassioClient = hassioClient;
             return _instance!;
         }
 
@@ -82,6 +86,7 @@ namespace hassio_onedrive_backup.Hass
                 Converters = entityStateConverters
             });
 
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(null));
             await _hassioClient.UpdateHassEntityStateAsync(OneDrive_Backup_Entity_ID, payloadStr);
         }
 

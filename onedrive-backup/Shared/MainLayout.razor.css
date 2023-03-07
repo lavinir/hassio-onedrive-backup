@@ -19,7 +19,6 @@ footer p {
 /* Set the min-height of the content area to fill the viewport */
 .container {
     min-height: calc(100vh - 140px);
-    margin: 0;
 }
 
 /*::deep .nav-link {

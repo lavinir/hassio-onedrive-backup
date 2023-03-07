@@ -4,6 +4,7 @@ using hassio_onedrive_backup.Contracts;
 using hassio_onedrive_backup.Storage;
 using Microsoft.Graph;
 using Newtonsoft.Json;
+using onedrive_backup.Contracts;
 using System.Reflection;
 using System.Text;
 using System.Text.Unicode;
@@ -187,13 +188,18 @@ namespace hassio_onedrive_backup.Graph
             return true;
         }
 
-        public async Task<double?> GetFreeSpaceInGB()
+        public async Task<OneDriveFreeSpaceData> GetFreeSpaceInGB()
         {
             try
             {
                 var drive = await _userClient.Drive.Request().GetAsync();
-                double? ret = drive.Quota.Remaining == null ? null : drive.Quota.Remaining.Value / (double)Math.Pow(1024, 3);
-                return (double?)ret;
+                double? totalSpace = drive.Quota.Total == null ? null : drive.Quota.Total.Value / (double)Math.Pow(1024, 3);
+                double? freeSpace = drive.Quota.Remaining == null ? null : drive.Quota.Remaining.Value / (double)Math.Pow(1024, 3);
+                return new OneDriveFreeSpaceData
+                {
+                    FreeSpace = freeSpace,
+                    TotalSpace = totalSpace
+                };
 
             }
             catch (Exception ex)

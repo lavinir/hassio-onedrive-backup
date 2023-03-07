@@ -230,3 +230,5 @@ _Pvt_Extensions
 
 # FAKE - F# Make
 .fake/
+
+record.auth

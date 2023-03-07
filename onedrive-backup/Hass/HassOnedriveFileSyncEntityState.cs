@@ -15,23 +15,24 @@ namespace hassio_onedrive_backup.Hass
             new StringEnumConverter()
         };
 
-        private HassOnedriveFileSyncEntityState()
+        public HassOnedriveFileSyncEntityState(IHassioClient hassioClient)
         {
+            _hassioClient = hassioClient;
             State = FileState.Unknown;
         }
 
-        public static HassOnedriveFileSyncEntityState Instance
-        {
-            get
-            {
-                _instance = _instance ?? new HassOnedriveFileSyncEntityState();
-                return _instance;
-            }
-        }
+        //public static HassOnedriveFileSyncEntityState Instance
+        //{
+        //    get
+        //    {
+        //        _instance = _instance ?? new HassOnedriveFileSyncEntityState();
+        //        return _instance;
+        //    }
+        //}
 
         public static HassOnedriveFileSyncEntityState Initialize(IHassioClient hassioClient)
         {
-            Instance._hassioClient = hassioClient;
+            //Instance._hassioClient = hassioClient;
             return _instance!;
         }
 

@@ -3,6 +3,7 @@ using hassio_onedrive_backup.Graph;
 using hassio_onedrive_backup.Hass;
 using hassio_onedrive_backup.Storage;
 using hassio_onedrive_backup.Sync;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -15,18 +16,22 @@ namespace hassio_onedrive_backup
     public class Orchestrator
     {
         private readonly IHassioClient _hassIoClient;
+        private readonly HassOnedriveFreeSpaceEntityState? _hassOnedriveFreeSpaceEntityState;
         private readonly IGraphHelper _graphHelper;
+        private readonly IServiceProvider _serviceProvider;
         private readonly AddonOptions _addonOptions;
 
         private bool _enabled = false;
 
-        public Orchestrator(IHassioClient hassIoClient, IGraphHelper graphHelper, AddonOptions addonOptions)
+        public Orchestrator(IServiceProvider serviceProvider)
         {
-            _hassIoClient = hassIoClient;
-            _graphHelper = graphHelper;
-            _addonOptions = addonOptions;
+            _serviceProvider = serviceProvider;
+            _addonOptions = serviceProvider.GetService<AddonOptions>();
+            _graphHelper = serviceProvider.GetService<IGraphHelper>();
+            _hassIoClient = serviceProvider.GetService<IHassioClient>();
+            _hassOnedriveFreeSpaceEntityState = serviceProvider.GetService<HassOnedriveFreeSpaceEntityState>();
         }
-        
+
         public async Task Start()
         {
             _enabled = true;
@@ -35,7 +40,7 @@ namespace hassio_onedrive_backup
             TimeSpan intervalDelay = TimeSpan.FromMinutes(5);
 
             BitArray allowedBackupHours = TimeRangeHelper.GetAllowedHours(_addonOptions.BackupAllowedHours);
-            var backupManager = new BackupManager(_addonOptions, _graphHelper, _hassIoClient, allowedBackupHours);
+            var backupManager = new BackupManager(_serviceProvider, allowedBackupHours);
 
             if (_addonOptions.RecoveryMode)
             {
@@ -52,7 +57,7 @@ namespace hassio_onedrive_backup
                 // Initialize File Sync Manager
                 if (_addonOptions.FileSyncEnabled)
                 {
-                    var syncManager = new SyncManager(_addonOptions, _graphHelper, _hassIoClient, allowedBackupHours);
+                    var syncManager = new SyncManager(_serviceProvider, allowedBackupHours);
                     var tokenSource = new CancellationTokenSource();
                     await _graphHelper.GetAndCacheUserTokenAsync();
                     var fileSyncTask = Task.Run(() => syncManager.SyncLoop(tokenSource.Token), tokenSource.Token);
@@ -67,8 +72,8 @@ namespace hassio_onedrive_backup
                     await _graphHelper.GetAndCacheUserTokenAsync();
 
                     // Update OneDrive Freespace Sensor
-                    double? freeSpaceGB = await _graphHelper.GetFreeSpaceInGB();
-                    await HassOnedriveFreeSpaceEntityState.UpdateOneDriveFreespaceSensorInHass(freeSpaceGB, _hassIoClient);
+                    var oneDriveSpace = await _graphHelper.GetFreeSpaceInGB();
+                    await _hassOnedriveFreeSpaceEntityState.UpdateOneDriveFreespaceSensorInHass(oneDriveSpace);
                     ConsoleLogger.LogInfo("Checking backups");
 
                     if (_addonOptions.RecoveryMode)

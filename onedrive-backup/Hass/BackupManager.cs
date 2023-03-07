@@ -16,12 +16,12 @@ namespace hassio_onedrive_backup.Hass
         private BitArray _allowedHours;
         private bool _isExecuting = false;
 
-        public BackupManager(AddonOptions addonOptions, IGraphHelper graphHelper, IHassioClient hassIoClient, BitArray allowedHours)
+        public BackupManager(IServiceProvider serviceProvider, BitArray allowedHours)
         {
-            _addonOptions = addonOptions;
-            _graphHelper = graphHelper;
-            _hassIoClient = hassIoClient;
-            _hassEntityState = HassOnedriveEntityState.Initialize(hassIoClient);
+            _addonOptions = serviceProvider.GetService<AddonOptions>();
+            _graphHelper = serviceProvider.GetService<IGraphHelper>();
+            _hassIoClient = serviceProvider.GetService<IHassioClient>();
+            _hassEntityState = serviceProvider.GetService<HassOnedriveEntityState>();
             _allowedHours = allowedHours;
         }
 

@@ -1,10 +1,10 @@
-using BlazorApp1.Data;
 using hassio_onedrive_backup.Contracts;
 using hassio_onedrive_backup.Graph;
 using hassio_onedrive_backup.Hass;
 using hassio_onedrive_backup.Storage;
 using hassio_onedrive_backup.Sync;
 using Microsoft.Extensions.FileProviders;
+using onedrive_backup;
 using onedrive_backup.Hass;
 using System.Collections;
 
@@ -44,14 +44,7 @@ namespace hassio_onedrive_backup
             var addonInfo = hassIoClient.GetAddonInfo("local_hassio_onedrive_backup").Result;
             _pathBase = addonInfo.DataProperty.IngressUrl;
             // ConsoleLogger.LogInfo($"Ingress Info. Entry: {addonInfo.DataProperty.IngressEntry}. URL: {addonInfo.DataProperty.IngressUrl}");
-            _orchestrator = new Orchestrator(hassIoClient, graphHelper, addonOptions);
-            _orchestrator.Start();
 
-            SetUpWebUI(args);
-        }
-
-        private static void SetUpWebUI(string[] args)
-        {
             var builder = WebApplication.CreateBuilder(args);
 
             builder.Logging.AddConsole();
@@ -59,12 +52,25 @@ namespace hassio_onedrive_backup
             // Add services to the container.
             builder.Services.AddRazorPages();
             builder.Services.AddServerSideBlazor();
-            builder.Services.AddSingleton<WeatherForecastService>();
             builder.Services.AddSingleton(new IngressSettings { IngressUrl = _pathBase });
+            builder.Services.AddSingleton<ComponentInitializedStateHelper>();
+            builder.Services.AddSingleton(addonOptions);
+            builder.Services.AddSingleton<IHassioClient>(hassIoClient);
+            builder.Services.AddSingleton<IGraphHelper>(graphHelper);
+            
+            // var hassOneDriveEntityState = HassOnedriveEntityState.Initialize(hassIoClient);
+            builder.Services.AddSingleton<HassOnedriveEntityState>();
+
+            // var hassOneDriveFileSyncEntityState = HassOnedriveFileSyncEntityState.Initialize(hassIoClient);
+            builder.Services.AddSingleton<HassOnedriveFileSyncEntityState>();
+            builder.Services.AddSingleton<HassOnedriveFreeSpaceEntityState>();
+            builder.Services.AddSingleton<Orchestrator>();
             // builder.WebHost.UseStaticWebAssets();
             builder.WebHost.UseUrls("http://*:8099");
 
             var app = builder.Build();
+            _orchestrator = app.Services.GetService<Orchestrator>();
+            _orchestrator.Start();
 
             if (!app.Environment.IsDevelopment())
             {

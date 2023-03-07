@@ -1,0 +1,75 @@
+﻿@using hassio_onedrive_backup.Contracts;
+@using hassio_onedrive_backup.Hass;
+@inject AddonOptions AddonOptions
+@inject HassOnedriveEntityState HassOnedriveEntityState
+@inject HassOnedriveFreeSpaceEntityState HassOnedriveFreeSpaceEntityState
+@inject ComponentInitializedStateHelper ComponentInitializedStateHelper
+
+<div class="card text-white bg-primary mb-3 w-100" style="min-width: 16rem">
+    <div class="card-header">Summary</div>
+    <div class="card-body bg-light text-body">
+        <div class="row">
+            <div class="col">
+                <span class="card-text">OneDrive Storage</span>
+            </div>
+            <div class="col">
+                @if (HassOnedriveFreeSpaceEntityState.FreeSpaceGB == null)
+                {
+                    <div class="progress">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-secondary" role="progressbar" style="width: 100%">Initializing</div>
+                    </div>
+                }
+                else
+                {
+                    <div class="progress">
+                        <div class="progress-bar bg-warning" role="progressbar" style="width: @(OneDriveUsedSpacePercentage)%" aria-valuenow="@OneDriveUsedSpacePercentage" aria-valuemin="0" aria-valuemax="100">Used: @(OneDriveUsedSpacePercentage)%</div>
+                        <div class="progress-bar bg-success" role="progressbar" style="width: @(100 - OneDriveUsedSpacePercentage)%" aria-valuenow="@(100 - OneDriveUsedSpacePercentage)" aria-valuemin="0" aria-valuemax="100">Free: @(100 - OneDriveUsedSpacePercentage)%</div>
+                    </div>
+                }
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <span class="card-text">Local Backups</span>
+            </div>
+            <div class="col">
+                <div class="progress">
+                    <div class="progress-bar bg-warning" role="progressbar" style="width: @(LocalBackupsPercentage)%" aria-valuenow="@LocalBackupsPercentage" aria-valuemin="0" aria-valuemax="@AddonOptions.MaxLocalBackups">"@HassOnedriveEntityState.BackupsInHomeAssistant / @AddonOptions.MaxLocalBackups"</div>
+                    <div class="progress-bar bg-success" role="progressbar" style="width: @(100 - LocalBackupsPercentage)%" aria-valuenow="@(100 - LocalBackupsPercentage)" aria-valuemin="0" aria-valuemax="@AddonOptions.MaxLocalBackups"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@code {
+    private int OneDriveUsedSpacePercentage => (int)(((HassOnedriveFreeSpaceEntityState.FreeSpaceGB ?? 0) / (HassOnedriveFreeSpaceEntityState.TotalSpaceGB ?? 1)) * 100);
+
+    private int LocalBackupsPercentage => (int)((HassOnedriveEntityState.BackupsInHomeAssistant / (double)AddonOptions.MaxLocalBackups) * 100);
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        HassOnedriveFreeSpaceEntityState.PropertyChanged -= TriggerStateChanged;
+        HassOnedriveFreeSpaceEntityState.PropertyChanged += TriggerStateChanged;
+        HassOnedriveEntityState.PropertyChanged -= TriggerStateChanged;
+        HassOnedriveEntityState.PropertyChanged += TriggerStateChanged;
+
+    }
+
+
+    private async void TriggerStateChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        await InvokeAsync(() =>
+        {
+            StateHasChanged();
+        });
+    }
+
+    protected override bool ShouldRender()
+    {
+        var ret = base.ShouldRender();
+        return ret;
+    }
+}
