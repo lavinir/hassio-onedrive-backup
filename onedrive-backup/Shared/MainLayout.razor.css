@@ -44,13 +44,16 @@ footer p {
 
 ::deep nav.navbar .nav-link {
     color: #000;
+    border-bottom: 2px solid transparent;
 }
 
-::deep nav.navbar .nav-link:hover {
-    color: #0066CC;
-}
+    ::deep nav.navbar .nav-link:hover {
+        color: #0066CC;
+        border-bottom: 2px solid #0066CC;
+        transition: border-bottom-color 0.15s
+    }
 
 ::deep .nav-item .nav-link.active {
     color: #000;
-    background-color: azure
+    border-bottom: 2px solid #0066CC;
 }
