@@ -3,33 +3,46 @@
 @inject IGraphHelper GraphHelper
 
 <div class="container">
-	@if (GraphHelper.IsAuthenticated == false)
-	{
-		<div class="alert alert-danger">
-			<strong>Not logged in!</strong> @GraphHelper.AuthPrompt
-		</div>
-	}
-	<div class="row justify-content-center">
-		<div class="col-12 d-flex justify-content-center">
-			<onedrive_backup.Shared.OneDriveSummaryCard />
-		</div>
-	</div>
+    @if (GraphHelper.IsAuthenticated == false)
+    {
+        <div class="alert alert-danger">
+            <strong>Not logged in!</strong> @GraphHelper.AuthPrompt
+        </div>
+    }
+    <div class="row justify-content-center">
+        <div class="col-12 d-flex justify-content-center">
+            <onedrive_backup.Shared.OneDriveSummaryCard />
+        </div>
+    </div>
+</div>
+<div class="container">
+    <div class="row row-cols-1 row-cols-md-2 g-4">
+        <div class="col">
+            <div class="card">
+                <img src="..." class="card-img-top" alt="...">
+                <div class="card-body">
+                    <h5 class="card-title">Card title</h5>
+                    <p class="card-text">This is a longer card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.</p>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 @code
 {
-	protected override void OnInitialized()
-	{
-		base.OnInitialized();
-		GraphHelper.AuthStatusChangedEventHandler -= OnAuthStatusChanged;
-		GraphHelper.AuthStatusChangedEventHandler += OnAuthStatusChanged;
-	}
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        GraphHelper.AuthStatusChangedEventHandler -= OnAuthStatusChanged;
+        GraphHelper.AuthStatusChangedEventHandler += OnAuthStatusChanged;
+    }
 
-	private async void OnAuthStatusChanged()
-	{
-		await InvokeAsync(() =>
-		{
-			StateHasChanged();
-		});
-	}
+    private async void OnAuthStatusChanged()
+    {
+        await InvokeAsync(() =>
+        {
+            StateHasChanged();
+        });
+    }
 }    

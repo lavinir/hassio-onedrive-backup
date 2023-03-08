@@ -13,5 +13,11 @@ namespace hassio_onedrive_backup.Contracts
         public DateTime BackupDate { get; set; }
 
         public string? InstanceName { get; set; }
+
+        public bool IsProtected { get; set; }
+
+        public float Size { get; set; }
+
+        public string BackupType { get; set; }
     }
 }

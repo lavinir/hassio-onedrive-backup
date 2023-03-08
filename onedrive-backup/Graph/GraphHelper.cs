@@ -128,7 +128,7 @@ namespace hassio_onedrive_backup.Graph
 			return folder;
 		}
 
-		public async Task<bool> UploadFileAsync(string filePath, DateTime date, string? instanceName, string? destinationFileName = null, Action<int>? progressCallback = null, bool flatten = true, bool omitDescription = false)
+		public async Task<bool> UploadFileAsync(string filePath, DateTime date, string? instanceName, string? destinationFileName = null, Action<int>? progressCallback = null, bool flatten = true, string description = null)
 		{
 			if (File.Exists(filePath) == false)
 			{
@@ -138,10 +138,10 @@ namespace hassio_onedrive_backup.Graph
 
 			using var fileStream = File.OpenRead(filePath);
 			destinationFileName = destinationFileName ?? (flatten ? Path.GetFileName(filePath) : filePath);
-			string originalFileName = Path.GetFileNameWithoutExtension(filePath);
+			// string originalFileName = Path.GetFileNameWithoutExtension(filePath);
 			var uploadSession = await _userClient.Drive.Special.AppRoot.ItemWithPath(destinationFileName).CreateUploadSession(new DriveItemUploadableProperties
 			{
-				Description = omitDescription ? null : SerializeBackupDescription(originalFileName, date, instanceName)
+				Description = description // ? null : SerializeBackupDescription(originalFileName, date, instanceName)
 			}
 
 			).Request().PostAsync();
@@ -154,7 +154,7 @@ namespace hassio_onedrive_backup.Graph
 			IProgress<long> progress = new Progress<long>(prog =>
 			{
 				double percentage = Math.Round((prog / (double)totalFileLength), 2) * 100;
-				if (percentage - lastShownPercentageHolder.Percentage >= 10)
+				if (percentage - lastShownPercentageHolder.Percentage >= 10 || percentage == 100)
 				{
 					ConsoleLogger.LogInfo($"Uploaded {percentage}%");
 					lastShownPercentageHolder.Percentage = percentage;
@@ -263,18 +263,6 @@ namespace hassio_onedrive_backup.Graph
 			progressCallback?.Invoke(null);
 			ConsoleLogger.LogInfo($"{fileName} downloaded successfully");
 			return fileInfo.FullName;
-		}
-
-		private string SerializeBackupDescription(string originalFileName, DateTime date, string instanceName)
-		{
-			var description = new OnedriveItemDescription
-			{
-				Slug = originalFileName,
-				BackupDate = date,
-				InstanceName = instanceName
-			};
-
-			return JsonConvert.SerializeObject(description);
 		}
 
 		private AuthenticationRecord GetAuthenticationRecordFromCredential()

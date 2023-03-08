@@ -4,10 +4,12 @@
 @inject AddonOptions AddonOptions
 @inject HassOnedriveEntityState HassOnedriveEntityState
 @inject HassOnedriveFreeSpaceEntityState HassOnedriveFreeSpaceEntityState
-@inject ComponentInitializedStateHelper ComponentInitializedStateHelper
+@inject HassOnedriveFileSyncEntityState HassOnedriveFileSyncEntityState
 
-<div class="card text-white bg-primary mb-3 w-100" style="min-width: 16rem">
-    <div class="card-header">Summary</div>
+<div class="card text-white bg-light mb-3 w-100" style="min-width: 16rem">
+    <div class="card-header text-dark">
+        Summary <span class="badge rounded-pill @SummaryBadgeColor">@SummaryBadgeText</span>
+    </div>
     <div class="card-body bg-light text-body">
         <div class="row">
             <div class="col">
@@ -23,7 +25,7 @@
                 else
                 {
                     <div class="progress">
-                        <div class="progress-bar bg-warning" role="progressbar" style="width: @(OneDriveUsedSpacePercentage)%" aria-valuenow="@OneDriveUsedSpacePercentage" data-bs-toggle="tooltip" title=@(OneDriveUsedSpace.ToString("N2") + " GB")  aria-valuemin="0" aria-valuemax="100">Used: @(OneDriveUsedSpacePercentage)%</div>
+                        <div class="progress-bar bg-warning" role="progressbar" style="width: @(OneDriveUsedSpacePercentage)%" aria-valuenow="@OneDriveUsedSpacePercentage" data-bs-toggle="tooltip" title=@(OneDriveUsedSpace.ToString("N2") + " GB") aria-valuemin="0" aria-valuemax="100">Used: @(OneDriveUsedSpacePercentage)%</div>
                         <div class="progress-bar bg-success" role="progressbar" style="width: @(100 - OneDriveUsedSpacePercentage)%" aria-valuenow="@(100 - OneDriveUsedSpacePercentage)" data-bs-toggle="tooltip" title=@((HassOnedriveFreeSpaceEntityState.FreeSpaceGB ?? 0).ToString("N2") + " GB") aria-valuemin="0" aria-valuemax="100">Free: @(100 - OneDriveUsedSpacePercentage)%</div>
                     </div>
                 }
@@ -51,19 +53,115 @@
                 </div>
             </div>
         </div>
+        <div class="row">
+            <div class="col">
+                <span class="card-text">Last Backup Date</span>
+            </div>
+            <div class="col">
+                @if (LastBackupDate == null)
+                {
+                    <span class="card-text">None</span>
+                }
+                else
+                {
+                    <span class="card-text">@LastBackupDate</span>
+                }
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <span class="card-text">Backup Upload Progress</span>
+            </div>
+            <div class="col">
+                @if (HassOnedriveEntityState.State != HassOnedriveEntityState.BackupState.Syncing)
+                {
+                    <span class="card-text">N/A</span>
+                }
+                else
+                {
+                    <div class="progress">
+                        <div class="progress-bar progress-bar-animated bg-primary" role="progressbar" style="width: @(HassOnedriveEntityState.UploadPercentage)%">@HassOnedriveEntityState.UploadPercentage</div>
+                    </div>
+                }
+            </div>
+        </div>
+        @if (AddonOptions.FileSyncEnabled)
+        {
+            <div class="row">
+                <div class="col">
+                    <span class="card-text">File Sync Upload Progress</span>
+                </div>
+                <div class="col">
+                    @if (HassOnedriveFileSyncEntityState.State != HassOnedriveFileSyncEntityState.FileState.Syncing)
+                    {
+                        <span class="card-text">N/A</span>
+                    }
+                    else
+                    {
+                        <div class="progress">
+                            <div class="progress-bar progress-bar-animated bg-primary" role="progressbar" style="width: @(HassOnedriveFileSyncEntityState.UploadPercentage)%">@HassOnedriveFileSyncEntityState.UploadPercentage</div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
     </div>
 </div>
-
 
 @code {
     private int OneDriveUsedSpacePercentage => (int)((OneDriveUsedSpace / (HassOnedriveFreeSpaceEntityState.TotalSpaceGB ?? 1)) * 100);
 
     private int LocalBackupsPercentage => (int)((HassOnedriveEntityState.BackupsInHomeAssistant / (double)AddonOptions.MaxLocalBackups) * 100);
 
-    private int OneDriveBackupsPercentage => (int)((HassOnedriveEntityState.BackupsInOnedrive/ (double)AddonOptions.MaxOnedriveBackups) * 100);
+    private int OneDriveBackupsPercentage => (int)((HassOnedriveEntityState.BackupsInOnedrive / (double)AddonOptions.MaxOnedriveBackups) * 100);
 
     private double OneDriveUsedSpace => ((HassOnedriveFreeSpaceEntityState.TotalSpaceGB ?? 0) - (HassOnedriveFreeSpaceEntityState.FreeSpaceGB ?? 0));
 
+    private DateTime? LastBackupDate => HassOnedriveEntityState.LastLocalBackupDate > HassOnedriveEntityState.LastOnedriveBackupDate ? HassOnedriveEntityState.LastLocalBackupDate : HassOnedriveEntityState.LastOnedriveBackupDate;
+
+    private string SummaryBadgeColor
+    {
+        get
+        {
+            switch (HassOnedriveEntityState.State)
+            {
+                case HassOnedriveEntityState.BackupState.Stale:
+                    return "bg-warning";
+                case HassOnedriveEntityState.BackupState.Backed_Up:
+                    return "bg-success";
+                case HassOnedriveEntityState.BackupState.Backed_Up_Local:
+                    return "bg-secondary";
+                case HassOnedriveEntityState.BackupState.Backed_Up_Onedrive:
+                    return "bg-info";
+                case HassOnedriveEntityState.BackupState.Syncing:
+                    return "bg-primary";
+                default:
+                    return "bg-dark";
+            }
+        }
+    }
+
+    private string SummaryBadgeText
+    {
+        get
+        {
+            switch (HassOnedriveEntityState.State)
+            {
+                case HassOnedriveEntityState.BackupState.Stale:
+                    return "Stale";
+                case HassOnedriveEntityState.BackupState.Backed_Up:
+                    return "Backed Up";
+                case HassOnedriveEntityState.BackupState.Backed_Up_Local:
+                    return "Backed Up Local";
+                case HassOnedriveEntityState.BackupState.Backed_Up_Onedrive:
+                    return "Backed Up OneDrive";
+                case HassOnedriveEntityState.BackupState.Syncing:
+                    return "Syncing";
+                default:
+                    return "";
+            }
+        }
+    }
     protected override void OnInitialized()
     {
         base.OnInitialized();
@@ -71,16 +169,10 @@
         HassOnedriveFreeSpaceEntityState.PropertyChanged += TriggerStateChanged;
         HassOnedriveEntityState.PropertyChanged -= TriggerStateChanged;
         HassOnedriveEntityState.PropertyChanged += TriggerStateChanged;
+        HassOnedriveFileSyncEntityState.PropertyChanged -= TriggerStateChanged;
+        HassOnedriveFileSyncEntityState.PropertyChanged += TriggerStateChanged;
 
     }
-
-    //protected override async Task OnAfterRenderAsync(bool firstRender)
-    //{
-    //    if (firstRender)
-    //    {
-    //        await JS.InvokeVoidAsync("addTooltips");
-    //    }
-    //}
 
     private async void TriggerStateChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
@@ -89,4 +181,4 @@
             StateHasChanged();
         });
     }
-}
+    }

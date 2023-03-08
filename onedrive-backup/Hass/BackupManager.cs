@@ -7,7 +7,7 @@ using static hassio_onedrive_backup.Contracts.HassBackupsResponse;
 
 namespace hassio_onedrive_backup.Hass
 {
-    internal class BackupManager
+    internal class BackupManager 
     {
         private AddonOptions _addonOptions;
         private IGraphHelper _graphHelper;
@@ -24,6 +24,10 @@ namespace hassio_onedrive_backup.Hass
             _hassEntityState = serviceProvider.GetService<HassOnedriveEntityState>();
             _allowedHours = allowedHours;
         }
+
+        public event Action<IEnumerable<Backup>>? LocalBackupsUpdated;
+
+        public event Action<IEnumerable<OnedriveBackup>>? OneDriveBackupsUpdated;
 
         public async Task PerformBackupsAsync()
         {
@@ -124,7 +128,9 @@ namespace hassio_onedrive_backup.Hass
                             _hassEntityState.UploadPercentage = prog;
                             await _hassEntityState.UpdateBackupEntityInHass();
 
-                        });
+                        },
+                        description: SerializeBackupDescription(tempBackupFilePath, backup)
+                       );
                     if (uploadSuccessful == false)
                     {
                         await _hassIoClient.PublishEventAsync(Events.OneDriveEvents.BackupUploadFailed);
@@ -270,11 +276,28 @@ namespace hassio_onedrive_backup.Hass
             }
         }
 
+        private string SerializeBackupDescription(string originalFileName, Backup backup)
+        {
+            var description = new OnedriveItemDescription
+            {
+                Slug = Path.GetFileNameWithoutExtension(originalFileName),
+                BackupDate = backup.Date,
+                InstanceName = _addonOptions.InstanceName,
+                BackupType = backup.Type,
+                IsProtected = backup.Protected,
+                Size = backup.Size
+            };
+
+            return JsonConvert.SerializeObject(description);
+        }
+
         private async Task UpdateHassEntity()
         {
             var now = DateTimeHelper.Instance!.Now;
             var localBackups = await _hassIoClient.GetBackupsAsync(IsMonitoredBackup);
+            LocalBackupsUpdated?.Invoke(localBackups);
             var onlineBackups = await GetOnlineBackupsAsync(_addonOptions.InstanceName);
+            OneDriveBackupsUpdated?.Invoke(onlineBackups);
             _hassEntityState.BackupsInHomeAssistant = localBackups.Count;
             _hassEntityState.BackupsInOnedrive = onlineBackups.Count;
             _hassEntityState.LastLocalBackupDate = localBackups.Any() ? localBackups.Max(backup => backup.Date) : null;

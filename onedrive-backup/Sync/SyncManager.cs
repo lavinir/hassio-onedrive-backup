@@ -125,8 +125,7 @@ namespace hassio_onedrive_backup.Sync
                     Debug.WriteLine($"Progress: {prog}");
 
                 },
-                flatten: false,
-                omitDescription: true
+                flatten: false                
             );
         }
 
