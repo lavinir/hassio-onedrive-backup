@@ -35,12 +35,7 @@ namespace hassio_onedrive_backup
             IHassioClient hassIoClient = new HassioClient(supervisorToken, TimeSpan.FromMinutes(addonOptions.HassAPITimeoutMinutes));
 #endif
             LocalStorage.InitializeTempStorage();
-            IGraphHelper graphHelper = new GraphHelper(scopes, clientId, (info, cancel) =>
-            {
-                ConsoleLogger.LogInfo(info.Message);
-                return Task.FromResult(0);
-            });
-
+            IGraphHelper graphHelper = new GraphHelper(scopes, clientId);
             var addonInfo = hassIoClient.GetAddonInfo("local_hassio_onedrive_backup").Result;
             _pathBase = addonInfo.DataProperty.IngressUrl;
             // ConsoleLogger.LogInfo($"Ingress Info. Entry: {addonInfo.DataProperty.IngressEntry}. URL: {addonInfo.DataProperty.IngressUrl}");
@@ -98,7 +93,7 @@ namespace hassio_onedrive_backup
             app.MapFallbackToPage("/_Host");
             app.Run();
         }
-    }
+	}
 }
 
 

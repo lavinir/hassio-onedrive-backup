@@ -1,5 +1,6 @@
 ﻿@using hassio_onedrive_backup.Contracts;
 @using hassio_onedrive_backup.Hass;
+@inject IJSRuntime JS
 @inject AddonOptions AddonOptions
 @inject HassOnedriveEntityState HassOnedriveEntityState
 @inject HassOnedriveFreeSpaceEntityState HassOnedriveFreeSpaceEntityState
@@ -22,8 +23,8 @@
                 else
                 {
                     <div class="progress">
-                        <div class="progress-bar bg-warning" role="progressbar" style="width: @(OneDriveUsedSpacePercentage)%" aria-valuenow="@OneDriveUsedSpacePercentage" aria-valuemin="0" aria-valuemax="100">Used: @(OneDriveUsedSpacePercentage)%</div>
-                        <div class="progress-bar bg-success" role="progressbar" style="width: @(100 - OneDriveUsedSpacePercentage)%" aria-valuenow="@(100 - OneDriveUsedSpacePercentage)" aria-valuemin="0" aria-valuemax="100">Free: @(100 - OneDriveUsedSpacePercentage)%</div>
+                        <div class="progress-bar bg-warning" role="progressbar" style="width: @(OneDriveUsedSpacePercentage)%" aria-valuenow="@OneDriveUsedSpacePercentage" data-bs-toggle="tooltip" title=@(OneDriveUsedSpace.ToString("N2") + " GB")  aria-valuemin="0" aria-valuemax="100">Used: @(OneDriveUsedSpacePercentage)%</div>
+                        <div class="progress-bar bg-success" role="progressbar" style="width: @(100 - OneDriveUsedSpacePercentage)%" aria-valuenow="@(100 - OneDriveUsedSpacePercentage)" data-bs-toggle="tooltip" title=@((HassOnedriveFreeSpaceEntityState.FreeSpaceGB ?? 0).ToString("N2") + " GB") aria-valuemin="0" aria-valuemax="100">Free: @(100 - OneDriveUsedSpacePercentage)%</div>
                     </div>
                 }
             </div>
@@ -55,11 +56,13 @@
 
 
 @code {
-    private int OneDriveUsedSpacePercentage => (int)((((HassOnedriveFreeSpaceEntityState.TotalSpaceGB ?? 0) - (HassOnedriveFreeSpaceEntityState.FreeSpaceGB ?? 0)) / (HassOnedriveFreeSpaceEntityState.TotalSpaceGB ?? 1)) * 100);
+    private int OneDriveUsedSpacePercentage => (int)((OneDriveUsedSpace / (HassOnedriveFreeSpaceEntityState.TotalSpaceGB ?? 1)) * 100);
 
     private int LocalBackupsPercentage => (int)((HassOnedriveEntityState.BackupsInHomeAssistant / (double)AddonOptions.MaxLocalBackups) * 100);
 
     private int OneDriveBackupsPercentage => (int)((HassOnedriveEntityState.BackupsInOnedrive/ (double)AddonOptions.MaxOnedriveBackups) * 100);
+
+    private double OneDriveUsedSpace => ((HassOnedriveFreeSpaceEntityState.TotalSpaceGB ?? 0) - (HassOnedriveFreeSpaceEntityState.FreeSpaceGB ?? 0));
 
     protected override void OnInitialized()
     {
@@ -71,6 +74,13 @@
 
     }
 
+    //protected override async Task OnAfterRenderAsync(bool firstRender)
+    //{
+    //    if (firstRender)
+    //    {
+    //        await JS.InvokeVoidAsync("addTooltips");
+    //    }
+    //}
 
     private async void TriggerStateChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
@@ -78,11 +88,5 @@
         {
             StateHasChanged();
         });
-    }
-
-    protected override bool ShouldRender()
-    {
-        var ret = base.ShouldRender();
-        return ret;
     }
 }

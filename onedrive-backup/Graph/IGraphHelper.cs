@@ -4,7 +4,13 @@ using onedrive_backup.Contracts;
 namespace hassio_onedrive_backup.Graph
 {
     public interface IGraphHelper
-    {
+    {        
+        string AuthPrompt { get; }
+
+        bool? IsAuthenticated { get; }
+
+        event AuthStatusChanged AuthStatusChangedEventHandler;
+
         Task<string> GetAndCacheUserTokenAsync();
 
         Task<List<DriveItem>> GetItemsInAppFolderAsync(string subPath = "");
@@ -21,4 +27,6 @@ namespace hassio_onedrive_backup.Graph
 
         Task<DriveItem> GetOrCreateFolder(string path);
     }
+
+    public delegate void AuthStatusChanged();
 }

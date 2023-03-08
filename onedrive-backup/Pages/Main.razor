@@ -1,11 +1,35 @@
 ﻿@page "/"
+@using hassio_onedrive_backup.Graph;
+@inject IGraphHelper GraphHelper
+
 <div class="container">
-    <div class="row justify-content-center">
-        <div class="col-12 d-flex justify-content-center">
-            <onedrive_backup.Shared.OneDriveSummaryCard />
-        </div>
-    </div>
+	@if (GraphHelper.IsAuthenticated == false)
+	{
+		<div class="alert alert-danger">
+			<strong>Not logged in!</strong> @GraphHelper.AuthPrompt
+		</div>
+	}
+	<div class="row justify-content-center">
+		<div class="col-12 d-flex justify-content-center">
+			<onedrive_backup.Shared.OneDriveSummaryCard />
+		</div>
+	</div>
 </div>
 
-@code {
+@code
+{
+	protected override void OnInitialized()
+	{
+		base.OnInitialized();
+		GraphHelper.AuthStatusChangedEventHandler -= OnAuthStatusChanged;
+		GraphHelper.AuthStatusChangedEventHandler += OnAuthStatusChanged;
+	}
+
+	private async void OnAuthStatusChanged()
+	{
+		await InvokeAsync(() =>
+		{
+			StateHasChanged();
+		});
+	}
 }    

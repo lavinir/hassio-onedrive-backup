@@ -12,311 +12,331 @@ using File = System.IO.File;
 
 namespace hassio_onedrive_backup.Graph
 {
-    public class GraphHelper : IGraphHelper
-    {
-        private const string AuthRecordFile = "record.auth";
-        private const int UploadRetryCount = 3;
-        private const int DownloadRetryCount = 3;
-        private const int GraphRequestTimeoutMinutes = 2;
-        private const int ChunkSize = (320 * 1024) * 10;
-        private DeviceCodeCredential? _deviceCodeCredential;
-        protected GraphServiceClient? _userClient;
-        private IEnumerable<string> _scopes;
-        private string _clientId;
-        private Func<DeviceCodeInfo, CancellationToken, Task> _deviceCodePrompt;
-        private string _persistentDataPath;
-        private HttpClient _downloadHttpClient;
+	public class GraphHelper : IGraphHelper
+	{
+		private const string AuthRecordFile = "record.auth";
+		private const int UploadRetryCount = 3;
+		private const int DownloadRetryCount = 3;
+		private const int GraphRequestTimeoutMinutes = 2;
+		private const int ChunkSize = (320 * 1024) * 10;
+		private DeviceCodeCredential? _deviceCodeCredential;
+		protected GraphServiceClient? _userClient;
+		private IEnumerable<string> _scopes;
+		private string _clientId;
+		private string _persistentDataPath;
+		private HttpClient _downloadHttpClient;
+		private bool? _isAuthenticated = null;
 
-        public GraphHelper(
-            IEnumerable<string> scopes,
-            string clientId,
-            Func<DeviceCodeInfo, CancellationToken, Task> deviceCodePrompt,
-            string persistentDataPath = "")
-        {
-            _scopes = scopes;
-            _clientId = clientId;
-            _deviceCodePrompt = deviceCodePrompt;
-            _persistentDataPath = persistentDataPath;
-        }
+		public event AuthStatusChanged? AuthStatusChangedEventHandler;
 
-        private string PersistentAuthRecordFullPath => Path.Combine(_persistentDataPath, AuthRecordFile);
+		public GraphHelper(
+			IEnumerable<string> scopes,
+			string clientId,
+			string persistentDataPath = "")
+		{
+			_scopes = scopes;
+			_clientId = clientId;
+			_persistentDataPath = persistentDataPath;
+		}
 
-        public async Task<string> GetAndCacheUserTokenAsync()
-        {
-            if (_deviceCodeCredential == null)
-            {
-                await InitializeGraphForUserAuthAsync();
-            }
+		private string PersistentAuthRecordFullPath => Path.Combine(_persistentDataPath, AuthRecordFile);
 
-            _ = _deviceCodeCredential ??
-                throw new NullReferenceException("User Auth not Initialized");
+		public bool? IsAuthenticated
+		{
+			get => _isAuthenticated; 
+			private set
+			{
+				_isAuthenticated = value; AuthStatusChangedEventHandler?.Invoke();
+			}
+		}
 
-            _ = _scopes ?? throw new ArgumentNullException("'scopes' cannot be null");
+		public string AuthPrompt { get; private set; }
 
-            var context = new TokenRequestContext(_scopes.ToArray());
-            var response = await _deviceCodeCredential.GetTokenAsync(context);
-            await PersistAuthenticationRecordAsync(GetAuthenticationRecordFromCredential());
-            return response.Token;
-        }
+		public async Task<string> GetAndCacheUserTokenAsync()
+		{
+			if (_deviceCodeCredential == null)
+			{
+				await InitializeGraphForUserAuthAsync();
+			}
 
-        public async Task<DriveItem?> GetItemInAppFolderAsync(string subPath = "")
-        {
-            try
-            {
-                var item = await _userClient.Drive.Special.AppRoot.ItemWithPath(subPath).Request().Expand("children").GetAsync();
-                return item;
-                // return item.Children.ToList();
-            }
-            catch (ServiceException se)
-            {
-                if (se.StatusCode != System.Net.HttpStatusCode.NotFound)
-                {
-                    throw;
-                }
+			_ = _deviceCodeCredential ??
+				throw new NullReferenceException("User Auth not Initialized");
 
-                return null;
-            }
+			_ = _scopes ?? throw new ArgumentNullException("'scopes' cannot be null");
 
-        }
+			var context = new TokenRequestContext(_scopes.ToArray());
+			var response = await _deviceCodeCredential.GetTokenAsync(context);
+			await PersistAuthenticationRecordAsync(GetAuthenticationRecordFromCredential());
+			IsAuthenticated = true;
+			return response.Token;
+		}
 
-        public async Task<List<DriveItem>?> GetItemsInAppFolderAsync(string subPath = "")
-        {
-            var parent = await GetItemInAppFolderAsync(subPath);
-            return parent?.Children?.ToList();
-        }
+		public async Task<DriveItem?> GetItemInAppFolderAsync(string subPath = "")
+		{
+			try
+			{
+				var item = await _userClient.Me.Drive.Special.AppRoot.ItemWithPath(subPath).Request().Expand("children").GetAsync();
+				return item;
+				// return item.Children.ToList();
+			}
+			catch (ServiceException se)
+			{
+				if (se.StatusCode != System.Net.HttpStatusCode.NotFound)
+				{
+					throw;
+				}
 
-        public async Task<bool> DeleteItemFromAppFolderAsync(string itemPath)
-        {
-            try
-            {
-                ConsoleLogger.LogInfo($"Deleting item: {itemPath}");
-                await _userClient.Drive.Special.AppRoot.ItemWithPath(itemPath).Request().DeleteAsync();
-            }
-            catch (Exception ex)
-            {
-                ConsoleLogger.LogError($"Error deleting {itemPath}. {ex}");
-                return false;
-            }
+				return null;
+			}
 
-            return true;
-        }
+		}
 
-        public async Task<DriveItem> GetOrCreateFolder(string folderPath)
-        {
-            var folder = (await GetItemInAppFolderAsync(folderPath)) ??
-                await _userClient.Drive.Special.AppRoot.ItemWithPath(folderPath).Children.Request().AddAsync(new DriveItem
-                {
-                    // Name = Path.GetFileName(folderPath),
-                    // Folder = new Folder { }
-                    File = new Microsoft.Graph.File { },
-                    Name = "temp.txt",
-                    Content = new MemoryStream(Encoding.UTF8.GetBytes("Here's your damn content"))
-                });
+		public async Task<List<DriveItem>?> GetItemsInAppFolderAsync(string subPath = "")
+		{
+			var parent = await GetItemInAppFolderAsync(subPath);
+			return parent?.Children?.ToList();
+		}
 
-            return folder;
-        }
+		public async Task<bool> DeleteItemFromAppFolderAsync(string itemPath)
+		{
+			try
+			{
+				ConsoleLogger.LogInfo($"Deleting item: {itemPath}");
+				await _userClient.Drive.Special.AppRoot.ItemWithPath(itemPath).Request().DeleteAsync();
+			}
+			catch (Exception ex)
+			{
+				ConsoleLogger.LogError($"Error deleting {itemPath}. {ex}");
+				return false;
+			}
 
-        public async Task<bool> UploadFileAsync(string filePath, DateTime date, string? instanceName, string? destinationFileName = null, Action<int>? progressCallback = null, bool flatten = true, bool omitDescription = false)
-        {
-            if (File.Exists(filePath) == false)
-            {
-                ConsoleLogger.LogError($"File {filePath} not found");
-                return false;
-            }
+			return true;
+		}
 
-            using var fileStream = File.OpenRead(filePath);
-            destinationFileName = destinationFileName ?? (flatten ? Path.GetFileName(filePath) : filePath);
-            string originalFileName = Path.GetFileNameWithoutExtension(filePath);
-            var uploadSession = await _userClient.Drive.Special.AppRoot.ItemWithPath(destinationFileName).CreateUploadSession(new DriveItemUploadableProperties
-            {
-                Description = omitDescription ? null : SerializeBackupDescription(originalFileName, date, instanceName)                
-            }
+		public async Task<DriveItem> GetOrCreateFolder(string folderPath)
+		{
+			var folder = (await GetItemInAppFolderAsync(folderPath)) ??
+				await _userClient.Drive.Special.AppRoot.ItemWithPath(folderPath).Children.Request().AddAsync(new DriveItem
+				{
+					// Name = Path.GetFileName(folderPath),
+					// Folder = new Folder { }
+					File = new Microsoft.Graph.File { },
+					Name = "temp.txt",
+					Content = new MemoryStream(Encoding.UTF8.GetBytes("Here's your damn content"))
+				});
 
-            ).Request().PostAsync();
+			return folder;
+		}
 
-            // todo: allow settings this in advanced configuration
-            int maxSlizeSize = ChunkSize;
-            long totalFileLength = fileStream.Length;
-            var fileUploadTask = new LargeFileUploadTask<DriveItem>(uploadSession, fileStream, maxSlizeSize);
-            var lastShownPercentageHolder = new UploadProgressHolder();
-            IProgress<long> progress = new Progress<long>(prog =>
-            {
-                double percentage = Math.Round((prog / (double)totalFileLength), 2) * 100;
-                if (percentage - lastShownPercentageHolder.Percentage >= 10)
-                {
-                    ConsoleLogger.LogInfo($"Uploaded {percentage}%");
-                    lastShownPercentageHolder.Percentage = percentage;
-                }
+		public async Task<bool> UploadFileAsync(string filePath, DateTime date, string? instanceName, string? destinationFileName = null, Action<int>? progressCallback = null, bool flatten = true, bool omitDescription = false)
+		{
+			if (File.Exists(filePath) == false)
+			{
+				ConsoleLogger.LogError($"File {filePath} not found");
+				return false;
+			}
 
-                progressCallback?.Invoke((int)percentage);
-            });
+			using var fileStream = File.OpenRead(filePath);
+			destinationFileName = destinationFileName ?? (flatten ? Path.GetFileName(filePath) : filePath);
+			string originalFileName = Path.GetFileNameWithoutExtension(filePath);
+			var uploadSession = await _userClient.Drive.Special.AppRoot.ItemWithPath(destinationFileName).CreateUploadSession(new DriveItemUploadableProperties
+			{
+				Description = omitDescription ? null : SerializeBackupDescription(originalFileName, date, instanceName)
+			}
 
-            int uploadAttempt = 0;
-            while (uploadAttempt++ < UploadRetryCount)
-            {
-                try
-                {
-                    ConsoleLogger.LogInfo($"Starting file upload. (Size:{totalFileLength} bytes. Attempt: {uploadAttempt}/{UploadRetryCount})");
-                    UploadResult<DriveItem> uploadResult;
-                    if (uploadAttempt > 1)
-                    {
-                        uploadResult = await fileUploadTask.ResumeAsync(progress);
-                    }
-                    else
-                    {
-                        uploadResult = await fileUploadTask.UploadAsync(progress);
-                    }
+			).Request().PostAsync();
 
-                    await Task.Delay(TimeSpan.FromSeconds(2));
-                    if (uploadResult.UploadSucceeded)
-                    {
-                        ConsoleLogger.LogInfo("Upload completed successfully");
-                        break;
-                    }
-                    else
-                    {
-                        ConsoleLogger.LogError("Upload failed");
-                    }
-                }
-                catch (ServiceException ex)
-                {
-                    ConsoleLogger.LogError($"Error uploading: {ex}");
-                    return false;
-                }
-            }
+			// todo: allow settings this in advanced configuration
+			int maxSlizeSize = ChunkSize;
+			long totalFileLength = fileStream.Length;
+			var fileUploadTask = new LargeFileUploadTask<DriveItem>(uploadSession, fileStream, maxSlizeSize);
+			var lastShownPercentageHolder = new UploadProgressHolder();
+			IProgress<long> progress = new Progress<long>(prog =>
+			{
+				double percentage = Math.Round((prog / (double)totalFileLength), 2) * 100;
+				if (percentage - lastShownPercentageHolder.Percentage >= 10)
+				{
+					ConsoleLogger.LogInfo($"Uploaded {percentage}%");
+					lastShownPercentageHolder.Percentage = percentage;
+				}
 
-            return true;
-        }
+				progressCallback?.Invoke((int)percentage);
+			});
 
-        public async Task<OneDriveFreeSpaceData> GetFreeSpaceInGB()
-        {
-            try
-            {
-                var drive = await _userClient.Drive.Request().GetAsync();
-                double? totalSpace = drive.Quota.Total == null ? null : drive.Quota.Total.Value / (double)Math.Pow(1024, 3);
-                double? freeSpace = drive.Quota.Remaining == null ? null : drive.Quota.Remaining.Value / (double)Math.Pow(1024, 3);
-                return new OneDriveFreeSpaceData
-                {
-                    FreeSpace = freeSpace,
-                    TotalSpace = totalSpace
-                };
+			int uploadAttempt = 0;
+			while (uploadAttempt++ < UploadRetryCount)
+			{
+				try
+				{
+					ConsoleLogger.LogInfo($"Starting file upload. (Size:{totalFileLength} bytes. Attempt: {uploadAttempt}/{UploadRetryCount})");
+					UploadResult<DriveItem> uploadResult;
+					if (uploadAttempt > 1)
+					{
+						uploadResult = await fileUploadTask.ResumeAsync(progress);
+					}
+					else
+					{
+						uploadResult = await fileUploadTask.UploadAsync(progress);
+					}
 
-            }
-            catch (Exception ex)
-            {
-                ConsoleLogger.LogError($"Error getting free space: {ex}");
-                return null;
-            }
-        }
-    
-        public async Task<string?> DownloadFileAsync(string fileName, Action<int?>? progressCallback) 
-        {
-            var item = await _userClient.Drive.Special.AppRoot.ItemWithPath(fileName).Request().GetAsync();
-            if (item.AdditionalData.TryGetValue("@microsoft.graph.downloadUrl", out var downloadUrl) == false)
-            {
-                ConsoleLogger.LogError($"Failed getting file download data. ${fileName}");
-                return null;
-            }
+					await Task.Delay(TimeSpan.FromSeconds(2));
+					if (uploadResult.UploadSucceeded)
+					{
+						ConsoleLogger.LogInfo("Upload completed successfully");
+						break;
+					}
+					else
+					{
+						ConsoleLogger.LogError("Upload failed");
+					}
+				}
+				catch (ServiceException ex)
+				{
+					ConsoleLogger.LogError($"Error uploading: {ex}");
+					return false;
+				}
+			}
 
-            var fileInfo = new FileInfo($"{LocalStorage.TempFolder}/{fileName}");
-            using var fileStream = File.Create(fileInfo.FullName);
+			return true;
+		}
 
-            _downloadHttpClient = _downloadHttpClient ?? new HttpClient();
-            long position = 0;
-            int attempt = 1;
-            while (position < item.Size)
-            {
-                try
-                {
-                    long chunkSize = Math.Min(position + ChunkSize, item.Size.Value - 1);
-                    _downloadHttpClient.DefaultRequestHeaders.Range = new System.Net.Http.Headers.RangeHeaderValue(position, chunkSize);
-                    var contentStream = await _downloadHttpClient.GetStreamAsync(downloadUrl.ToString());
-                    await contentStream.CopyToAsync(fileStream);
-                    position = chunkSize + 1;
-                    progressCallback?.Invoke((int)(position * 100 / item.Size.Value));
-                }
-                catch (Exception ex)
-                {
-                    if (attempt >= DownloadRetryCount)
-                    {
-                        ConsoleLogger.LogError($"Failed downloading file {fileName}. {ex}");
-                        progressCallback?.Invoke(null);
-                        return null;
-                    }
+		public async Task<OneDriveFreeSpaceData> GetFreeSpaceInGB()
+		{
+			try
+			{
+				var drive = await _userClient.Drive.Request().GetAsync();
+				double? totalSpace = drive.Quota.Total == null ? null : drive.Quota.Total.Value / (double)Math.Pow(1024, 3);
+				double? freeSpace = drive.Quota.Remaining == null ? null : drive.Quota.Remaining.Value / (double)Math.Pow(1024, 3);
+				return new OneDriveFreeSpaceData
+				{
+					FreeSpace = freeSpace,
+					TotalSpace = totalSpace
+				};
 
-                    await Task.Delay(5000);
-                }
-            }
+			}
+			catch (Exception ex)
+			{
+				ConsoleLogger.LogError($"Error getting free space: {ex}");
+				return null;
+			}
+		}
 
-            progressCallback?.Invoke(null);
-            ConsoleLogger.LogInfo($"{fileName} downloaded successfully");
-            return fileInfo.FullName;
-        }
+		public async Task<string?> DownloadFileAsync(string fileName, Action<int?>? progressCallback)
+		{
+			var item = await _userClient.Drive.Special.AppRoot.ItemWithPath(fileName).Request().GetAsync();
+			if (item.AdditionalData.TryGetValue("@microsoft.graph.downloadUrl", out var downloadUrl) == false)
+			{
+				ConsoleLogger.LogError($"Failed getting file download data. ${fileName}");
+				return null;
+			}
 
-        private string SerializeBackupDescription(string originalFileName, DateTime date, string instanceName)
-        {
-            var description = new OnedriveItemDescription
-            {
-                Slug = originalFileName,
-                BackupDate = date,
-                InstanceName = instanceName
-            };
+			var fileInfo = new FileInfo($"{LocalStorage.TempFolder}/{fileName}");
+			using var fileStream = File.Create(fileInfo.FullName);
 
-            return JsonConvert.SerializeObject(description);
-        }
+			_downloadHttpClient = _downloadHttpClient ?? new HttpClient();
+			long position = 0;
+			int attempt = 1;
+			while (position < item.Size)
+			{
+				try
+				{
+					long chunkSize = Math.Min(position + ChunkSize, item.Size.Value - 1);
+					_downloadHttpClient.DefaultRequestHeaders.Range = new System.Net.Http.Headers.RangeHeaderValue(position, chunkSize);
+					var contentStream = await _downloadHttpClient.GetStreamAsync(downloadUrl.ToString());
+					await contentStream.CopyToAsync(fileStream);
+					position = chunkSize + 1;
+					progressCallback?.Invoke((int)(position * 100 / item.Size.Value));
+				}
+				catch (Exception ex)
+				{
+					if (attempt >= DownloadRetryCount)
+					{
+						ConsoleLogger.LogError($"Failed downloading file {fileName}. {ex}");
+						progressCallback?.Invoke(null);
+						return null;
+					}
 
-        private AuthenticationRecord GetAuthenticationRecordFromCredential()
-        {
-            var record = typeof(DeviceCodeCredential)
-                .GetProperty("Record", System.Reflection.BindingFlags.NonPublic | BindingFlags.Instance)
-                .GetValue(_deviceCodeCredential) as AuthenticationRecord;
+					await Task.Delay(5000);
+				}
+			}
 
-            return record;
-        }
+			progressCallback?.Invoke(null);
+			ConsoleLogger.LogInfo($"{fileName} downloaded successfully");
+			return fileInfo.FullName;
+		}
 
-        private async Task PersistAuthenticationRecordAsync(AuthenticationRecord record)
-        {
-            using var authRecordStream = new FileStream(PersistentAuthRecordFullPath, FileMode.Create, FileAccess.Write);
-            await record.SerializeAsync(authRecordStream);
-        }
+		private string SerializeBackupDescription(string originalFileName, DateTime date, string instanceName)
+		{
+			var description = new OnedriveItemDescription
+			{
+				Slug = originalFileName,
+				BackupDate = date,
+				InstanceName = instanceName
+			};
 
-        private async Task<AuthenticationRecord?> ReadPersistedAuthenticationRecordAsync()
-        {
-            if (File.Exists(PersistentAuthRecordFullPath) == false)
-            {
-                ConsoleLogger.LogWarning("Token cache is empty");
-                return null;
-            }
+			return JsonConvert.SerializeObject(description);
+		}
 
-            using var authRecordStream = new FileStream(PersistentAuthRecordFullPath, FileMode.Open, FileAccess.Read);
-            var record = await AuthenticationRecord.DeserializeAsync(authRecordStream);
-            return record;
-        }
+		private AuthenticationRecord GetAuthenticationRecordFromCredential()
+		{
+			var record = typeof(DeviceCodeCredential)
+				.GetProperty("Record", System.Reflection.BindingFlags.NonPublic | BindingFlags.Instance)
+				.GetValue(_deviceCodeCredential) as AuthenticationRecord;
 
-        protected virtual async Task InitializeGraphForUserAuthAsync()
-        {
-            AuthenticationRecord? authRecord = await ReadPersistedAuthenticationRecordAsync();
-            var deviceCodeCredOptions = new DeviceCodeCredentialOptions
-            {
-                ClientId = _clientId,
-                DeviceCodeCallback = _deviceCodePrompt,
-                TenantId = "common",
-                AuthenticationRecord = authRecord,
-                TokenCachePersistenceOptions = new TokenCachePersistenceOptions
-                {
-                    Name = "hassio-onedrive-backup",
-                    UnsafeAllowUnencryptedStorage = true
-                }
-            };
+			return record;
+		}
 
-            _deviceCodeCredential = new DeviceCodeCredential(deviceCodeCredOptions);
-            _userClient = new GraphServiceClient(_deviceCodeCredential, _scopes);
-            _userClient.HttpProvider.OverallTimeout = TimeSpan.FromMinutes(GraphRequestTimeoutMinutes);
-        }
+		private async Task PersistAuthenticationRecordAsync(AuthenticationRecord record)
+		{
+			using var authRecordStream = new FileStream(PersistentAuthRecordFullPath, FileMode.Create, FileAccess.Write);
+			await record.SerializeAsync(authRecordStream);
+		}
 
-        private class UploadProgressHolder
-        {
-            public double Percentage { get; set; } = 0;
-        }
-    }
+		private async Task<AuthenticationRecord?> ReadPersistedAuthenticationRecordAsync()
+		{
+			if (File.Exists(PersistentAuthRecordFullPath) == false)
+			{
+				ConsoleLogger.LogWarning("Token cache is empty");
+				return null;
+			}
+
+			using var authRecordStream = new FileStream(PersistentAuthRecordFullPath, FileMode.Open, FileAccess.Read);
+			var record = await AuthenticationRecord.DeserializeAsync(authRecordStream);
+			return record;
+		}
+
+		protected virtual async Task InitializeGraphForUserAuthAsync()
+		{
+			AuthenticationRecord? authRecord = await ReadPersistedAuthenticationRecordAsync();
+			var deviceCodeCredOptions = new DeviceCodeCredentialOptions
+			{
+				ClientId = _clientId,
+				DeviceCodeCallback = DeviceCodeBallBackPrompt,
+				TenantId = "common",
+				AuthenticationRecord = authRecord,
+				TokenCachePersistenceOptions = new TokenCachePersistenceOptions
+				{
+					Name = "hassio-onedrive-backup",
+					UnsafeAllowUnencryptedStorage = true
+				},
+			};
+
+			_deviceCodeCredential = new DeviceCodeCredential(deviceCodeCredOptions);
+			_userClient = new GraphServiceClient(_deviceCodeCredential, _scopes);
+			_userClient.HttpProvider.OverallTimeout = TimeSpan.FromMinutes(GraphRequestTimeoutMinutes);
+		}
+
+		private Task DeviceCodeBallBackPrompt(DeviceCodeInfo info, CancellationToken ct)
+		{
+			IsAuthenticated = false;
+			ConsoleLogger.LogInfo(info.Message);
+			AuthPrompt = info.Message;
+			return Task.FromResult(0);
+		}
+
+		private class UploadProgressHolder
+		{
+			public double Percentage { get; set; } = 0;
+		}
+	}
 }
