@@ -20,6 +20,7 @@ namespace hassio_onedrive_backup
         private readonly IGraphHelper _graphHelper;
         private readonly IServiceProvider _serviceProvider;
         private readonly AddonOptions _addonOptions;
+        private readonly BitArray _allowedBackupHours;
 
         private bool _enabled = false;
 
@@ -30,7 +31,12 @@ namespace hassio_onedrive_backup
             _graphHelper = serviceProvider.GetService<IGraphHelper>();
             _hassIoClient = serviceProvider.GetService<IHassioClient>();
             _hassOnedriveFreeSpaceEntityState = serviceProvider.GetService<HassOnedriveFreeSpaceEntityState>();
+
+            _allowedBackupHours = TimeRangeHelper.GetAllowedHours(_addonOptions.BackupAllowedHours);
+            BackupManager = new BackupManager(_serviceProvider, _allowedBackupHours);
         }
+
+        public BackupManager BackupManager { get; set; }
 
         public async Task Start()
         {
@@ -38,9 +44,6 @@ namespace hassio_onedrive_backup
             string timeZoneId = await _hassIoClient.GetTimeZoneAsync();
             DateTimeHelper.Initialize(timeZoneId);
             TimeSpan intervalDelay = TimeSpan.FromMinutes(5);
-
-            BitArray allowedBackupHours = TimeRangeHelper.GetAllowedHours(_addonOptions.BackupAllowedHours);
-            var backupManager = new BackupManager(_serviceProvider, allowedBackupHours);
 
             if (_addonOptions.RecoveryMode)
             {
@@ -51,13 +54,13 @@ namespace hassio_onedrive_backup
                 ConsoleLogger.LogInfo($"Backup interval configured to every {_addonOptions.BackupIntervalHours} hours");
                 if (string.IsNullOrWhiteSpace(_addonOptions.BackupAllowedHours) == false)
                 {
-                    ConsoleLogger.LogInfo($"Backups / Syncs will only run during these hours: {allowedBackupHours.ToAllowedHoursText()}");
+                    ConsoleLogger.LogInfo($"Backups / Syncs will only run during these hours: {_allowedBackupHours.ToAllowedHoursText()}");
                 }
 
                 // Initialize File Sync Manager
                 if (_addonOptions.FileSyncEnabled)
                 {
-                    var syncManager = new SyncManager(_serviceProvider, allowedBackupHours);
+                    var syncManager = new SyncManager(_serviceProvider, _allowedBackupHours);
                     var tokenSource = new CancellationTokenSource();
                     await _graphHelper.GetAndCacheUserTokenAsync();
                     var fileSyncTask = Task.Run(() => syncManager.SyncLoop(tokenSource.Token), tokenSource.Token);
@@ -78,12 +81,12 @@ namespace hassio_onedrive_backup
 
                     if (_addonOptions.RecoveryMode)
                     {
-                        await backupManager.DownloadCloudBackupsAsync();
+                        await BackupManager.DownloadCloudBackupsAsync();
                         Console.WriteLine();
                     }
                     else
                     {
-                        backupManager.PerformBackupsAsync();
+                        BackupManager.PerformBackupsAsync();
                     }
 
                 }

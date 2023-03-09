@@ -8,9 +8,9 @@
 
         public DateTime Date { get; set; }
 
-        public bool IsOnline { get; set; }
+        public BackupLocation Location { get; set; }
 
-        public string FileName { get; set; }
+        public string OneDriveFileName { get; set; }
 
         public string Type { get; set; }
 
@@ -18,7 +18,13 @@
 
         public float Size { get; set; }
 
-        public string DisplayName => string.IsNullOrEmpty(Name) ? FileName : Name;
+        public string DisplayName => string.IsNullOrEmpty(Name) ? OneDriveFileName : Name;
 
+        public enum BackupLocation
+        {
+            Local,
+            OneDrive,
+            Both
+        }
     }
 }

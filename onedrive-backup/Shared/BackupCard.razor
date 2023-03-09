@@ -2,17 +2,35 @@
 
 <div class="card text-white bg-light mb-3 w-100" style="min-width: 16rem">
     <div class="card-header text-dark">
-        @Backup.DisplayName <span class="badge rounded-pill @BackupTypeColor">@Backup.Type</span>
+        @Backup.DisplayName 
+        @**************Add Badges*****************@
+        @if (Backup.Type != null)
+        {
+            <span class="badge rounded-pill m-1 @BackupTypeColor">@Backup.Type</span>
+        }
+        @if (Backup.Location == BackupModel.BackupLocation.OneDrive || Backup.Location == BackupModel.BackupLocation.Both)
+        {
+            <span class="badge rounded-pill m-1 bg-primary">OneDrive</span>
+        }
+        @if (Backup.Location == BackupModel.BackupLocation.Local || Backup.Location == BackupModel.BackupLocation.Both)
+        {
+            <span class="badge rounded-pill m-1 bg-dark">Local</span>
+        }
+        @if (Backup.IsProtected)
+        {
+            <span class="badge rounded-pill m-1 bg-dark">Protected</span>
+        }
+        @***************@
     </div>
     <div class="card-body bg-light text-body">
-        <div class="row">
-            <div class="col">
-
-            </div>
-        </div>
+        <h5 class="card-title">@Backup.Date</h5>
+        <h6 class="card-subtitle text-muted">@(Backup.IsProtected ? "Password Protected": "No Password")</h6>
+        <span class="card-text"><strong>Size: </strong>@Backup.Size</span>
     </div>
     <div class="card-footer">
-
+        <div class="btn-group btn-group-sm" role="group">
+            <button type="button" class="btn btn-outline-primary"><span class="oi oi-cloud-upload" title="Upload to OneDrive" aria-hidden="true"></span></button>
+        </div>
     </div>
 </div>
 @code {
@@ -20,5 +38,5 @@
     [Parameter]
     public BackupModel Backup { get; set; }
 
-    public string BackupTypeColor => Backup.Type.Equals("full", StringComparison.OrdinalIgnoreCase) ? "bg-primary" : "bg-secondary";
+    public string BackupTypeColor => Backup.Type.Equals("full", StringComparison.OrdinalIgnoreCase) ? "bg-info" : "bg-secondary";
 }

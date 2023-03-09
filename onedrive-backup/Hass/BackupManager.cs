@@ -7,7 +7,7 @@ using static hassio_onedrive_backup.Contracts.HassBackupsResponse;
 
 namespace hassio_onedrive_backup.Hass
 {
-    internal class BackupManager 
+    public class BackupManager 
     {
         private AddonOptions _addonOptions;
         private IGraphHelper _graphHelper;

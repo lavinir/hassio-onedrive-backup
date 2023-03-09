@@ -16,7 +16,7 @@ namespace onedrive_backup.Extensions
                 Type = backup.Type,
                 Size = backup.Size,
                 IsProtected = backup.Protected,
-                IsOnline = false
+                Location = BackupModel.BackupLocation.Local
             };
         }
 
@@ -26,11 +26,11 @@ namespace onedrive_backup.Extensions
             {
                 Slug = onedriveBackup.Slug,
                 Date = onedriveBackup.BackupDate,
-                FileName = onedriveBackup.FileName,
+                OneDriveFileName = onedriveBackup.FileName,
                 Type = onedriveBackup.Type,
                 Size = onedriveBackup.Size,
                 IsProtected = onedriveBackup.IsProtected,
-                IsOnline = true
+                Location = BackupModel.BackupLocation.OneDrive
             };
         } 
     }
