@@ -9,3 +9,7 @@
         $(this).tooltip('dispose');
     });
 }
+
+function copyToClipboard(txt) {
+    navigator.clipboard.writeText(txt);
+}

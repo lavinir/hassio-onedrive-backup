@@ -4,8 +4,10 @@ using onedrive_backup.Contracts;
 namespace hassio_onedrive_backup.Graph
 {
     public interface IGraphHelper
-    {        
-        string AuthPrompt { get; }
+    {
+        string AuthUrl { get; }
+
+        string AuthCode { get; }
 
         bool? IsAuthenticated { get; }
 

@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using onedrive_backup.Contracts;
 using System.Reflection;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Text.Unicode;
 using File = System.IO.File;
 
@@ -50,9 +51,11 @@ namespace hassio_onedrive_backup.Graph
 			}
 		}
 
-		public string AuthPrompt { get; private set; }
+        public string AuthUrl { get; private set; }
 
-		public async Task<string> GetAndCacheUserTokenAsync()
+        public string AuthCode { get; private set; }
+
+        public async Task<string> GetAndCacheUserTokenAsync()
 		{
 			if (_deviceCodeCredential == null)
 			{
@@ -318,11 +321,19 @@ namespace hassio_onedrive_backup.Graph
 		{
 			IsAuthenticated = false;
 			ConsoleLogger.LogInfo(info.Message);
-			AuthPrompt = info.Message;
+			(AuthUrl, AuthCode) = ExtractAuthParams(info.Message);
 			return Task.FromResult(0);
 		}
 
-		private class UploadProgressHolder
+        private (string url, string code) ExtractAuthParams(string message)
+        {
+			Match match = Regex.Match(message, "To sign in, use a web browser to open the page ([^ ]*) and enter the code ([\\w]*) to authenticate");
+			string url = match.Groups[1].Value;
+			string code = match.Groups[2].Value;
+			return (url, code);
+        }
+
+        private class UploadProgressHolder
 		{
 			public double Percentage { get; set; } = 0;
 		}

@@ -2,6 +2,11 @@
 {
     public class OnedriveBackup
     {
+        public OnedriveBackup()
+        {
+
+        }
+
         public OnedriveBackup(string fileName, OnedriveItemDescription itemDescription)
         {
             FileName = fileName;
@@ -15,9 +20,9 @@
             Folders = itemDescription.Folders;
         }
 
-        public string Slug { get; }
+        public string Slug { get; set; }
 
-        public string FileName { get; }
+        public string FileName { get; set; }
 
         public DateTime BackupDate { get; set; }
 

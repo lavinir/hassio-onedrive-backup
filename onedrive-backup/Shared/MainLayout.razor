@@ -1,5 +1,8 @@
-﻿@inherits LayoutComponentBase
+﻿@using hassio_onedrive_backup.Graph;
+@inherits LayoutComponentBase
 @inject NavigationManager NavigationManager
+@inject IGraphHelper GraphHelper
+@inject IJSRuntime JS
 
 <div class="container-fluid">
     <nav class="navbar navbar-expand-lg">
@@ -18,6 +21,13 @@
             </NavLink>
         </div>
     </nav>
+    @if (GraphHelper.IsAuthenticated == false)
+    {
+        <div class="alert alert-danger">
+            <strong>Not logged in!</strong> To sign in to OneDrive, navigate to <a href="@GraphHelper.AuthUrl" class="alert-link" target="_blank">@GraphHelper.AuthUrl</a> and enter the code @GraphHelper.AuthCode to authenticate.
+            <button type="button" class="btn btn-sm m-1 btn-light" @onclick="CopyCodeToClipboard"><span class="oi oi-clipboard" title="Copy code to clipboard"></span></button>
+        </div>
+    }
 </div>
 
 <div class="container">
@@ -29,16 +39,24 @@
 </footer>
 
 @code{
-    //[Inject]
-    //NavigationManager NavigationManager { get; set; }
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        GraphHelper.AuthStatusChangedEventHandler -= OnStateChanged;
+        GraphHelper.AuthStatusChangedEventHandler += OnStateChanged;
+    }
 
-    //protected override void OnInitialized() => NavigationManager.LocationChanged+= (s, e) => StateHasChanged();
+    private void CopyCodeToClipboard()
+    {
+        JS.InvokeVoidAsync("copyToClipboard", GraphHelper.AuthCode);
+    }
 
-    //bool IsActive(string href, NavLinkMatch navLinkMatch = NavLinkMatch.Prefix)
-    //{
-    //    var relativePath = NavigationManager.ToBaseRelativePath(NavigationManager.Uri).ToLower();
-    //    return navLinkMatch == NavLinkMatch.All ? relativePath == href.ToLower() : relativePath.StartsWith(href.ToLower());
-    //}
+    private async void OnStateChanged()
+    {
+        await InvokeAsync(() =>
+        {
+            StateHasChanged();
+        });
+    }
 
-    //string GetActive(string href, NavLinkMatch navLinkMatch = NavLinkMatch.Prefix) => IsActive(href, navLinkMatch) ? "active" : "";
 }

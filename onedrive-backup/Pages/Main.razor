@@ -9,12 +9,6 @@
 @inject Orchestrator Orchestrator
 
 <div class="container">
-    @if (GraphHelper.IsAuthenticated == false)
-    {
-        <div class="alert alert-danger">
-            <strong>Not logged in!</strong> @GraphHelper.AuthPrompt
-        </div>
-    }
     <div class="row justify-content-center">
         <div class="col-12 d-flex justify-content-center">
             <onedrive_backup.Shared.OneDriveSummaryCard />

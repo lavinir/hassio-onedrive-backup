@@ -37,5 +37,38 @@ namespace onedrive_backup.Extensions
                 Folders = onedriveBackup.Folders
             };
         } 
+
+        public static OnedriveBackup ToOneDriveBackup(this BackupModel backupModel)
+        {
+            return new OnedriveBackup
+            {
+                Addons = backupModel.Addons,
+                BackupDate = backupModel.Date,
+                FileName = backupModel.OneDriveFileName,
+                Folders = backupModel.Folders,
+                IsProtected = backupModel.IsProtected,
+                Slug = backupModel.Slug,
+                Type = backupModel.Type,
+                Size = backupModel.Size
+            };
+        }
+
+        public static Backup ToBackup(this BackupModel backupModel)
+        {
+            return new Backup
+            {
+                Date = backupModel.Date,
+                Protected = backupModel.IsProtected,
+                Slug = backupModel.Slug,
+                Type = backupModel.Type,
+                Size = backupModel.Size,
+                Name = backupModel.DisplayName,
+                Content = new Content
+                {
+                    Addons = backupModel.Addons.ToArray() ?? Enumerable.Empty<string>().ToArray(),
+                    Folders = backupModel.Folders?.ToArray() ?? Enumerable.Empty<string>().ToArray()
+                }
+            };
+        }
     }
 }
