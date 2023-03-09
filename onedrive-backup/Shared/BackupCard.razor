@@ -2,7 +2,6 @@
 
 <div class="card text-white bg-light mb-3 w-100" style="min-width: 16rem">
     <div class="card-header text-dark">
-        @Backup.DisplayName 
         @**************Add Badges*****************@
         @if (Backup.Type != null)
         {
@@ -23,20 +22,53 @@
         @***************@
     </div>
     <div class="card-body bg-light text-body">
-        <h5 class="card-title">@Backup.Date</h5>
-        <h6 class="card-subtitle text-muted">@(Backup.IsProtected ? "Password Protected": "No Password")</h6>
-        <span class="card-text"><strong>Size: </strong>@Backup.Size</span>
-    </div>
-    <div class="card-footer">
-        <div class="btn-group btn-group-sm" role="group">
-            <button type="button" class="btn btn-outline-primary"><span class="oi oi-cloud-upload" title="Upload to OneDrive" aria-hidden="true"></span></button>
+        <h5 class="card-title">@Backup.DisplayName</h5>
+        <h6 class="card-subtitle text-muted">@(Backup.Date)</h6>
+        @if (Backup.Size > 0)
+        {
+            <span class="card-text">@Backup.Size MB</span>
+        }
+        <div class="collapse">
+            @if (Backup.Addons != null && Backup.Addons.Any())
+            {
+                <div class="card-text">
+                    <p>Addons:</p>
+                    <p>@string.Join(", ", Backup.Addons)</p>
+                </div>
+            }
+            @if (Backup.Folders != null && Backup.Folders.Any())
+            {
+                <div class="card-text">
+                    <p>Folders:</p>
+                    <p>@string.Join(", ", Backup.Folders)</p>
+                </div>
+            }
         </div>
     </div>
-</div>
-@code {
+    <div class="card-footer">
+        @*Upload Button*@
+        @if (@Backup.Location == BackupModel.BackupLocation.Local)
+        {
+            <button type="button" class="btn btn-sm m-1 btn-outline-primary"><span class="oi oi-cloud-upload" title="Upload to OneDrive">Upload</span></button>
+        }
 
+        @*Download Button*@
+        @if (@Backup.Location == BackupModel.BackupLocation.OneDrive)
+        {
+            <button type="button" class="btn btn-sm m-1 btn-outline-primary"><span class="oi oi-cloud-download" title="Download to Home Assistant">Download</span></button>
+        }
+        
+        @*Details Button*@
+        <button type="button" class="btn btn-sm m-1 btn-outline-primary" disabled="@detailsDisabled"><span class="oi oi-expand-down" title="Backup details">Details</span></button>
+    </div>
+</div>
+
+
+@code {
     [Parameter]
     public BackupModel Backup { get; set; }
 
+    private bool detailsDisabled => (Backup.Addons?.Count() > 0 || Backup.Folders?.Count() > 0) ? false : true;
     public string BackupTypeColor => Backup.Type.Equals("full", StringComparison.OrdinalIgnoreCase) ? "bg-info" : "bg-secondary";
 }
+

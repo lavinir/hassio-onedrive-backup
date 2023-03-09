@@ -5,6 +5,7 @@ using hassio_onedrive_backup.Storage;
 using hassio_onedrive_backup.Sync;
 using Microsoft.Extensions.FileProviders;
 using onedrive_backup;
+using onedrive_backup.Extensions;
 using onedrive_backup.Hass;
 using System.Collections;
 
@@ -38,7 +39,7 @@ namespace hassio_onedrive_backup
             IGraphHelper graphHelper = new GraphHelper(scopes, clientId);
             var addonInfo = hassIoClient.GetAddonInfo("local_hassio_onedrive_backup").Result;
             _pathBase = addonInfo.DataProperty.IngressUrl;
-            // ConsoleLogger.LogInfo($"Ingress Info. Entry: {addonInfo.DataProperty.IngressEntry}. URL: {addonInfo.DataProperty.IngressUrl}");
+            ConsoleLogger.LogInfo($"Ingress Info. Entry: {addonInfo.DataProperty.IngressEntry}. URL: {addonInfo.DataProperty.IngressUrl}");
 
             var builder = WebApplication.CreateBuilder(args);
 
@@ -88,6 +89,8 @@ namespace hassio_onedrive_backup
 
             app.UseStaticFiles();
             app.UseRouting();
+
+            app.UseHassUrlExtractor();
 
             app.MapBlazorHub();
             app.MapFallbackToPage("/_Host");

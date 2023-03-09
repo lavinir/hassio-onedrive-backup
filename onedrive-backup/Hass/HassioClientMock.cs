@@ -9,7 +9,47 @@ namespace hassio_onedrive_backup.Hass
 {
     internal class HassioClientMock : IHassioClient
     {
-        private List<Backup> _backups = new List<Backup>();
+        private List<Backup> _backups = new List<Backup>
+        {
+            new Backup
+            {
+                Compressed = true,
+                Date = DateTime.Now.AddDays(-10),
+                Name = "Mock1",
+                Protected = false,
+                Size = 1,
+                Slug = "Mock1",
+                Type = "partial",
+                Content = new Content
+                {
+                    Addons = new string[]
+                    {
+                        "Addon1", "Addon2"
+                    }
+                }
+            },
+            new Backup
+            {
+                Compressed = true,
+                Date = DateTime.Now.AddDays(-1),
+                Name = "Mock2",
+                Protected = false,
+                Size = 2,
+                Slug = "Mock2",
+                Type = "full",
+                Content = new Content
+                {
+                    Addons = new string[]
+                    {
+                        "Addon1", "Addon2"
+                    },
+                    Folders = new string[]
+                    {
+                        "Folder1"
+                    }
+                }
+            }
+        };
 
         public Task<bool> CreateBackupAsync(string backupName, bool appendTimestamp = true, bool compressed = true, string? password = null, IEnumerable<string>? folders = null, IEnumerable<string>? addons = null)
         {
@@ -20,7 +60,7 @@ namespace hassio_onedrive_backup.Hass
                 Compressed = compressed,
                 Name = finalBackupName,
                 Protected = !string.IsNullOrEmpty(password),
-                Type = folders == null && addons == null ? "Full" : "Partial",
+                Type = folders == null && addons == null ? "full" : "partial",
                 Date = DateTime.Now,
                 Slug = Guid.NewGuid().ToString()
             };

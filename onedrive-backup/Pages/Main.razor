@@ -22,7 +22,7 @@
     </div>
 </div>
 <div class="container">
-    <div class="row row-cols-1 row-cols-md-2 g-4">
+    <div class="row row-cols-1 row-cols-md-2 g-4 h-100">
         @foreach (var backup in Backups)
         {
             <div class="col">
@@ -36,42 +36,24 @@
 {
     private List<BackupModel> Backups => GetBackupModels();
 
-    private IEnumerable<BackupModel> _onedriveBackups = Enumerable.Empty<BackupModel>();
-
-    private IEnumerable<BackupModel> _localBackups = Enumerable.Empty<BackupModel>();
-
     protected override void OnInitialized()
     {
         base.OnInitialized();
-        GraphHelper.AuthStatusChangedEventHandler -= OnAuthStatusChanged;
-        GraphHelper.AuthStatusChangedEventHandler += OnAuthStatusChanged;
-        Orchestrator.BackupManager.OneDriveBackupsUpdated -= OnOneDriveBackupsUpdated;
-        Orchestrator.BackupManager.OneDriveBackupsUpdated += OnOneDriveBackupsUpdated;
-        Orchestrator.BackupManager.LocalBackupsUpdated -= OnLocalBackupsUpdated;
-        Orchestrator.BackupManager.LocalBackupsUpdated += OnLocalBackupsUpdated;
-    }
-
-    private async void OnOneDriveBackupsUpdated(IEnumerable<OnedriveBackup> onedriveBackups)
-    {
-        _onedriveBackups = onedriveBackups.Select(backup => backup.ToBackupModel());
-        await InvokeAsync(() =>
-        {
-            StateHasChanged();
-        });
-    }
-
-    private async void OnLocalBackupsUpdated(IEnumerable<Backup> localBackups)
-    {
-        _localBackups = localBackups.Select(backup => backup.ToBackupModel());
-        await InvokeAsync(() =>
-        {
-            StateHasChanged();
-        });
+        GraphHelper.AuthStatusChangedEventHandler -= OnStateChanged;
+        GraphHelper.AuthStatusChangedEventHandler += OnStateChanged;
+        Orchestrator.BackupManager.OneDriveBackupsUpdated -= OnStateChanged;
+        Orchestrator.BackupManager.OneDriveBackupsUpdated += OnStateChanged;
+        Orchestrator.BackupManager.LocalBackupsUpdated -= OnStateChanged;
+        Orchestrator.BackupManager.LocalBackupsUpdated += OnStateChanged;
     }
 
     private List<BackupModel> GetBackupModels()
-    {
-        var ret = new List<BackupModel>(_onedriveBackups);
+    {        
+        var ret = new List<BackupModel>();
+        var _localBackups = Orchestrator.BackupManager.LocalBackups?.Select(backup => backup.ToBackupModel()) ?? Enumerable.Empty<BackupModel>();
+        var _onedriveBackups = Orchestrator.BackupManager.OnlineBackups?.Select(backup => backup.ToBackupModel()) ?? Enumerable.Empty<BackupModel>();
+
+        ret.AddRange(_onedriveBackups);
         foreach (var localBackup in _localBackups)
         {
             if (_onedriveBackups.Any(oneDriveBackup => oneDriveBackup.Slug == localBackup.Slug))
@@ -86,7 +68,7 @@
 
         return ret;
     }
-    private async void OnAuthStatusChanged()
+    private async void OnStateChanged()
     {
         await InvokeAsync(() =>
         {

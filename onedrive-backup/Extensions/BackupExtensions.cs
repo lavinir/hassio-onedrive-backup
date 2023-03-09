@@ -16,7 +16,9 @@ namespace onedrive_backup.Extensions
                 Type = backup.Type,
                 Size = backup.Size,
                 IsProtected = backup.Protected,
-                Location = BackupModel.BackupLocation.Local
+                Location = BackupModel.BackupLocation.Local,
+                Addons = backup.Content.Addons,
+                Folders = backup.Content.Folders
             };
         }
 
@@ -30,7 +32,9 @@ namespace onedrive_backup.Extensions
                 Type = onedriveBackup.Type,
                 Size = onedriveBackup.Size,
                 IsProtected = onedriveBackup.IsProtected,
-                Location = BackupModel.BackupLocation.OneDrive
+                Location = BackupModel.BackupLocation.OneDrive,
+                Addons = onedriveBackup.Addons,
+                Folders = onedriveBackup.Folders
             };
         } 
     }

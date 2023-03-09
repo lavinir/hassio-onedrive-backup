@@ -1,0 +1,11 @@
+﻿.transition-visible {
+    overflow: hidden;
+    transition: transform 0.3s ease-out;
+    height: auto;
+    transform: scaleY(1);
+    transform-origin: top;
+}
+
+    .transition-visible.transition-collapsed {
+        transform: scaleY(0);
+    }

@@ -5,5 +5,7 @@ namespace onedrive_backup.Hass
     public class IngressSettings
     {
         public string IngressUrl { get; set; }
+
+        public string HeaderIngressPath { get; set; }
     }
 }

@@ -11,6 +11,8 @@
             Type = itemDescription.BackupType;
             IsProtected = itemDescription.IsProtected;
             Size = itemDescription.Size;
+            Addons = itemDescription.Addons;
+            Folders = itemDescription.Folders;
         }
 
         public string Slug { get; }
@@ -27,5 +29,8 @@
 
         public float Size { get; set; }
 
+        public IEnumerable<string> Addons { get; set; }
+
+        public IEnumerable<string> Folders { get; set; }
     }
 }

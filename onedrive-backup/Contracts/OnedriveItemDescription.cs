@@ -19,5 +19,9 @@ namespace hassio_onedrive_backup.Contracts
         public float Size { get; set; }
 
         public string BackupType { get; set; }
+
+        public IEnumerable<string> Addons { get; set; }
+
+        public IEnumerable<string> Folders { get; set; }
     }
 }

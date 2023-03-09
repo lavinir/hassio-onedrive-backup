@@ -80,7 +80,7 @@
                 else
                 {
                     <div class="progress">
-                        <div class="progress-bar progress-bar-animated bg-primary" role="progressbar" style="width: @(HassOnedriveEntityState.UploadPercentage)%">@HassOnedriveEntityState.UploadPercentage</div>
+                        <div class="progress-bar progress-bar-animated bg-primary" role="progressbar" style="width: @(HassOnedriveEntityState.UploadPercentage)%">@(HassOnedriveEntityState.UploadPercentage)%</div>
                     </div>
                 }
             </div>
@@ -99,7 +99,7 @@
                     else
                     {
                         <div class="progress">
-                            <div class="progress-bar progress-bar-animated bg-primary" role="progressbar" style="width: @(HassOnedriveFileSyncEntityState.UploadPercentage)%">@HassOnedriveFileSyncEntityState.UploadPercentage</div>
+                            <div class="progress-bar progress-bar-animated bg-primary" role="progressbar" style="width: @(HassOnedriveFileSyncEntityState.UploadPercentage)%">@(HassOnedriveFileSyncEntityState.UploadPercentage)%</div>
                         </div>
                     }
                 </div>

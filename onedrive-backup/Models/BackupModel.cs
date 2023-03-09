@@ -18,7 +18,11 @@
 
         public float Size { get; set; }
 
-        public string DisplayName => string.IsNullOrEmpty(Name) ? OneDriveFileName : Name;
+        public IEnumerable<string> Addons { get; set; }
+
+        public IEnumerable<string> Folders { get; set; }
+
+        public string DisplayName => string.IsNullOrEmpty(Name) ? Path.GetFileNameWithoutExtension(OneDriveFileName) : Name;
 
         public enum BackupLocation
         {

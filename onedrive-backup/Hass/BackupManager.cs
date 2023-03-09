@@ -16,6 +16,9 @@ namespace hassio_onedrive_backup.Hass
         private BitArray _allowedHours;
         private bool _isExecuting = false;
 
+        public List<Backup> LocalBackups { get; private set; }
+        public List<OnedriveBackup> OnlineBackups { get; private set; }
+
         public BackupManager(IServiceProvider serviceProvider, BitArray allowedHours)
         {
             _addonOptions = serviceProvider.GetService<AddonOptions>();
@@ -25,9 +28,9 @@ namespace hassio_onedrive_backup.Hass
             _allowedHours = allowedHours;
         }
 
-        public event Action<IEnumerable<Backup>>? LocalBackupsUpdated;
+        public event Action? LocalBackupsUpdated;
 
-        public event Action<IEnumerable<OnedriveBackup>>? OneDriveBackupsUpdated;
+        public event Action? OneDriveBackupsUpdated;
 
         public async Task PerformBackupsAsync()
         {
@@ -43,7 +46,7 @@ namespace hassio_onedrive_backup.Hass
 
             // Get existing local backups
             ConsoleLogger.LogInfo("Retrieving existing local backups...");
-            var localBackups = await _hassIoClient.GetBackupsAsync(IsMonitoredBackup);
+            var localBackups = await GetLocalBackups();
 
             // Get existing online backups
             ConsoleLogger.LogInfo("Retrieving existing online backups...");
@@ -93,7 +96,7 @@ namespace hassio_onedrive_backup.Hass
                     //Refresh local backup list
                     if (backupCreated)
                     {
-                        localBackups = await _hassIoClient.GetBackupsAsync(IsMonitoredBackup);
+                        localBackups = await GetLocalBackups();
                     }
                 }
             }
@@ -101,12 +104,23 @@ namespace hassio_onedrive_backup.Hass
             // Get Online backup candidates
             var onlineBackupCandiates = await GetOnlineBackupCandidatesAsync(localBackups);
 
-            // Get Online Backups Candidates that have not yet been uploaded
-            var backupsToUpload = onlineBackupCandiates
-                .Take(_addonOptions.MaxOnedriveBackups)
-                .Where(backup => onlineBackups.Any(onlineBackup => onlineBackup.Slug.Equals(backup.Slug, StringComparison.OrdinalIgnoreCase)) == false)
-                .ToList();
+            var uploadCandidates = onlineBackupCandiates
+                .Select(bc => new { Slug = bc.Slug, Date = bc.Date }).Union(onlineBackups.Select(ob => new { Slug = ob.Slug, Date = ob.BackupDate }))
+                .OrderByDescending(backup => backup.Date)
+                .Take(_addonOptions.MaxOnedriveBackups).ToList();
 
+            // Get Online Backups Candidates that have not yet been uploaded
+            var backupsToUpload = new List<Backup>();
+            foreach (var backupId in uploadCandidates)
+            {
+                if (onlineBackups.Any(ob => ob.Slug == backupId.Slug))
+                {
+                    continue;
+                }
+
+                backupsToUpload.Add(onlineBackupCandiates.Single(bc => bc.Slug == backupId.Slug));
+            }
+                
             // Upload backups
             if (backupsToUpload.Any())
             {
@@ -209,7 +223,7 @@ namespace hassio_onedrive_backup.Hass
             await _hassEntityState.UpdateBackupEntityInHass();
             var onlineBackups = await GetOnlineBackupsAsync("*");
             var onlineInstanceBackups = onlineBackups.Where(backup => string.Equals(backup.InstanceName, _addonOptions.InstanceName, StringComparison.OrdinalIgnoreCase)).ToList();
-            var localBackups = await _hassIoClient.GetBackupsAsync(IsMonitoredBackup);
+            var localBackups = await GetLocalBackups();
 
             if (onlineInstanceBackups.Count > 0)
             {
@@ -285,7 +299,9 @@ namespace hassio_onedrive_backup.Hass
                 InstanceName = _addonOptions.InstanceName,
                 BackupType = backup.Type,
                 IsProtected = backup.Protected,
-                Size = backup.Size
+                Size = backup.Size,
+                Addons = backup.Content.Addons,
+                Folders = backup.Content.Folders
             };
 
             return JsonConvert.SerializeObject(description);
@@ -294,10 +310,10 @@ namespace hassio_onedrive_backup.Hass
         private async Task UpdateHassEntity()
         {
             var now = DateTimeHelper.Instance!.Now;
-            var localBackups = await _hassIoClient.GetBackupsAsync(IsMonitoredBackup);
-            LocalBackupsUpdated?.Invoke(localBackups);
+            var localBackups = await GetLocalBackups();
+            LocalBackupsUpdated?.Invoke();
             var onlineBackups = await GetOnlineBackupsAsync(_addonOptions.InstanceName);
-            OneDriveBackupsUpdated?.Invoke(onlineBackups);
+            OneDriveBackupsUpdated?.Invoke();
             _hassEntityState.BackupsInHomeAssistant = localBackups.Count;
             _hassEntityState.BackupsInOnedrive = onlineBackups.Count;
             _hassEntityState.LastLocalBackupDate = localBackups.Any() ? localBackups.Max(backup => backup.Date) : null;
@@ -350,7 +366,8 @@ namespace hassio_onedrive_backup.Hass
             {
                 onlineBackups = onlineBackups.Where(item => string.Equals(instanceName, item.InstanceName, StringComparison.OrdinalIgnoreCase)).ToList();
             }
-            
+
+            OnlineBackups = onlineBackups;
             return onlineBackups;
         }
 
@@ -381,6 +398,13 @@ namespace hassio_onedrive_backup.Hass
                 .OrderByDescending(backup => backup.Date);
 
             return Task.FromResult(filteredLocalBackups.ToList());
+        }
+
+        private async Task<List<Backup>> GetLocalBackups()
+        {
+            var ret = await _hassIoClient.GetBackupsAsync(IsMonitoredBackup);
+            LocalBackups = ret;
+            return ret;
         }
 
         private bool IsMonitoredBackup(Backup backup)
