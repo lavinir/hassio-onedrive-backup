@@ -18,7 +18,7 @@
 
         public float Size { get; set; }
 
-        public int MyProperty { get; set; }
+        public string DisplayName => string.IsNullOrEmpty(Name) ? FileName : Name;
 
     }
 }

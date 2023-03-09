@@ -2,9 +2,14 @@
 
 <div class="card text-white bg-light mb-3 w-100" style="min-width: 16rem">
     <div class="card-header text-dark">
-        @Backup. <span class="badge rounded-pill @SummaryBadgeColor">@SummaryBadgeText</span>
+        @Backup.DisplayName <span class="badge rounded-pill @BackupTypeColor">@Backup.Type</span>
     </div>
     <div class="card-body bg-light text-body">
+        <div class="row">
+            <div class="col">
+
+            </div>
+        </div>
     </div>
     <div class="card-footer">
 
@@ -14,4 +19,6 @@
 
     [Parameter]
     public BackupModel Backup { get; set; }
+
+    public string BackupTypeColor => Backup.Type.Equals("full", StringComparison.OrdinalIgnoreCase) ? "bg-primary" : "bg-secondary";
 }
