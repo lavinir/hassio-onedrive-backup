@@ -83,7 +83,7 @@ namespace hassio_onedrive_backup.Hass
 
         public Task<string> DownloadBackupAsync(string backupSlug)
         {
-            string backupFile = $"./mockBackup_{Guid.NewGuid()}.tar";
+            string backupFile = $"./{backupSlug}.tar";
             
             // 1MB File
             byte[] data = new byte[1 * 1024 * 1024];
