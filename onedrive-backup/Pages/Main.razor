@@ -33,11 +33,8 @@
     protected override void OnInitialized()
     {
         base.OnInitialized();
-        GraphHelper.AuthStatusChangedEventHandler -= OnStateChanged;
         GraphHelper.AuthStatusChangedEventHandler += OnStateChanged;
-        Orchestrator.BackupManager.OneDriveBackupsUpdated -= OnStateChanged;
         Orchestrator.BackupManager.OneDriveBackupsUpdated += OnStateChanged;
-        Orchestrator.BackupManager.LocalBackupsUpdated -= OnStateChanged;
         Orchestrator.BackupManager.LocalBackupsUpdated += OnStateChanged;
     }
 
@@ -60,6 +57,7 @@
             ret.Add(localBackup);
         }
 
+        ret = ret.OrderByDescending(backup => backup.Date).ToList();
         return ret;
     }
     private async void OnStateChanged()

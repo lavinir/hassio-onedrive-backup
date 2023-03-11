@@ -6,94 +6,135 @@
 @inject AddonOptions AddonOptions;
 
 <div class="card text-white bg-light mb-3 w-100 h-100" style="min-width: 16rem">
-    <div class="card-header text-dark">
-        @**************Add Badges*****************@
-        @if (Backup.Type != null)
-        {
-            <span class="badge rounded-pill m-1 @BackupTypeColor">@Backup.Type</span>
-        }
-        @if (Backup.Location == BackupModel.BackupLocation.OneDrive || Backup.Location == BackupModel.BackupLocation.Both)
-        {
-            <span class="badge rounded-pill m-1 bg-primary">OneDrive</span>
-        }
-        @if (Backup.Location == BackupModel.BackupLocation.Local || Backup.Location == BackupModel.BackupLocation.Both)
-        {
-            <span class="badge rounded-pill m-1 bg-dark">Local</span>
-        }
-        @if (Backup.IsProtected)
-        {
-            <span class="badge rounded-pill m-1 bg-dark">Protected</span>
-        }
-        @***************@
-    </div>
-    <div class="card-body bg-light text-body">
-        <h5 class="card-title">@Backup.DisplayName</h5>
-        <h6 class="card-subtitle text-muted">@(Backup.Date)</h6>
-        @if (Backup.Size > 0)
-        {
-            <span class="card-text">@Backup.Size MB</span>
-        }
-        <div class="collapse" id="details-@Backup.Slug">
-            @if (Backup.Addons != null && Backup.Addons.Any())
-            {
-                <div class="card-text">
-                    <p><strong>Addons:</strong>@string.Join(", ", Backup.Addons)</p>
-                </div>
-            }
-            @if (Backup.Folders != null && Backup.Folders.Any())
-            {
-                <div class="card-text">
-                    <p><strong>Folders:</strong>@string.Join(", ", Backup.Folders)</p>
-                </div>
-            }
-        </div>
-    </div>
-    <div class="card-footer">
-        @*Upload Button*@
-        @if (@Backup.Location == BackupModel.BackupLocation.Local)
-        {
-            <button type="button" @onclick="UploadBackup" class="btn btn-sm m-1 btn-outline-primary" disabled="@uploading">
-                @if (@uploading)
-                {
-                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                    <span class="oi oi-cloud-upload" title="Upload to OneDrive">Upload</span>
-                }
-                else
-                {
-                    <span class="oi oi-cloud-upload" title="Upload to OneDrive">Upload</span>
-                }
-            </button>
-        }
+	<div class="card-header text-dark">
+		@**************Add Badges*****************@
+		@if (Backup.Type != null)
+		{
+			<span class="badge rounded-pill m-1 @BackupTypeColor">@Backup.Type</span>
+		}
+		@if (Backup.Location == BackupModel.BackupLocation.OneDrive || Backup.Location == BackupModel.BackupLocation.Both)
+		{
+			<span class="badge rounded-pill m-1 bg-primary">OneDrive</span>
+		}
+		@if (Backup.Location == BackupModel.BackupLocation.Local || Backup.Location == BackupModel.BackupLocation.Both)
+		{
+			<span class="badge rounded-pill m-1 bg-dark">Local</span>
+		}
+		@if (Backup.IsProtected)
+		{
+			<span class="badge rounded-pill m-1 bg-dark">Protected</span>
+		}
+		@***************@
+	</div>
+	<div class="card-body bg-light text-body">
+		<h5 class="card-title">@Backup.DisplayName</h5>
+		<h6 class="card-subtitle text-muted">@(Backup.Date)</h6>
+		@if (Backup.Size > 0)
+		{
+			<span class="card-text">@Backup.Size MB</span>
+		}
+		<div class="collapse" id="details-@Backup.Slug">
+			@if (Backup.Addons != null && Backup.Addons.Any())
+			{
+				<div class="card-text">
+					<p><strong>Addons:</strong>@string.Join(", ", Backup.Addons)</p>
+				</div>
+			}
+			@if (Backup.Folders != null && Backup.Folders.Any())
+			{
+				<div class="card-text">
+					<p><strong>Folders:</strong>@string.Join(", ", Backup.Folders)</p>
+				</div>
+			}
+		</div>
+	</div>
+	<div class="card-footer">
+		@*Upload Button*@
+		@if (@Backup.Location == BackupModel.BackupLocation.Local)
+		{
+			<button type="button" @onclick="UploadBackup" class="btn btn-sm m-1 btn-outline-primary" disabled="@uploading">
+				@if (uploading)
+				{
+					<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+					<span class="oi oi-cloud-upload" title="Upload to OneDrive">Uploading @uploadPercent</span>
+				}
+				else
+				{
+					<span class="oi oi-cloud-upload" title="Upload to OneDrive">Upload</span>
+				}
+			</button>
+		}
 
-        @*Download Button*@
-        @if (@Backup.Location == BackupModel.BackupLocation.OneDrive)
-        {
-            <button type="button" class="btn btn-sm m-1 btn-outline-primary"><span class="oi oi-cloud-download" title="Download to Home Assistant">Download</span></button>
-        }
-        
-        @*Details Button*@
-        <button type="button" class="btn btn-sm m-1 btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#details-@Backup.Slug" disabled="@detailsDisabled"><span class="oi oi-expand-down" title="Backup details">Details</span></button>
-    </div>
+		@*Download Button*@
+		@if (@Backup.Location == BackupModel.BackupLocation.OneDrive)
+		{
+			<button type="button" @onclick="DownloadBackup" class="btn btn-sm m-1 btn-outline-primary" disabled="@downloading">
+				@if (downloading)
+				{
+					<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+					<span class="oi oi-cloud-download" title="Download to Home Assistant">Downloading @downloadPercent%</span>
+				}
+				else
+				{
+					<span class="oi oi-cloud-download" title="Download to Home Assistant">Download</span>
+				}
+			</button>
+		}
+
+		@*Details Button*@
+		<button type="button" class="btn btn-sm m-1 btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#details-@Backup.Slug" disabled="@detailsDisabled"><span class="oi oi-expand-down" title="Backup details">Details</span></button>
+	</div>
 </div>
 
 
 @code {
-    [Parameter]
-    public BackupModel Backup { get; set; }
+	[Parameter]
+	public BackupModel Backup { get; set; }
 
-    public string BackupTypeColor => Backup.Type.Equals("full", StringComparison.OrdinalIgnoreCase) ? "bg-info" : "bg-secondary";
+	public string BackupTypeColor => Backup.Type.Equals("full", StringComparison.OrdinalIgnoreCase) ? "bg-info" : "bg-secondary";
 
-    private bool detailsDisabled => (Backup.Addons?.Count() > 0 || Backup.Folders?.Count() > 0) ? false : true;
-    private bool uploading = false;
-    private bool downloading = false;
+	private bool detailsDisabled => (Backup.Addons?.Count() > 0 || Backup.Folders?.Count() > 0) ? false : true;
+	private bool uploading = false;
+	private bool downloading = false;
+	private int uploadPercent = 0;
+	private int downloadPercent = 0;
 
-    private async void UploadBackup()
-    {
-        uploading = true;
-        var backup = Backup.ToBackup();
-        await Orchestrator.BackupManager.UploadLocalBackupToOneDrive(backup);
-        uploading = false;
-        await Orchestrator.BackupManager.GetOnlineBackupsAsync(AddonOptions.InstanceName);
-    }
+	private async void UploadBackup()
+	{
+		uploading = true;
+		uploadPercent = 0;
+		var backup = Backup.ToBackup();
+		await Orchestrator.BackupManager.UploadLocalBackupToOneDrive(backup, updateHassEntityState: false, progressCallback: (prog) =>
+		{
+			uploadPercent = prog ?? 0;
+			TriggerStateChanged();
+
+		});
+		uploading = false;
+		await Orchestrator.BackupManager.GetOnlineBackupsAsync(AddonOptions.InstanceName);
+	}
+
+	private async void DownloadBackup()
+	{
+		downloading = true;
+		downloadPercent = 0;
+		var onedriveBackup = Backup.ToOneDriveBackup();
+		await Orchestrator.BackupManager.DownloadBackupFromOneDrive(onedriveBackup, updateHassEntityState: false, progressCallback: (prog) =>
+		{
+			downloadPercent = prog ?? 0;
+			TriggerStateChanged();
+		});
+
+		downloading = false;
+		await Orchestrator.BackupManager.GetLocalBackups();
+	}
+
+	private async void TriggerStateChanged()
+	{
+		await InvokeAsync(() =>
+	{
+		StateHasChanged();
+	});
+
+	}
 }
-

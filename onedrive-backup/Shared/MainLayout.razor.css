@@ -48,8 +48,8 @@ footer p {
 
     ::deep nav.navbar .nav-link:hover {
         color: #0066CC;
-        border-bottom: 2px solid #0066CC;
-        transition: border-bottom-color 0.15s
+        /*border-bottom: 2px solid #0066CC;*/
+        /*transition: border-bottom-color 0.15s*/
     }
 
 ::deep .nav-item .nav-link.active {

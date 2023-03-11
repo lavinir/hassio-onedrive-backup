@@ -10,24 +10,27 @@
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
-        <div class="nav-item">
+        <div class="nav-item m-1">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="oi oi-home" aria-hidden="true"></span> Overview
+                Dashboard
             </NavLink>
         </div>
-        <div class="nav-item">
+        <div class="nav-item m-1">
             <NavLink class="nav-link" href="about" Match="NavLinkMatch.All">
-                <span class="oi oi-question-mark" aria-hidden="true"></span> About
+                About
             </NavLink>
         </div>
     </nav>
     @if (GraphHelper.IsAuthenticated == false)
     {
         <div class="alert alert-danger">
-            <strong>Not logged in!</strong> To sign in to OneDrive, navigate to <a href="@GraphHelper.AuthUrl" class="alert-link" target="_blank">@GraphHelper.AuthUrl</a> and enter the code @GraphHelper.AuthCode to authenticate.
-            <button type="button" class="btn btn-sm m-1 btn-light" @onclick="CopyCodeToClipboard"><span class="oi oi-clipboard" title="Copy code to clipboard"></span></button>
+            <strong>Not logged in!</strong> To sign in to OneDrive, navigate to <a href="@GraphHelper.AuthUrl" class="alert-link" target="_blank">@GraphHelper.AuthUrl</a> and enter the code <i>
+                @GraphHelper.AuthCode</i>
+            <button type="button" class="btn btn-sm m-1 btn-light" @onclick="CopyCodeToClipboard"><span class="oi oi-clipboard" title="Copy code to clipboard"></span></button> to authenticate.
         </div>
     }
+
+    <div id="alertPlaceholder"></div>
 </div>
 
 <div class="container">
@@ -42,7 +45,6 @@
     protected override void OnInitialized()
     {
         base.OnInitialized();
-        GraphHelper.AuthStatusChangedEventHandler -= OnStateChanged;
         GraphHelper.AuthStatusChangedEventHandler += OnStateChanged;
     }
 
