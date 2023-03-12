@@ -43,7 +43,7 @@ namespace hassio_onedrive_backup
 
             var builder = WebApplication.CreateBuilder(args);
 
-            builder.Logging.AddConsole();
+            // builder.Logging.AddConsole();
 
             // Add services to the container.
             builder.Services.AddRazorPages();

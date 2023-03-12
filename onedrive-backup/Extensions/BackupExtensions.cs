@@ -17,8 +17,8 @@ namespace onedrive_backup.Extensions
                 Size = backup.Size,
                 IsProtected = backup.Protected,
                 Location = BackupModel.BackupLocation.Local,
-                Addons = backup.Content.Addons,
-                Folders = backup.Content.Folders
+                Addons = backup.Content?.Addons ?? Enumerable.Empty<string>(),
+                Folders = backup.Content?.Folders ?? Enumerable.Empty<string>()
             };
         }
 

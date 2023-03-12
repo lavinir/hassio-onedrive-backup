@@ -19,5 +19,6 @@
       "recursive": true
     }
   ],
-  "file_sync_remove_deleted": true
+  "file_sync_remove_deleted": true,
+  "backup_instance_name" :  "LocalTest"
 }

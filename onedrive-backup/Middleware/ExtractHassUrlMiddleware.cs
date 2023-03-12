@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Primitives;
+﻿using hassio_onedrive_backup;
+using Microsoft.Extensions.Primitives;
 using onedrive_backup.Hass;
 
 namespace onedrive_backup.Middleware
@@ -17,9 +18,12 @@ namespace onedrive_backup.Middleware
         public async Task InvokeAsync(HttpContext context)
         {
             const string HeaderKeyName = "X-Ingress-Path";
-            context.Request.Headers.TryGetValue(HeaderKeyName, out StringValues headerValue);
-            _ingressSettings.HeaderIngressPath = headerValue.ToString();
-            await _next(context);
+            if (context.Request.Headers.TryGetValue(HeaderKeyName, out StringValues headerValue))
+            {
+				_ingressSettings.HeaderIngressPath = headerValue.ToString();
+                ConsoleLogger.LogInfo($"X-Ingress-Path: {_ingressSettings.HeaderIngressPath}");
+			}
+			await _next(context);
         }
     }
 }

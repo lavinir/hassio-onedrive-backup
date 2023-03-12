@@ -1,4 +1,4 @@
-﻿@using hassio_onedrive_backup.Graph;
+@using hassio_onedrive_backup.Graph;
 @inherits LayoutComponentBase
 @inject NavigationManager NavigationManager
 @inject IGraphHelper GraphHelper
@@ -9,7 +9,7 @@
         <a class="navbar-brand" href="#">OneDrive Backup</a>
         <div class="nav-item">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-               Overview
+                Dashboard
             </NavLink>
         </div>
         <div class="nav-item">
@@ -21,10 +21,13 @@
     @if (GraphHelper.IsAuthenticated == false)
     {
         <div class="alert alert-danger">
-            <strong>Not logged in!</strong> To sign in to OneDrive, navigate to <a href="@GraphHelper.AuthUrl" class="alert-link" target="_blank">@GraphHelper.AuthUrl</a> and enter the code @GraphHelper.AuthCode to authenticate.
-            <button type="button" class="btn btn-sm m-1 btn-light" @onclick="CopyCodeToClipboard"><span class="oi oi-clipboard" title="Copy code to clipboard"></span></button>
+            <strong>Not logged in!</strong> To sign in to OneDrive, navigate to <a href="@GraphHelper.AuthUrl" class="alert-link" target="_blank">@GraphHelper.AuthUrl</a> and enter the code <i>
+                @GraphHelper.AuthCode</i>
+            <button type="button" class="btn btn-sm m-1 btn-light" @onclick="CopyCodeToClipboard"><span class="oi oi-clipboard" title="Copy code to clipboard"></span></button> to authenticate.
         </div>
     }
+
+    <div id="alertPlaceholder"></div>
 </div>
 
 <div class="container" style="padding-bottom: 2rem">
@@ -39,7 +42,6 @@
     protected override void OnInitialized()
     {
         base.OnInitialized();
-        GraphHelper.AuthStatusChangedEventHandler -= OnStateChanged;
         GraphHelper.AuthStatusChangedEventHandler += OnStateChanged;
     }
 
@@ -55,5 +57,4 @@
             StateHasChanged();
         });
     }
-
 }

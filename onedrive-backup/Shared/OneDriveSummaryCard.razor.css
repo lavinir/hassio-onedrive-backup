@@ -1,0 +1,14 @@
+﻿@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+span.oi-reload.refreshing {
+    display: inline-block;
+    animation: rotate 2s linear infinite;
+}
