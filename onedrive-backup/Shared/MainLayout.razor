@@ -4,20 +4,17 @@
 @inject IGraphHelper GraphHelper
 @inject IJSRuntime JS
 
-<div class="container-fluid">
+<div class="container-fluid p-1 pb-5">
     <nav class="navbar navbar-expand-lg">
         <a class="navbar-brand" href="#">OneDrive Backup</a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
         <div class="nav-item">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="oi oi-home" aria-hidden="true"></span> Overview
+               Overview
             </NavLink>
         </div>
         <div class="nav-item">
             <NavLink class="nav-link" href="about" Match="NavLinkMatch.All">
-                <span class="oi oi-question-mark" aria-hidden="true"></span> About
+                About
             </NavLink>
         </div>
     </nav>
@@ -30,7 +27,7 @@
     }
 </div>
 
-<div class="container">
+<div class="container" style="padding-bottom: 2rem">
     @Body
 </div>
 
