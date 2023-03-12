@@ -5,6 +5,16 @@
 @inject IJSRuntime JS
 
 <div class="container-fluid p-1 pb-5">
+    @if (GraphHelper.IsAuthenticated == false)
+    {
+        <div class="alert alert-danger" role="alert" style="padding:1px;margin-bottom:1px;">
+            <strong>Not logged in!</strong> To sign in to OneDrive, navigate to <a href="@GraphHelper.AuthUrl" class="alert-link" target="_blank">@GraphHelper.AuthUrl</a> and enter the code <i>
+                @GraphHelper.AuthCode
+            </i>
+            <button type="button" class="btn btn-sm m-1 btn-light" @onclick="CopyCodeToClipboard"><span class="oi oi-clipboard" title="Copy code to clipboard"></span></button> to authenticate.
+        </div>
+    }
+
     <nav class="navbar navbar-expand-lg">
         <a class="navbar-brand" href="#">OneDrive Backup</a>
         <div class="nav-item">
@@ -18,15 +28,6 @@
             </NavLink>
         </div>
     </nav>
-    @if (GraphHelper.IsAuthenticated == false)
-    {
-        <div class="alert alert-danger">
-            <strong>Not logged in!</strong> To sign in to OneDrive, navigate to <a href="@GraphHelper.AuthUrl" class="alert-link" target="_blank">@GraphHelper.AuthUrl</a> and enter the code <i>
-                @GraphHelper.AuthCode</i>
-            <button type="button" class="btn btn-sm m-1 btn-light" @onclick="CopyCodeToClipboard"><span class="oi oi-clipboard" title="Copy code to clipboard"></span></button> to authenticate.
-        </div>
-    }
-
     <div id="alertPlaceholder"></div>
 </div>
 
@@ -35,6 +36,7 @@
 </div>
 
 <footer>
+    <a href="https://www.buymeacoffee.com/snirlavis" target="_blank"><img class="mx-1" src="bmc/bmc-button.svg" alt="Buy Me A Coffee" style="height: 1.8rem !important;"></a>    
     <p>&copy; Nir Lavi</p>
 </footer>
 

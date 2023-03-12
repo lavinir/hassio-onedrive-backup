@@ -1,4 +1,5 @@
 ﻿@using hassio_onedrive_backup.Contracts;
+@using hassio_onedrive_backup.Graph;
 @using hassio_onedrive_backup.Hass;
 @using hassio_onedrive_backup;
 @inject IJSRuntime JS
@@ -7,6 +8,7 @@
 @inject HassOnedriveFreeSpaceEntityState HassOnedriveFreeSpaceEntityState
 @inject HassOnedriveFileSyncEntityState HassOnedriveFileSyncEntityState
 @inject Orchestrator Orchestrator
+@inject IGraphHelper GraphHelper
 
 <div class="card text-white bg-light mb-3 w-100" style="min-width: 16rem">
 	<div class="card-header text-dark">
@@ -20,19 +22,22 @@
 					</div>
 				}
 			</div>
-			<div class="col text-end">
-				<button type="button" @onclick="RefreshData" class="btn btn-sm btn-primary" disabled="@refreshingData">
-					<span class="oi oi-reload @(refreshingData ? "refreshing" : string.Empty)" title="Refresh Backups Data" aria-hidden="true"></span>
-				</button>
+			@if (GraphHelper.IsAuthenticated == true)
+			{
+				<div class="col text-end">
+					<button type="button" @onclick="RefreshData" class="btn btn-sm btn-primary" disabled="@refreshingData">
+						<span class="oi oi-reload @(refreshingData ? "refreshing" : string.Empty)" title="Refresh Backups Data" aria-hidden="true"></span>
+					</button>
 
-				<button type="button" @onclick="TriggerBackup" class="btn btn-sm btn-primary" disabled="@onDemandBackup">
-					<span class="card-text" title="Trigger backup now">Trigger Backup</span>
-					@if (onDemandBackup)
-					{
-						<span class="spinner-border spinner-border-sm m-1" role="status" aria-hidden="true"></span>
-					}
-				</button>
-			</div>
+					<button type="button" @onclick="TriggerBackup" class="btn btn-sm btn-primary" disabled="@onDemandBackup">
+						<span class="card-text" title="Trigger backup now">Trigger Backup</span>
+						@if (onDemandBackup)
+						{
+							<span class="spinner-border spinner-border-sm mx-1" role="status" aria-hidden="true"></span>
+						}
+					</button>
+				</div>
+			}
 		</div>
 	</div>
 	<div class="card-body bg-light text-body">
@@ -50,8 +55,8 @@
 				else
 				{
 					<div class="progress">
-						<div class="progress-bar bg-warning" role="progressbar" style="width: @(OneDriveUsedSpacePercentage)%" aria-valuenow="@OneDriveUsedSpacePercentage" data-bs-toggle="tooltip" title=@(OneDriveUsedSpace.ToString("N2") + " GB") aria-valuemin="0" aria-valuemax="100">Used: @(OneDriveUsedSpacePercentage)%</div>
-						<div class="progress-bar bg-success" role="progressbar" style="width: @(100 - OneDriveUsedSpacePercentage)%" aria-valuenow="@(100 - OneDriveUsedSpacePercentage)" data-bs-toggle="tooltip" title=@((HassOnedriveFreeSpaceEntityState.FreeSpaceGB ?? 0).ToString("N2") + " GB") aria-valuemin="0" aria-valuemax="100">Free: @(100 - OneDriveUsedSpacePercentage)%</div>
+						<div class="progress-bar bg-primary" role="progressbar" style="width: @(OneDriveUsedSpacePercentage)%" aria-valuenow="@OneDriveUsedSpacePercentage" data-bs-toggle="tooltip" title=@(OneDriveUsedSpace.ToString("N2") + " GB") aria-valuemin="0" aria-valuemax="100">Used: @(OneDriveUsedSpacePercentage)%</div>
+						<div class="progress-bar bg-secondary" role="progressbar" style="width: @(100 - OneDriveUsedSpacePercentage)%" aria-valuenow="@(100 - OneDriveUsedSpacePercentage)" data-bs-toggle="tooltip" title=@((HassOnedriveFreeSpaceEntityState.FreeSpaceGB ?? 0).ToString("N2") + " GB") aria-valuemin="0" aria-valuemax="100">Free: @(100 - OneDriveUsedSpacePercentage)%</div>
 					</div>
 				}
 			</div>
@@ -62,8 +67,8 @@
 			</div>
 			<div class="col">
 				<div class="progress">
-					<div class="progress-bar bg-success" role="progressbar" style="width: @(LocalBackupsPercentage)%" aria-valuenow="@LocalBackupsPercentage" aria-valuemin="0" aria-valuemax="@AddonOptions.MaxLocalBackups">@HassOnedriveEntityState.BackupsInHomeAssistant / @AddonOptions.MaxLocalBackups</div>
-					<div class="progress-bar bg-warning" role="progressbar" style="width: @(100 - LocalBackupsPercentage)%" aria-valuenow="@(100 - LocalBackupsPercentage)" aria-valuemin="0" aria-valuemax="@AddonOptions.MaxLocalBackups"></div>
+					<div class="progress-bar bg-primary" role="progressbar" style="width: @(LocalBackupsPercentage)%" aria-valuenow="@LocalBackupsPercentage" aria-valuemin="0" aria-valuemax="@AddonOptions.MaxLocalBackups">@HassOnedriveEntityState.BackupsInHomeAssistant / @AddonOptions.MaxLocalBackups</div>
+					<div class="progress-bar bg-secondary" role="progressbar" style="width: @(100 - LocalBackupsPercentage)%" aria-valuenow="@(100 - LocalBackupsPercentage)" aria-valuemin="0" aria-valuemax="@AddonOptions.MaxLocalBackups"></div>
 				</div>
 			</div>
 		</div>
@@ -73,8 +78,8 @@
 			</div>
 			<div class="col">
 				<div class="progress">
-					<div class="progress-bar bg-success" role="progressbar" style="width: @(OneDriveBackupsPercentage)%" aria-valuenow="@OneDriveBackupsPercentage" aria-valuemin="0" aria-valuemax="@AddonOptions.MaxOnedriveBackups">@HassOnedriveEntityState.BackupsInOnedrive / @AddonOptions.MaxOnedriveBackups</div>
-					<div class="progress-bar bg-warning" role="progressbar" style="width: @(100 - OneDriveBackupsPercentage)%" aria-valuenow="@(100 - OneDriveBackupsPercentage)" aria-valuemin="0" aria-valuemax="@AddonOptions.MaxOnedriveBackups"></div>
+					<div class="progress-bar bg-primary" role="progressbar" style="width: @(OneDriveBackupsPercentage)%" aria-valuenow="@OneDriveBackupsPercentage" aria-valuemin="0" aria-valuemax="@AddonOptions.MaxOnedriveBackups">@HassOnedriveEntityState.BackupsInOnedrive / @AddonOptions.MaxOnedriveBackups</div>
+					<div class="progress-bar bg-secondary" role="progressbar" style="width: @(100 - OneDriveBackupsPercentage)%" aria-valuenow="@(100 - OneDriveBackupsPercentage)" aria-valuemin="0" aria-valuemax="@AddonOptions.MaxOnedriveBackups"></div>
 				</div>
 			</div>
 		</div>
