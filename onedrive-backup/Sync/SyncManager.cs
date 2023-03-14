@@ -1,7 +1,7 @@
 ﻿using hassio_onedrive_backup.Contracts;
 using hassio_onedrive_backup.Graph;
 using hassio_onedrive_backup.Hass;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileSystemGlobbing;
 using Microsoft.Graph;
 using System.Collections;
 using System.Diagnostics;
@@ -19,6 +19,8 @@ namespace hassio_onedrive_backup.Sync
         private IHassioClient _hassIoClient;
         private BitArray _allowedHours;
         private HassOnedriveFileSyncEntityState _hassEntityState;
+		private IWebHostEnvironment? _environment;
+		private Matcher _fileMatcher;
 
         public SyncManager(IServiceProvider serviceProvider, BitArray allowedHours)
         {
@@ -26,7 +28,10 @@ namespace hassio_onedrive_backup.Sync
             _graphHelper = serviceProvider.GetService<IGraphHelper>();
             _hassIoClient = serviceProvider.GetService<IHassioClient>();
             _hassEntityState = serviceProvider.GetService<HassOnedriveFileSyncEntityState>();
+            _environment = serviceProvider.GetService<IWebHostEnvironment>();
             _allowedHours = allowedHours;
+            _fileMatcher = new();
+            _fileMatcher.AddIncludePatterns(_addonOptions.SyncPaths);
         }
 
         public async void SyncLoop(CancellationToken ct)
@@ -46,34 +51,18 @@ namespace hassio_onedrive_backup.Sync
                     _hassEntityState.State = HassOnedriveFileSyncEntityState.FileState.Syncing;
                     await _hassEntityState.UpdateBackupEntityInHass();
 
-                    var paths = _addonOptions.SyncPaths;
-                    foreach (var syncPath in paths)
+                    var matchingFiles = _fileMatcher.GetResultsInFullPath("/");
+                    foreach (var matchingFile in matchingFiles)
                     {
                         try
                         {
-                            string path = syncPath.Path;
-                            if (System.IO.Directory.Exists(path))
-                            {
-                                await SyncDirectory(path, recursive: syncPath.Recursive);
-                            }
-                            else if (System.IO.File.Exists(path))
-                            {
-                                await SyncFile(path);
-                            }
-                            else if (System.IO.Directory.Exists(Path.GetDirectoryName(path)))
-                            {
-                                await SyncDirectory(Path.GetDirectoryName(path), filter: Path.GetFileName(path), recursive: syncPath.Recursive);
-                            }
-                            else
-                            {
-                                ConsoleLogger.LogError($"Error: Path {path} was not found");
-                            }
-                        }
-                        catch (Exception ex)
+							await SyncFile(matchingFile);
+						}
+						catch (Exception ex)
                         {
-                            ConsoleLogger.LogError($"Error syncing path {syncPath}: {ex}");                            
-                        }
-                    }
+                            ConsoleLogger.LogError($"Error syncing file {matchingFile}: {ex}");
+						}
+					}
 
                     if (_addonOptions.FileSyncRemoveDeleted)
                     {
@@ -96,11 +85,22 @@ namespace hassio_onedrive_backup.Sync
         private async Task SyncFile(string path)
         {
             var fileInfo = new FileInfo(path);
+            if (fileInfo.Length == 0)
+            {
+                ConsoleLogger.LogWarning($"Skipping 0-byte file: {path}");
+                return;
+            }
+
             var now = DateTimeHelper.Instance!.Now;
             string fileHash = CalculateFileHash(path);
             var localFileSyncData = new SyncFileData(path, fileHash, fileInfo.Length);
 
             string remotePath = $"/{OneDriveFileSyncRootDir}{path}".Replace("//", "/").Replace(@"\\", @"\");
+            if (_environment!.IsDevelopment())
+            {
+                remotePath = remotePath.Replace(@"c:\", "/", StringComparison.OrdinalIgnoreCase);
+            }
+
             DriveItem? remoteFile = await _graphHelper.GetItemInAppFolderAsync(remotePath);                             
             bool requiresUpload = 
                 remoteFile == null 
@@ -141,18 +141,6 @@ namespace hassio_onedrive_backup.Sync
             }
         }
 
-        private async Task SyncDirectory(string path, string filter = "*", bool recursive = false)
-        {
-            var files = System.IO.Directory.GetFiles(path, filter, recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
-            foreach (var file in files)
-            {
-                if (System.IO.File.Exists(file))
-                {
-                     await SyncFile(file);
-                }
-            }            
-        }
-
         private async Task DeleteRemovedFilesFromOneDrive(string remotePath, string localPath)
         {
             var item = await _graphHelper.GetItemInAppFolderAsync(remotePath);
@@ -164,12 +152,7 @@ namespace hassio_onedrive_backup.Sync
             
             if (item.Folder != null)
             {
-                if (localPath.Equals("/") == false && _addonOptions.SyncPaths.Any(syncPath => (((syncPath.Path.StartsWith(localPath)) || (localPath.StartsWith(syncPath.Path) && syncPath.Recursive)) == false)))
-                {
-                    ConsoleLogger.LogInfo($"{localPath} is not included in Sync Paths. Deleting from OneDrive");
-                    await _graphHelper.DeleteItemFromAppFolderAsync(remotePath);
-                }
-                else if (System.IO.Directory.Exists(localPath) == false)
+                if (System.IO.Directory.Exists(localPath) == false)
                 {
                     ConsoleLogger.LogInfo($"{localPath} does not exist locally. Deleting from OneDrive");
                     await _graphHelper.DeleteItemFromAppFolderAsync(remotePath);
@@ -182,8 +165,15 @@ namespace hassio_onedrive_backup.Sync
                     {
                         await DeleteRemovedFilesFromOneDrive(Path.Combine(remotePath, folderItem.Name), localPath);
                     }
-                }
-            }
+
+                    // If no content left in folder then remove it
+					folderItems = await _graphHelper.GetItemsInAppFolderAsync(remotePath);
+                    if (folderItems.Count == 0)
+                    {
+						await _graphHelper.DeleteItemFromAppFolderAsync(remotePath);
+					}
+				}
+			}
             else if (item.File != null)
             {
                 if (System.IO.File.Exists(localPath) == false)

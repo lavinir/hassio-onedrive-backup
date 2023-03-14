@@ -50,11 +50,10 @@ schema:
   backup_allowed_hours: "str?"
   backup_instance_name: "match([a-zA-Z_]*)?"
   sync_paths:
-    - path: 'match(\/config[\/\w.*-]*|\/ssl[\/\w.*-]*|\/addons[\/\w.*-]*|\/media[\/\w.*-]*|\/share[\/\w.*-]*|)'
-      recursive: bool?
+    - 'match(\/config[\/\w.*-]*|\/ssl[\/\w.*-]*|\/addons[\/\w.*-]*|\/media[\/\w.*-]*|\/share[\/\w.*-]*|)'
   file_sync_remove_deleted: bool
   excluded_addons:
-    - name: str
+    - str
 
 ingress: true
 hassio_role : "manager"

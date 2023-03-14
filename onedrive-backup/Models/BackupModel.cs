@@ -1,4 +1,7 @@
-﻿namespace onedrive_backup.Models
+﻿
+using static hassio_onedrive_backup.Contracts.HassAddonsResponse;
+
+namespace onedrive_backup.Models
 {
     public class BackupModel
     {
@@ -18,7 +21,7 @@
 
         public float Size { get; set; }
 
-        public IEnumerable<string> Addons { get; set; }
+        public IEnumerable<Addon> Addons { get; set; }
 
         public IEnumerable<string> Folders { get; set; }
 

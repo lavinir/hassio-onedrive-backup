@@ -38,6 +38,8 @@ namespace hassio_onedrive_backup
             LocalStorage.InitializeTempStorage();
             IGraphHelper graphHelper = new GraphHelper(scopes, clientId);
             var addonInfo = hassIoClient.GetAddonInfo("local_hassio_onedrive_backup").Result;
+            var addons = hassIoClient.GetAddonsAsync().Result;
+            ConsoleLogger.LogInfo($"Addons: {string.Join(",", addons.Select(a => a.Name))}");
             _pathBase = addonInfo.DataProperty.IngressUrl;
             ConsoleLogger.LogInfo($"Ingress Info. Entry: {addonInfo.DataProperty.IngressEntry}. URL: {addonInfo.DataProperty.IngressUrl}");
 
@@ -48,7 +50,7 @@ namespace hassio_onedrive_backup
             // Add services to the container.
             builder.Services.AddRazorPages();
             builder.Services.AddServerSideBlazor();
-            builder.Services.AddSingleton(new IngressSettings { IngressUrl = _pathBase });
+            builder.Services.AddSingleton(new HassContext { IngressUrl = _pathBase, Addons = addons });
             builder.Services.AddSingleton<ComponentInitializedStateHelper>();
             builder.Services.AddSingleton(addonOptions);
             builder.Services.AddSingleton<IHassioClient>(hassIoClient);
@@ -63,6 +65,11 @@ namespace hassio_onedrive_backup
             builder.Services.AddSingleton<Orchestrator>();
             // builder.WebHost.UseStaticWebAssets();
             builder.WebHost.UseUrls("http://*:8099");
+
+            if (!builder.Environment.IsDevelopment())
+            {
+                builder.Logging.ClearProviders();
+			}
 
             var app = builder.Build();
             _orchestrator = app.Services.GetService<Orchestrator>();

@@ -7,9 +7,9 @@ namespace onedrive_backup.Middleware
     public class ExtractHassUrlMiddleware
     {
         private readonly RequestDelegate _next;
-        private IngressSettings _ingressSettings;
+        private HassContext _ingressSettings;
 
-        public ExtractHassUrlMiddleware(RequestDelegate next, IngressSettings ingressSettings)
+        public ExtractHassUrlMiddleware(RequestDelegate next, HassContext ingressSettings)
         {
             _next = next;
             _ingressSettings = ingressSettings;

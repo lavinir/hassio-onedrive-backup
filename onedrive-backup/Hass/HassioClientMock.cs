@@ -1,4 +1,5 @@
-﻿using hassio_onedrive_backup.Hass.Events;
+﻿using hassio_onedrive_backup.Contracts;
+using hassio_onedrive_backup.Hass.Events;
 using Newtonsoft.Json;
 using onedrive_backup.Contracts;
 using System.Diagnostics;
@@ -104,12 +105,12 @@ namespace hassio_onedrive_backup.Hass
             });
         }
 
-        public Task<List<string>> GetAddonsAsync()
+        public Task<List<HassAddonsResponse.Addon>> GetAddonsAsync()
         {
-            return Task.FromResult(new List<string>()
+            return Task.FromResult(new List<HassAddonsResponse.Addon>()
             {
-                "Addon1",
-                "Addon2"
+                new HassAddonsResponse.Addon{ Slug = "Addon1", Name = "First Addon" },
+                new HassAddonsResponse.Addon { Slug = "Addon2", Name = "Second Addon" }
             });
         }
 

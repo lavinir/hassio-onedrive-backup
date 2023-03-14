@@ -3,10 +3,12 @@
 @using hassio_onedrive_backup.Graph;
 @using hassio_onedrive_backup;
 @using onedrive_backup.Extensions;
+@using onedrive_backup.Hass;
 @using onedrive_backup.Models;
 @using static hassio_onedrive_backup.Contracts.HassBackupsResponse;
 @inject IGraphHelper GraphHelper
 @inject Orchestrator Orchestrator
+@inject HassContext HassContext;
 
 <div class="container">
     <div class="row justify-content-center">
@@ -41,8 +43,8 @@
     private List<BackupModel> GetBackupModels()
     {        
         var ret = new List<BackupModel>();
-        var _localBackups = Orchestrator.BackupManager.LocalBackups?.Select(backup => backup.ToBackupModel()) ?? Enumerable.Empty<BackupModel>();
-        var _onedriveBackups = Orchestrator.BackupManager.OnlineBackups?.Select(backup => backup.ToBackupModel()) ?? Enumerable.Empty<BackupModel>();
+        var _localBackups = Orchestrator.BackupManager.LocalBackups?.Select(backup => backup.ToBackupModel(HassContext)) ?? Enumerable.Empty<BackupModel>();
+        var _onedriveBackups = Orchestrator.BackupManager.OnlineBackups?.Select(backup => backup.ToBackupModel(HassContext)) ?? Enumerable.Empty<BackupModel>();
 
         ret.AddRange(_onedriveBackups);
         foreach (var localBackup in _localBackups)

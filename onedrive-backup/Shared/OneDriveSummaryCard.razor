@@ -17,7 +17,7 @@
 				Summary <span class="badge rounded-pill m-1 @SummaryBadgeColor">@SummaryBadgeText</span>
 				@if (HassOnedriveEntityState.State == HassOnedriveEntityState.BackupState.Syncing)
 				{
-					<div class="spinner-border text-primary" role="status">
+					<div class="spinner-border spinner-border-sm text-primary" role="status">
 						<span class="visually-hidden">Loading...</span>
 					</div>
 				}
@@ -25,12 +25,12 @@
 			@if (GraphHelper.IsAuthenticated == true)
 			{
 				<div class="col text-end">
-					<button type="button" @onclick="RefreshData" class="btn btn-sm btn-primary" disabled="@refreshingData">
-						<span class="oi oi-reload @(refreshingData ? "refreshing" : string.Empty)" title="Refresh Backups Data" aria-hidden="true"></span>
+					<button type="button" @onclick="RefreshData" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" data-bs-title="Refresh Backups Data" disabled="@refreshingData">
+						<span class="oi oi-reload @(refreshingData ? "refreshing" : string.Empty)" aria-hidden="true"></span>
 					</button>
 
-					<button type="button" @onclick="TriggerBackup" class="btn btn-sm btn-primary" disabled="@onDemandBackup">
-						<span class="card-text" title="Trigger backup now">Trigger Backup</span>
+					<button type="button" @onclick="TriggerBackup" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" data-bs-title="Trigger a backup now" disabled="@onDemandBackup">
+						<span class="card-text">Trigger Backup</span>
 						@if (onDemandBackup)
 						{
 							<span class="spinner-border spinner-border-sm mx-1" role="status" aria-hidden="true"></span>
@@ -55,7 +55,7 @@
 				else
 				{
 					<div class="progress">
-						<div class="progress-bar bg-primary" role="progressbar" style="width: @(OneDriveUsedSpacePercentage)%" aria-valuenow="@OneDriveUsedSpacePercentage" data-bs-toggle="tooltip" title=@(OneDriveUsedSpace.ToString("N2") + " GB") aria-valuemin="0" aria-valuemax="100">Used: @(OneDriveUsedSpacePercentage)%</div>
+						<div class="progress-bar @FreeSpaceColor" role="progressbar" style="width: @(OneDriveUsedSpacePercentage)%" aria-valuenow="@OneDriveUsedSpacePercentage" data-bs-toggle="tooltip" title=@(OneDriveUsedSpace.ToString("N2") + " GB") aria-valuemin="0" aria-valuemax="100">Used: @(OneDriveUsedSpacePercentage)%</div>
 						<div class="progress-bar bg-secondary" role="progressbar" style="width: @(100 - OneDriveUsedSpacePercentage)%" aria-valuenow="@(100 - OneDriveUsedSpacePercentage)" data-bs-toggle="tooltip" title=@((HassOnedriveFreeSpaceEntityState.FreeSpaceGB ?? 0).ToString("N2") + " GB") aria-valuemin="0" aria-valuemax="100">Free: @(100 - OneDriveUsedSpacePercentage)%</div>
 					</div>
 				}
@@ -148,6 +148,8 @@
 	private double OneDriveUsedSpace => ((HassOnedriveFreeSpaceEntityState.TotalSpaceGB ?? 0) - (HassOnedriveFreeSpaceEntityState.FreeSpaceGB ?? 0));
 
 	private DateTime? LastBackupDate => HassOnedriveEntityState.LastLocalBackupDate > HassOnedriveEntityState.LastOnedriveBackupDate ? HassOnedriveEntityState.LastLocalBackupDate : HassOnedriveEntityState.LastOnedriveBackupDate;
+
+	private string FreeSpaceColor => OneDriveUsedSpacePercentage > 90 ? "bg-danger" : "bg-primary";
 
 	private bool onDemandBackup = false;
 

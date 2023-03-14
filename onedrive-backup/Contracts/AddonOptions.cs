@@ -52,13 +52,13 @@ namespace hassio_onedrive_backup.Contracts
         public string? InstanceName { get; set; }
 
         [JsonProperty("sync_paths")]
-        public List<SyncPath>? SyncPaths { get; set; }
+        public List<string>? SyncPaths { get; set; }
 
         [JsonProperty("file_sync_remove_deleted")]
         public bool FileSyncRemoveDeleted { get; set; } = false;
 
         [JsonProperty("excluded_addons")]
-        public List<Addon> ExcludedAddons { get; set; }
+        public List<string> ExcludedAddons { get; set; }
 
 
         [JsonIgnore]
@@ -101,20 +101,5 @@ namespace hassio_onedrive_backup.Contracts
                 return folders;
             }
         }
-    }
-    
-    public class SyncPath
-    {
-        [JsonProperty("path")]
-        public string Path { get; set; }
-
-        [JsonProperty("recursive")]
-        public bool Recursive { get; set; } = false;
-    }
-
-    public class Addon
-    {
-        [JsonProperty("name")]
-        public string Name { get; set; }
     }
 }

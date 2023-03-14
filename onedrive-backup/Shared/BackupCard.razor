@@ -1,28 +1,30 @@
 ﻿@using hassio_onedrive_backup;
 @using hassio_onedrive_backup.Contracts;
 @using onedrive_backup.Extensions;
+@using onedrive_backup.Hass;
 @using onedrive_backup.Models;
-@inject Orchestrator Orchestrator
+@inject Orchestrator Orchestrator;
 @inject AddonOptions AddonOptions;
+@inject IJSRuntime JS
 
 <div class="card text-white bg-light mb-3 w-100 h-100" style="min-width: 16rem">
 	<div class="card-header text-dark">
 		@**************Add Badges*****************@
 		@if (Backup.Type != null)
 		{
-			<span class="badge rounded-pill m-1 @BackupTypeColor">@Backup.Type</span>
+			<span class="badge rounded-pill m-1 @BackupTypeColor" data-bs-toggle="tooltip" data-bs-title="Backup is @Backup.Type">@Backup.Type</span>
 		}
 		@if (Backup.Location == BackupModel.BackupLocation.OneDrive || Backup.Location == BackupModel.BackupLocation.Both)
 		{
-			<span class="badge rounded-pill m-1 bg-primary">OneDrive</span>
+			<span class="badge rounded-pill m-1 bg-primary" data-bs-toggle="tooltip" data-bs-title="Backup is in OneDrive">OneDrive</span>
 		}
 		@if (Backup.Location == BackupModel.BackupLocation.Local || Backup.Location == BackupModel.BackupLocation.Both)
 		{
-			<span class="badge rounded-pill m-1 bg-dark">Local</span>
+			<span class="badge rounded-pill m-1 bg-dark" data-bs-toggle="tooltip" data-bs-title="Backup is in Home Assistant">Local</span>
 		}
 		@if (Backup.IsProtected)
 		{
-			<span class="badge rounded-pill m-1 bg-dark">Protected</span>
+			<span class="badge rounded-pill m-1 bg-dark" data-bs-toggle="tooltip" data-bs-title="Backup is password protected">Protected</span>
 		}
 		@***************@
 	</div>
@@ -37,7 +39,7 @@
 			@if (Backup.Addons != null && Backup.Addons.Any())
 			{
 				<div class="card-text">
-					<p><strong>Addons:</strong>@string.Join(", ", Backup.Addons)</p>
+					<p><strong>Addons:</strong>@string.Join(", ", Backup.Addons.Select(addon => addon.Name))</p>
 				</div>
 			}
 			@if (Backup.Folders != null && Backup.Folders.Any())
@@ -52,15 +54,15 @@
 		@*Upload Button*@
 		@if (@Backup.Location == BackupModel.BackupLocation.Local)
 		{
-			<button type="button" @onclick="UploadBackup" class="btn btn-sm m-1 btn-outline-primary" disabled="@uploading">
+			<button type="button" @onclick="UploadBackup" class="btn btn-sm m-1 btn-outline-primary" data-bs-toggle="tooltip" data-bs-title="Upload backup to OneDrive" disabled="@uploading">
 				@if (uploading)
 				{
 					<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-					<span class="oi oi-cloud-upload" title="Upload to OneDrive">Uploading @uploadPercent</span>
+					<span class="oi oi-cloud-upload">Uploading @uploadPercent</span>
 				}
 				else
 				{
-					<span class="oi oi-cloud-upload" title="Upload to OneDrive">Upload</span>
+					<span class="oi oi-cloud-upload">Upload</span>
 				}
 			</button>
 		}
@@ -68,15 +70,15 @@
 		@*Download Button*@
 		@if (@Backup.Location == BackupModel.BackupLocation.OneDrive)
 		{
-			<button type="button" @onclick="DownloadBackup" class="btn btn-sm m-1 btn-outline-primary" disabled="@downloading">
+			<button type="button" @onclick="DownloadBackup" class="btn btn-sm m-1 btn-outline-primary" data-bs-toggle="tooltip" data-bs-title="Download Backup to Home Assistant" disabled="@downloading">
 				@if (downloading)
 				{
 					<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-					<span class="oi oi-cloud-download" title="Download to Home Assistant">Downloading @downloadPercent%</span>
+					<span class="oi oi-cloud-download">Downloading @downloadPercent%</span>
 				}
 				else
 				{
-					<span class="oi oi-cloud-download" title="Download to Home Assistant">Download</span>
+					<span class="oi oi-cloud-download">Download</span>
 				}
 			</button>
 		}
@@ -112,6 +114,14 @@
 		});
 		uploading = false;
 		await Orchestrator.BackupManager.GetOnlineBackupsAsync(AddonOptions.InstanceName);
+	}
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (firstRender)
+		{
+			await JS.InvokeVoidAsync("addTooltips");
+		}
 	}
 
 	private async void DownloadBackup()

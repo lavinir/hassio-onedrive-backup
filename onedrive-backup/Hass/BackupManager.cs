@@ -2,6 +2,7 @@
 using hassio_onedrive_backup.Graph;
 using Microsoft.Graph;
 using Newtonsoft.Json;
+using onedrive_backup.Hass;
 using System.Collections;
 using static hassio_onedrive_backup.Contracts.HassBackupsResponse;
 
@@ -13,7 +14,8 @@ namespace hassio_onedrive_backup.Hass
         private IGraphHelper _graphHelper;
         private IHassioClient _hassIoClient;
         private readonly HassOnedriveEntityState _hassEntityState;
-        private BitArray _allowedHours;
+		private readonly HassContext _hassContext;
+		private BitArray _allowedHours;
         private bool _isExecuting = false;
         private const int InstanceNameMaxLength = 20;
 
@@ -25,7 +27,8 @@ namespace hassio_onedrive_backup.Hass
             _addonOptions = serviceProvider.GetService<AddonOptions>();
             _graphHelper = serviceProvider.GetService<IGraphHelper>();
             _hassIoClient = serviceProvider.GetService<IHassioClient>();
-            _hassEntityState = serviceProvider.GetService<HassOnedriveEntityState>();
+            _hassEntityState = serviceProvider.GetService<HassOnedriveEntityState>();    
+            _hassContext = serviceProvider.GetService<HassContext>();
             _allowedHours = allowedHours;
         }
 
@@ -172,7 +175,7 @@ namespace hassio_onedrive_backup.Hass
 			ConsoleLogger.LogInfo($"Creating new backup");
 			if (_addonOptions.IsPartialBackup)
 			{
-				addons = await _hassIoClient.GetAddonsAsync();
+                addons = _hassContext.Addons?.Select(addon => addon.Slug).ToList();
 				folders = _addonOptions.IncludedFolderList;
 			}
 
