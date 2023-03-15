@@ -6,9 +6,11 @@ using System.Threading.Tasks;
 
 namespace hassio_onedrive_backup
 {
-    internal static class ConsoleLogger
+    public static class ConsoleLogger
     {
-        public static void LogError(string msg)
+		private static LogLevel _logLevel;
+
+		public static void LogError(string msg)
         {
             WriteLog(LogLevel.Error, msg);
         }
@@ -28,8 +30,18 @@ namespace hassio_onedrive_backup
             WriteLog(LogLevel.Verbose, msg);
         }
 
+        public static void SetLogLevel(LogLevel level)
+        {
+			_logLevel = level;
+		}
+
         private static void WriteLog(LogLevel level, string msg)
         {
+            if (level < _logLevel)
+            {
+				return;
+			}
+
             var timestamp = DateTimeHelper.Instance?.Now;
             string logMsg = $"{timestamp} [{Thread.CurrentThread.ManagedThreadId}] {level}: {msg}";
 

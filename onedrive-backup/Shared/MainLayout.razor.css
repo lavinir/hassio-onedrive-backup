@@ -39,29 +39,25 @@ footer {
 }
 */
 
-/* Add blue theme to the navbar */
 ::deep nav.navbar {
-    background: #f4f4f4;
-    background-image: linear-gradient(to right, #f5f5f5, #c4c4c4, #4183c4);
-    border-radius: 20px;
-    border: 1px solid #000000;
-    box-shadow: 0px 0px 5px 1px rgba(0,0,0,0.3);
-    padding: 5px;
+    box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.05);
 }
 
     ::deep nav.navbar .nav-link {
-        color: #000;
+        color: #333;
+        font-size: 16px;
+        font-weight: 500;
+        text-transform: uppercase;
+        padding: 16px;
         border-bottom: 2px solid transparent;
-        margin-left: 1rem;
+        transition: border-color 0.3s ease;
     }
 
-    ::deep nav.navbar .nav-link:hover {
-        color: #0066CC;
-        /*border-bottom: 2px solid #0066CC;*/
-        /*transition: border-bottom-color 0.15s*/
-    }
+        ::deep nav.navbar .nav-link:hover {
+            color: #0066CC;
+        }
 
-::deep .nav-item .nav-link.active {
-    color: #000;
-    border-bottom: 2px solid #0066CC;
-}
+        ::deep nav.navbar .nav-link.active {
+            color: #0066CC;
+            border-bottom-color: #0066CC;
+        }

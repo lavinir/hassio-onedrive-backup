@@ -4,6 +4,7 @@ using Microsoft.Graph;
 using Newtonsoft.Json;
 using onedrive_backup.Hass;
 using System.Collections;
+using static hassio_onedrive_backup.Contracts.HassAddonsResponse;
 using static hassio_onedrive_backup.Contracts.HassBackupsResponse;
 
 namespace hassio_onedrive_backup.Hass
@@ -70,7 +71,9 @@ namespace hassio_onedrive_backup.Hass
                 }
                 else
 				{
-                    await CreateLocalBackup();
+					_hassEntityState.State = HassOnedriveEntityState.BackupState.Syncing;
+					await _hassEntityState.UpdateBackupEntityInHass();
+					await CreateLocalBackup();
 				}
 			}
 
@@ -175,7 +178,10 @@ namespace hassio_onedrive_backup.Hass
 			ConsoleLogger.LogInfo($"Creating new backup");
 			if (_addonOptions.IsPartialBackup)
 			{
-                addons = _hassContext.Addons?.Select(addon => addon.Slug).ToList();
+                addons = _hassContext.Addons
+                    .Where(addon => _addonOptions.ExcludedAddons.Any(excludedAddon => excludedAddon.Equals(addon.Slug, StringComparison.OrdinalIgnoreCase)) == false)
+                    .Select(addon => addon.Slug)
+                    .ToList();
 				folders = _addonOptions.IncludedFolderList;
 			}
 

@@ -4,6 +4,7 @@ using hassio_onedrive_backup.Hass;
 using hassio_onedrive_backup.Storage;
 using hassio_onedrive_backup.Sync;
 using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Logging.Console;
 using onedrive_backup;
 using onedrive_backup.Extensions;
 using onedrive_backup.Hass;
@@ -18,7 +19,6 @@ namespace hassio_onedrive_backup
         private static readonly List<string> scopes = new() { "Files.ReadWrite.AppFolder" };
 
         private static Orchestrator _orchestrator;
-        private static string _pathBase = "";
         private static string _baseDirectory;
 
         static void Main(string[] args)
@@ -28,29 +28,33 @@ namespace hassio_onedrive_backup
 #if DEBUG
             IHassioClient hassIoClient = new HassioClientMock();
             var addonOptions = AddonOptionsReader.ReadOptions();
-#else           
+#else
 
             Directory.SetCurrentDirectory(addonDirectory);
             var addonOptions = AddonOptionsReader.ReadOptions();
             string supervisorToken = Environment.GetEnvironmentVariable("SUPERVISOR_TOKEN")!;
-            IHassioClient hassIoClient = new HassioClient(supervisorToken, TimeSpan.FromMinutes(addonOptions.HassAPITimeoutMinutes));
+            IHassioClient hassIoClient = new HassioClient(supervisorToken, addonOptions);
 #endif
-            LocalStorage.InitializeTempStorage();
+            ConsoleLogger.SetLogLevel(addonOptions.LogLevel);
+            ConsoleLogger.LogVerbose("VerboseTest");
+            ConsoleLogger.LogInfo("InfoTest");
+            ConsoleLogger.LogWarning("WarningTest");
+            ConsoleLogger.LogError("ErrorTest");
+			var builder = WebApplication.CreateBuilder(args);
+			LocalStorage.InitializeTempStorage();
             IGraphHelper graphHelper = new GraphHelper(scopes, clientId);
-            var addonInfo = hassIoClient.GetAddonInfo("local_hassio_onedrive_backup").Result;
-            var addons = hassIoClient.GetAddonsAsync().Result;
-            ConsoleLogger.LogInfo($"Addons: {string.Join(",", addons.Select(a => a.Name))}");
-            _pathBase = addonInfo.DataProperty.IngressUrl;
-            ConsoleLogger.LogInfo($"Ingress Info. Entry: {addonInfo.DataProperty.IngressEntry}. URL: {addonInfo.DataProperty.IngressUrl}");
+			var addons = hassIoClient.GetAddonsAsync().Result;
+            HassContext hassContext = null;
+			var addonInfo = hassIoClient.GetAddonInfo("self").Result;
+			hassContext = new HassContext { IngressUrl = addonInfo.DataProperty.IngressUrl, Addons = addons };
+			ConsoleLogger.LogInfo($"Ingress Info. Entry: {addonInfo.DataProperty.IngressEntry}. URL: {addonInfo.DataProperty.IngressUrl}");
+			builder.Services.AddSingleton(hassContext);
 
-            var builder = WebApplication.CreateBuilder(args);
-
-            // builder.Logging.AddConsole();
-
+			//ConsoleLogger.LogInfo($"Detected Addons: {string.Join(",", addons.Select(a => a.Name))}");
+            
             // Add services to the container.
             builder.Services.AddRazorPages();
             builder.Services.AddServerSideBlazor();
-            builder.Services.AddSingleton(new HassContext { IngressUrl = _pathBase, Addons = addons });
             builder.Services.AddSingleton<ComponentInitializedStateHelper>();
             builder.Services.AddSingleton(addonOptions);
             builder.Services.AddSingleton<IHassioClient>(hassIoClient);
@@ -69,6 +73,7 @@ namespace hassio_onedrive_backup
             if (!builder.Environment.IsDevelopment())
             {
                 builder.Logging.ClearProviders();
+                // builder.Logging.AddConsole();
 			}
 
             var app = builder.Build();
@@ -84,9 +89,13 @@ namespace hassio_onedrive_backup
                         FileProvider = new PhysicalFileProvider($"{_baseDirectory}/wwwroot")
                     }));
             }
+            else
+            {
+                ConsoleLogger.LogInfo("Dev Mode");
+            }
 
 
-            app.UsePathBase($"{_pathBase}");
+            app.UsePathBase($"{hassContext?.HeaderIngressPath ?? "/"}");
 
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())
@@ -105,31 +114,3 @@ namespace hassio_onedrive_backup
         }
 	}
 }
-
-
-//var builder = WebApplication.CreateBuilder(args);
-
-//// Add services to the container.
-
-//builder.Services.AddControllersWithViews();
-
-//var app = builder.Build();
-
-//// Configure the HTTP request pipeline.
-//if (!app.Environment.IsDevelopment())
-//{
-//    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-//    app.UseHsts();
-//}
-
-//app.UseStaticFiles();
-//app.UseRouting();
-
-
-//app.MapControllerRoute(
-//    name: "default",
-//    pattern: "{controller}/{action=Index}/{id?}");
-
-//app.MapFallbackToFile("index.html");
-
-//app.Run();

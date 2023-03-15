@@ -20,12 +20,12 @@ namespace onedrive_backup.Extensions
                 Size = backup.Size,
                 IsProtected = backup.Protected,
                 Location = BackupModel.BackupLocation.Local,
-                Addons = backup.Content?.Addons?.Select(slug => new Addon { Slug = slug }).ToList() ?? Enumerable.Empty<Addon>(),
+                Addons = backup.Content?.Addons?.Select(slug => new Addon { Slug = slug, Name = GetAddonNameFromSlug(hassContext.Addons, slug) }).ToList() ?? Enumerable.Empty<Addon>(),
                 Folders = backup.Content?.Folders ?? Enumerable.Empty<string>()
             };
         }
 
-        public static BackupModel ToBackupModel(this OnedriveBackup onedriveBackup, HassContext hassContext)
+		public static BackupModel ToBackupModel(this OnedriveBackup onedriveBackup, HassContext hassContext)
         {
             return new BackupModel
             {
@@ -36,9 +36,9 @@ namespace onedrive_backup.Extensions
                 Size = onedriveBackup.Size,
                 IsProtected = onedriveBackup.IsProtected,
                 Location = BackupModel.BackupLocation.OneDrive,
-                Addons = onedriveBackup.Addons.Select(slug => new Addon { Slug = slug }),
-                Folders = onedriveBackup.Folders
-            };
+                Addons = onedriveBackup.Addons?.Select(slug => new Addon { Slug = slug }) ?? Enumerable.Empty<Addon>(),
+                Folders = onedriveBackup.Folders ?? Enumerable.Empty<string>()
+			};
         } 
 
         public static OnedriveBackup ToOneDriveBackup(this BackupModel backupModel)
@@ -73,5 +73,11 @@ namespace onedrive_backup.Extensions
                 }
             };
         }
-    }
+
+		private static string GetAddonNameFromSlug(IEnumerable<Addon> addons, string slug)
+		{
+			string name = addons.FirstOrDefault(addon => addon.Slug.Equals(slug))?.Name;
+			return name ?? string.Empty;
+		}
+	}
 }

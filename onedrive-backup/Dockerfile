@@ -17,7 +17,7 @@ RUN dotnet build "onedrive-backup.csproj" -c Release -o /app/build -r $BUILD_ARC
 
 FROM build AS publish
 ARG BUILD_ARCH
-RUN dotnet publish "onedrive-backup.csproj" -c Release -o /app/publish -r $BUILD_ARCH --no-self-contained
+RUN dotnet publish "onedrive-backup.csproj" -c Release -o /app/publish -r $BUILD_ARCH --no-self-contained  /p:EnvironmentName=Production
 
 FROM base AS final
 WORKDIR /app
