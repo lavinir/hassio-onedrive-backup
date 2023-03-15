@@ -1,15 +1,8 @@
 ﻿using hassio_onedrive_backup.Contracts;
 using hassio_onedrive_backup.Graph;
 using hassio_onedrive_backup.Hass;
-using hassio_onedrive_backup.Storage;
 using hassio_onedrive_backup.Sync;
-using Microsoft.Extensions.DependencyInjection;
-using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace hassio_onedrive_backup
 {

@@ -90,16 +90,25 @@
 
 
 @code {
+	private bool uploading = false;
+	private bool downloading = false;
+	private int uploadPercent = 0;
+	private int downloadPercent = 0;
+
 	[Parameter]
 	public BackupModel Backup { get; set; }
 
 	public string BackupTypeColor => Backup.Type.Equals("full", StringComparison.OrdinalIgnoreCase) ? "bg-info" : "bg-secondary";
 
 	private bool detailsDisabled => (Backup.Addons?.Count() > 0 || Backup.Folders?.Count() > 0) ? false : true;
-	private bool uploading = false;
-	private bool downloading = false;
-	private int uploadPercent = 0;
-	private int downloadPercent = 0;
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (firstRender)
+		{
+			await JS.InvokeVoidAsync("addTooltips");
+		}
+	}
 
 	private async void UploadBackup()
 	{
@@ -116,13 +125,6 @@
 		await Orchestrator.BackupManager.GetOnlineBackupsAsync(AddonOptions.InstanceName);
 	}
 
-	protected override async Task OnAfterRenderAsync(bool firstRender)
-	{
-		if (firstRender)
-		{
-			await JS.InvokeVoidAsync("addTooltips");
-		}
-	}
 
 	private async void DownloadBackup()
 	{

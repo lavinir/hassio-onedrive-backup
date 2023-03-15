@@ -33,7 +33,7 @@ namespace hassio_onedrive_backup
             Directory.SetCurrentDirectory(addonDirectory);
             var addonOptions = AddonOptionsReader.ReadOptions();
             string supervisorToken = Environment.GetEnvironmentVariable("SUPERVISOR_TOKEN")!;
-            IHassioClient hassIoClient = new HassioClient(supervisorToken, addonOptions);
+            IHassioClient hassIoClient = new HassioClient(supervisorToken, addonOptions.HassAPITimeoutMinutes);
 #endif
             ConsoleLogger.SetLogLevel(addonOptions.LogLevel);
             ConsoleLogger.LogVerbose("VerboseTest");
@@ -49,25 +49,17 @@ namespace hassio_onedrive_backup
 			hassContext = new HassContext { IngressUrl = addonInfo.DataProperty.IngressUrl, Addons = addons };
 			ConsoleLogger.LogInfo($"Ingress Info. Entry: {addonInfo.DataProperty.IngressEntry}. URL: {addonInfo.DataProperty.IngressUrl}");
 			builder.Services.AddSingleton(hassContext);
-
-			//ConsoleLogger.LogInfo($"Detected Addons: {string.Join(",", addons.Select(a => a.Name))}");
             
             // Add services to the container.
             builder.Services.AddRazorPages();
             builder.Services.AddServerSideBlazor();
-            builder.Services.AddSingleton<ComponentInitializedStateHelper>();
             builder.Services.AddSingleton(addonOptions);
             builder.Services.AddSingleton<IHassioClient>(hassIoClient);
             builder.Services.AddSingleton<IGraphHelper>(graphHelper);
-            
-            // var hassOneDriveEntityState = HassOnedriveEntityState.Initialize(hassIoClient);
             builder.Services.AddSingleton<HassOnedriveEntityState>();
-
-            // var hassOneDriveFileSyncEntityState = HassOnedriveFileSyncEntityState.Initialize(hassIoClient);
             builder.Services.AddSingleton<HassOnedriveFileSyncEntityState>();
             builder.Services.AddSingleton<HassOnedriveFreeSpaceEntityState>();
             builder.Services.AddSingleton<Orchestrator>();
-            // builder.WebHost.UseStaticWebAssets();
             builder.WebHost.UseUrls("http://*:8099");
 
             if (!builder.Environment.IsDevelopment())
@@ -80,6 +72,7 @@ namespace hassio_onedrive_backup
             _orchestrator = app.Services.GetService<Orchestrator>();
             _orchestrator.Start();
 
+            app.UseIncomingHassFirewallMiddleware();
             if (!app.Environment.IsDevelopment())
             {
                 app.UseWhen(ctx => !ctx.Request.Path

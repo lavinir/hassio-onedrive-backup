@@ -1,7 +1,6 @@
 ﻿using hassio_onedrive_backup.Contracts;
 using onedrive_backup.Hass;
 using onedrive_backup.Models;
-using static hassio_onedrive_backup.Contracts.HassAddonsResponse;
 using static hassio_onedrive_backup.Contracts.HassBackupsResponse;
 using Addon = hassio_onedrive_backup.Contracts.HassAddonsResponse.Addon;
 

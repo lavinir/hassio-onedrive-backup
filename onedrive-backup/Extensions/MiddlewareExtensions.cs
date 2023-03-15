@@ -9,5 +9,10 @@ namespace onedrive_backup.Extensions
         {
             return builder.UseMiddleware<ExtractHassUrlMiddleware>();
         }
+
+        public static IApplicationBuilder UseIncomingHassFirewallMiddleware(this IApplicationBuilder builder )
+        {
+            return builder.UseMiddleware<IncomingHassFirewallMiddleware>();
+        }
     }
 }

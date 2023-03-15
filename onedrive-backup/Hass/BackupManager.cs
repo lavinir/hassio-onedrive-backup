@@ -11,14 +11,14 @@ namespace hassio_onedrive_backup.Hass
 {
     public class BackupManager 
     {
-        private AddonOptions _addonOptions;
+		private const int InstanceNameMaxLength = 20;
+		private readonly HassOnedriveEntityState _hassEntityState;
+		private readonly HassContext _hassContext;
+		private AddonOptions _addonOptions;
         private IGraphHelper _graphHelper;
         private IHassioClient _hassIoClient;
-        private readonly HassOnedriveEntityState _hassEntityState;
-		private readonly HassContext _hassContext;
 		private BitArray _allowedHours;
         private bool _isExecuting = false;
-        private const int InstanceNameMaxLength = 20;
 
         public List<Backup> LocalBackups { get; private set; }
         public List<OnedriveBackup> OnlineBackups { get; private set; }

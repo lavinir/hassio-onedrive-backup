@@ -8,7 +8,6 @@ namespace hassio_onedrive_backup.Hass
     {
         private const string OneDrive_Backup_Entity_ID = "sensor.onedrivebackup";
         private IHassioClient? _hassioClient;
-        private static HassOnedriveEntityState? _instance;
         private BackupState state;
         private List<JsonConverter> entityStateConverters = new List<JsonConverter>
         {
@@ -21,21 +20,6 @@ namespace hassio_onedrive_backup.Hass
         {
             _hassioClient = hassioClient;
             State = BackupState.Unknown;
-        }
-
-        //public static HassOnedriveEntityState Instance
-        //{
-        //    get
-        //    {
-        //        _instance = _instance ?? new HassOnedriveEntityState();
-        //        return _instance;
-        //    }
-        //}
-
-        public static HassOnedriveEntityState Initialize(IHassioClient hassioClient)
-        {
-            //Instance._hassioClient = hassioClient;
-            return _instance!;
         }
 
         [JsonConverter(typeof(StringEnumConverter))]
