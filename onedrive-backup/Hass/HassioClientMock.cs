@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using onedrive_backup.Contracts;
 using System.Diagnostics;
 using System.Net.Http;
+using static hassio_onedrive_backup.Contracts.HassAddonsResponse;
 using static hassio_onedrive_backup.Contracts.HassBackupsResponse;
 
 namespace hassio_onedrive_backup.Hass

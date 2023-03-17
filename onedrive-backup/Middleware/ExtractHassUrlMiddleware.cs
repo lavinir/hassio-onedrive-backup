@@ -8,11 +8,13 @@ namespace onedrive_backup.Middleware
     {
         private readonly RequestDelegate _next;
         private HassContext _ingressSettings;
+		private IHostEnvironment _env;
 
-        public ExtractHassUrlMiddleware(RequestDelegate next, HassContext ingressSettings)
+		public ExtractHassUrlMiddleware(RequestDelegate next, HassContext ingressSettings, IHostEnvironment env)
         {
             _next = next;
             _ingressSettings = ingressSettings;
+            _env = env;
         }
 
         public async Task InvokeAsync(HttpContext context)
@@ -23,6 +25,11 @@ namespace onedrive_backup.Middleware
 				_ingressSettings.HeaderIngressPath = headerValue.ToString();
                 ConsoleLogger.LogInfo($"X-Ingress-Path: {_ingressSettings.HeaderIngressPath}");
 			}
+            else if (_env.IsDevelopment())
+            {
+                _ingressSettings.HeaderIngressPath = "/";
+            }
+            
 			await _next(context);
         }
     }

@@ -17,11 +17,11 @@ namespace hassio_onedrive_backup.Hass
         private const string Hass_Base_Uri_Str = "http://supervisor/core/api";
         private readonly HttpClient _httpClient;
 
-        public HassioClient(string token, TimeSpan clientTimeout) 
+		public HassioClient(string token, int hassioTimeout) 
         {
             _httpClient = new HttpClient();
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            _httpClient.Timeout = clientTimeout;
+            _httpClient.Timeout = TimeSpan.FromMinutes(hassioTimeout);
         }
 
         public async Task<bool> DeleteBackupAsync(Backup backup)

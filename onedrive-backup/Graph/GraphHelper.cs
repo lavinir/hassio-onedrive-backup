@@ -1,14 +1,11 @@
 ﻿using Azure.Core;
 using Azure.Identity;
-using hassio_onedrive_backup.Contracts;
 using hassio_onedrive_backup.Storage;
 using Microsoft.Graph;
-using Newtonsoft.Json;
 using onedrive_backup.Contracts;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Text.Unicode;
 using File = System.IO.File;
 
 namespace hassio_onedrive_backup.Graph
@@ -40,8 +37,6 @@ namespace hassio_onedrive_backup.Graph
 			_persistentDataPath = persistentDataPath;
 		}
 
-		private string PersistentAuthRecordFullPath => Path.Combine(_persistentDataPath, AuthRecordFile);
-
 		public bool? IsAuthenticated
 		{
 			get => _isAuthenticated; 
@@ -55,7 +50,9 @@ namespace hassio_onedrive_backup.Graph
 
         public string AuthCode { get; private set; }
 
-        public async Task<string> GetAndCacheUserTokenAsync()
+		private string PersistentAuthRecordFullPath => Path.Combine(_persistentDataPath, AuthRecordFile);
+
+		public async Task<string> GetAndCacheUserTokenAsync()
 		{
 			if (_deviceCodeCredential == null)
 			{
@@ -268,6 +265,27 @@ namespace hassio_onedrive_backup.Graph
 			return fileInfo.FullName;
 		}
 
+		protected virtual async Task InitializeGraphForUserAuthAsync()
+		{
+			AuthenticationRecord? authRecord = await ReadPersistedAuthenticationRecordAsync();
+			var deviceCodeCredOptions = new DeviceCodeCredentialOptions
+			{
+				ClientId = _clientId,
+				DeviceCodeCallback = DeviceCodeBallBackPrompt,
+				TenantId = "common",
+				AuthenticationRecord = authRecord,
+				TokenCachePersistenceOptions = new TokenCachePersistenceOptions
+				{
+					Name = "hassio-onedrive-backup",
+					UnsafeAllowUnencryptedStorage = true
+				},
+			};
+
+			_deviceCodeCredential = new DeviceCodeCredential(deviceCodeCredOptions);
+			_userClient = new GraphServiceClient(_deviceCodeCredential, _scopes);
+			_userClient.HttpProvider.OverallTimeout = TimeSpan.FromMinutes(GraphRequestTimeoutMinutes);
+		}
+
 		private AuthenticationRecord GetAuthenticationRecordFromCredential()
 		{
 			var record = typeof(DeviceCodeCredential)
@@ -294,27 +312,6 @@ namespace hassio_onedrive_backup.Graph
 			using var authRecordStream = new FileStream(PersistentAuthRecordFullPath, FileMode.Open, FileAccess.Read);
 			var record = await AuthenticationRecord.DeserializeAsync(authRecordStream);
 			return record;
-		}
-
-		protected virtual async Task InitializeGraphForUserAuthAsync()
-		{
-			AuthenticationRecord? authRecord = await ReadPersistedAuthenticationRecordAsync();
-			var deviceCodeCredOptions = new DeviceCodeCredentialOptions
-			{
-				ClientId = _clientId,
-				DeviceCodeCallback = DeviceCodeBallBackPrompt,
-				TenantId = "common",
-				AuthenticationRecord = authRecord,
-				TokenCachePersistenceOptions = new TokenCachePersistenceOptions
-				{
-					Name = "hassio-onedrive-backup",
-					UnsafeAllowUnencryptedStorage = true
-				},
-			};
-
-			_deviceCodeCredential = new DeviceCodeCredential(deviceCodeCredOptions);
-			_userClient = new GraphServiceClient(_deviceCodeCredential, _scopes);
-			_userClient.HttpProvider.OverallTimeout = TimeSpan.FromMinutes(GraphRequestTimeoutMinutes);
 		}
 
 		private Task DeviceCodeBallBackPrompt(DeviceCodeInfo info, CancellationToken ct)

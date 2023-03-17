@@ -25,5 +25,8 @@
     <Content Update="wwwroot\bmc\bmc-button.svg">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Update="wwwroot\scripts\BlazorHelpers.js">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 </Project>

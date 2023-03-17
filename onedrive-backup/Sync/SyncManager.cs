@@ -5,7 +5,6 @@ using Microsoft.Extensions.FileSystemGlobbing;
 using Microsoft.Graph;
 using System.Collections;
 using System.Diagnostics;
-using System.IO;
 using System.Security.Cryptography;
 
 namespace hassio_onedrive_backup.Sync

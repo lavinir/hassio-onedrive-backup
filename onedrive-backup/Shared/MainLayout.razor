@@ -5,6 +5,7 @@
 @inject IJSRuntime JS
 
 <div class="container-fluid p-1 pb-5">
+    <div id="alertPlaceholder"></div>
     @if (GraphHelper.IsAuthenticated == false)
     {
         <div class="alert alert-danger" role="alert" style="padding:1px;margin-bottom:1px;">
@@ -28,7 +29,6 @@
             </NavLink>
         </div>
     </nav>
-    <div id="alertPlaceholder"></div>
 </div>
 
 <div class="container" style="padding-bottom: 2rem">
@@ -45,6 +45,15 @@
     {
         base.OnInitialized();
         GraphHelper.AuthStatusChangedEventHandler += OnStateChanged;
+        JS.InvokeVoidAsync("checkBlazorStatus");
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            JS.InvokeVoidAsync("alertIfBlazorDisabled");
+        }
     }
 
     private void CopyCodeToClipboard()

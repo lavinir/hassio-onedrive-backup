@@ -18,5 +18,9 @@
     "/synctemp2/"
   ],
   "file_sync_remove_deleted": true,
-  "backup_instance_name" :  "LocalTest"
+  "backup_instance_name": "LocalTest",
+  "log_level": "info",
+  "excluded_addons" :  [
+    "addon2"
+  ]
 }

@@ -32,6 +32,7 @@ options:
   sync_paths: []
   file_sync_remove_deleted: false
   excluded_addons: []
+  log_level: info
 
 schema:
   recovery_mode : bool
@@ -54,6 +55,7 @@ schema:
   file_sync_remove_deleted: bool
   excluded_addons:
     - str
+  log_level: list(verbose|info|warning|error)
 
 ingress: true
 hassio_role : "manager"

@@ -4,20 +4,21 @@ using Microsoft.Graph;
 using Newtonsoft.Json;
 using onedrive_backup.Hass;
 using System.Collections;
+using static hassio_onedrive_backup.Contracts.HassAddonsResponse;
 using static hassio_onedrive_backup.Contracts.HassBackupsResponse;
 
 namespace hassio_onedrive_backup.Hass
 {
     public class BackupManager 
     {
-        private AddonOptions _addonOptions;
+		private const int InstanceNameMaxLength = 20;
+		private readonly HassOnedriveEntityState _hassEntityState;
+		private readonly HassContext _hassContext;
+		private AddonOptions _addonOptions;
         private IGraphHelper _graphHelper;
         private IHassioClient _hassIoClient;
-        private readonly HassOnedriveEntityState _hassEntityState;
-		private readonly HassContext _hassContext;
 		private BitArray _allowedHours;
         private bool _isExecuting = false;
-        private const int InstanceNameMaxLength = 20;
 
         public List<Backup> LocalBackups { get; private set; }
         public List<OnedriveBackup> OnlineBackups { get; private set; }
@@ -70,7 +71,9 @@ namespace hassio_onedrive_backup.Hass
                 }
                 else
 				{
-                    await CreateLocalBackup();
+					_hassEntityState.State = HassOnedriveEntityState.BackupState.Syncing;
+					await _hassEntityState.UpdateBackupEntityInHass();
+					await CreateLocalBackup();
 				}
 			}
 
@@ -175,7 +178,10 @@ namespace hassio_onedrive_backup.Hass
 			ConsoleLogger.LogInfo($"Creating new backup");
 			if (_addonOptions.IsPartialBackup)
 			{
-                addons = _hassContext.Addons?.Select(addon => addon.Slug).ToList();
+                addons = _hassContext.Addons
+                    .Where(addon => _addonOptions.ExcludedAddons.Any(excludedAddon => excludedAddon.Equals(addon.Slug, StringComparison.OrdinalIgnoreCase)) == false)
+                    .Select(addon => addon.Slug)
+                    .ToList();
 				folders = _addonOptions.IncludedFolderList;
 			}
 
