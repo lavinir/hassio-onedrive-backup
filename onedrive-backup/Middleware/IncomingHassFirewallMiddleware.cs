@@ -15,7 +15,7 @@ namespace onedrive_backup.Middleware
 
 		public async Task InvokeAsync(HttpContext context)
 		{
-			var ip = context.Connection.RemoteIpAddress;
+			var ip = context.Connection.RemoteIpAddress.MapToIPv4();
 			ConsoleLogger.LogVerbose($"Source IP: {ip}");
 			// await context.Response.WriteAsync($"Request origin ({ip}) blocked.");
 			await _next(context);
