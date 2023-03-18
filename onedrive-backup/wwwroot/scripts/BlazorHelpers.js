@@ -9,36 +9,26 @@ function copyToClipboard(txt) {
     navigator.clipboard.writeText(txt);
 }
 
-function showAlert(message, type) {
+function showAlert(title, message, type, linkUrl, linkCaption, message2) {
     const alertPlaceholder = document.getElementById('alertPlaceholder');
     const wrapper = document.createElement('div')
     wrapper.innerHTML = [
         `<div class="alert alert-${type}" role="alert">`,
-        `   <div>${message}</div>`,
+        `   <div><strong>${title}</strong>${message}<a href="${linkUrl}" class="alert-link">${linkCaption}</a>${message2}</div>`,
         '</div>'
     ].join('')
 
     alertPlaceholder.append(wrapper)
-    alert("duda");
 }
 
 function checkBlazorStatus() {
-    alert(blazorPassThrough);
     var markup = document.documentElement.innerHTML;
-    // alert(markup);
-    if (markup.includes("<!--Blazor") == true) {
-//        showAlert("Blazor is not running. Please refresh the page.", "danger");
-        //alert("gotit");
+    if (markup.includes("<!--Blazor") == false) {
         blazorPassThrough = true;
+        showAlert("Error! ", "Html Content Filtering Detected - Web Interface will not work. If you are using Cloudflare or a similar service please follow", "danger", "#", " this link ", "for instructions");
     }
-//    else {
-//        alert("oger");
-//    }
 }
 
-function alertIfBlazorDisabled() {
-    if (blazorPassThrough == true) {
-        showAlert("Duda is an Oger", "danger");
-        // alert("hmmm");
-    }
+window.onload = function () {
+    checkBlazorStatus();
 }

@@ -20,8 +20,8 @@
     <component type="typeof(HeadOutlet)" render-mode="ServerPrerendered" />
 </head>
 <body style="background: #f4f4f4; background-image: linear-gradient(to bottom, #f4f4f4, #e6e6e6);">
+    <div id="alertPlaceholder"></div>
     <component type="typeof(App)" render-mode="ServerPrerendered" />
-
     <div id="blazor-error-ui">
         <environment include="Staging,Production">
             An error has occurred. This application may no longer respond until reloaded.
@@ -37,7 +37,6 @@
     <script src="lib/popper.js/umd/popper.min.js"></script>
     <script src="lib/bootstrap/js/bootstrap.min.js"></script>
     <script src="scripts/BlazorHelpers.js"></script>
-    <script src="_framework/blazor.server.js"></script>
-    <scp>
+    <script src="_framework/blazor.server.js"></script>    
 </body>
 </html>

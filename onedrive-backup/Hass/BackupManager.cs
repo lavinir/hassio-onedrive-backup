@@ -128,7 +128,10 @@ namespace hassio_onedrive_backup.Hass
 
             if (backupsToDelete.Any())
             {
-                ConsoleLogger.LogInfo($"Found {backupsToDelete.Count()} backups to delete from OneDrive.");
+				_hassEntityState.State = HassOnedriveEntityState.BackupState.Syncing;
+				await _hassEntityState.UpdateBackupEntityInHass();
+
+				ConsoleLogger.LogInfo($"Found {backupsToDelete.Count()} backups to delete from OneDrive.");
                 foreach (var backupToDelete in backupsToDelete)
                 {
                     bool deleteSuccessfull = await _graphHelper.DeleteItemFromAppFolderAsync(backupToDelete.FileName);
@@ -146,7 +149,10 @@ namespace hassio_onedrive_backup.Hass
             // Delete Old Local Backups
             if (localBackups.Count > _addonOptions.MaxLocalBackups)
             {
-                int numOfLocalBackupsToRemove = localBackups.Count - _addonOptions.MaxLocalBackups;
+				_hassEntityState.State = HassOnedriveEntityState.BackupState.Syncing;
+				await _hassEntityState.UpdateBackupEntityInHass();
+
+				int numOfLocalBackupsToRemove = localBackups.Count - _addonOptions.MaxLocalBackups;
                 var localBackupsToRemove = localBackups
                     .OrderBy(backup => backup.Date)
                     .Take(numOfLocalBackupsToRemove)

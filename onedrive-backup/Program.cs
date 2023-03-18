@@ -36,10 +36,6 @@ namespace hassio_onedrive_backup
             IHassioClient hassIoClient = new HassioClient(supervisorToken, addonOptions.HassAPITimeoutMinutes);
 #endif
             ConsoleLogger.SetLogLevel(addonOptions.LogLevel);
-            ConsoleLogger.LogVerbose("VerboseTest");
-            ConsoleLogger.LogInfo("InfoTest");
-            ConsoleLogger.LogWarning("WarningTest");
-            ConsoleLogger.LogError("ErrorTest");
 			var builder = WebApplication.CreateBuilder(args);
 			LocalStorage.InitializeTempStorage();
             IGraphHelper graphHelper = new GraphHelper(scopes, clientId);
@@ -47,7 +43,7 @@ namespace hassio_onedrive_backup
             HassContext hassContext = null;
 			var addonInfo = hassIoClient.GetAddonInfo("self").Result;
 			hassContext = new HassContext { IngressUrl = addonInfo.DataProperty.IngressUrl, Addons = addons };
-			ConsoleLogger.LogInfo($"Ingress Info. Entry: {addonInfo.DataProperty.IngressEntry}. URL: {addonInfo.DataProperty.IngressUrl}");
+			ConsoleLogger.LogVerbose($"Ingress URL: {addonInfo.DataProperty.IngressUrl}");
 			builder.Services.AddSingleton(hassContext);
             
             // Add services to the container.
@@ -99,7 +95,7 @@ namespace hassio_onedrive_backup
             app.UseStaticFiles();
             app.UseRouting();
 
-            app.UseHassUrlExtractor();
+            // app.UseHassUrlExtractor();
 
             app.MapBlazorHub();
             app.MapFallbackToPage("/_Host");

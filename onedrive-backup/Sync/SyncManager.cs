@@ -143,6 +143,12 @@ namespace hassio_onedrive_backup.Sync
         private async Task DeleteRemovedFilesFromOneDrive(string remotePath, string localPath)
         {
             var item = await _graphHelper.GetItemInAppFolderAsync(remotePath);
+            if (item == null)
+            {
+                return;
+            }
+
+            ConsoleLogger.LogVerbose($"Evaulating {remotePath}");
             localPath = Path.Combine(localPath, item.Name);
             if (localPath.StartsWith($"/{OneDriveFileSyncRootDir}"))
             {
@@ -169,6 +175,7 @@ namespace hassio_onedrive_backup.Sync
 					folderItems = await _graphHelper.GetItemsInAppFolderAsync(remotePath);
                     if (folderItems.Count == 0)
                     {
+                        ConsoleLogger.LogInfo($"Removing Folder: {remotePath}");
 						await _graphHelper.DeleteItemFromAppFolderAsync(remotePath);
 					}
 				}
@@ -180,7 +187,16 @@ namespace hassio_onedrive_backup.Sync
                     ConsoleLogger.LogInfo($"{localPath} does not exist locally. Deleting from OneDrive");
                     await _graphHelper.DeleteItemFromAppFolderAsync(remotePath);
                 }
-            }
+                else if (_fileMatcher.Match(localPath).HasMatches == false)
+                {
+					ConsoleLogger.LogInfo($"{localPath} not included in Sync Paths. Deleting from OneDrive");
+					await _graphHelper.DeleteItemFromAppFolderAsync(remotePath);
+				}
+                else
+                {
+                    ConsoleLogger.LogVerbose($"{remotePath} in sync with {localPath}");
+                }
+			}
         }
 
     }

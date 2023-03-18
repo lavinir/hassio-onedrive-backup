@@ -1,4 +1,5 @@
-﻿using hassio_onedrive_backup.Contracts;
+﻿using hassio_onedrive_backup;
+using hassio_onedrive_backup.Contracts;
 using onedrive_backup.Hass;
 using onedrive_backup.Models;
 using static hassio_onedrive_backup.Contracts.HassBackupsResponse;
@@ -35,7 +36,7 @@ namespace onedrive_backup.Extensions
                 Size = onedriveBackup.Size,
                 IsProtected = onedriveBackup.IsProtected,
                 Location = BackupModel.BackupLocation.OneDrive,
-                Addons = onedriveBackup.Addons?.Select(slug => new Addon { Slug = slug }) ?? Enumerable.Empty<Addon>(),
+                Addons = onedriveBackup.Addons?.Select(slug => new Addon { Slug = slug, Name = GetAddonNameFromSlug(hassContext.Addons, slug) }) ?? Enumerable.Empty<Addon>(),
                 Folders = onedriveBackup.Folders ?? Enumerable.Empty<string>()
 			};
         } 
@@ -75,7 +76,8 @@ namespace onedrive_backup.Extensions
 
 		private static string GetAddonNameFromSlug(IEnumerable<Addon> addons, string slug)
 		{
-			string name = addons.FirstOrDefault(addon => addon.Slug.Equals(slug))?.Name;
+            ConsoleLogger.LogVerbose($"Looking for Addon name matching slug: {slug}. Checking agaisnt {addons.Count()} Addons in cache ");
+			string name = addons.FirstOrDefault(addon => addon.Slug.Equals(slug, StringComparison.OrdinalIgnoreCase))?.Name;
 			return name ?? string.Empty;
 		}
 	}
