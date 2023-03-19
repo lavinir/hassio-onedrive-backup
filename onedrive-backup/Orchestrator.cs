@@ -38,26 +38,19 @@ namespace hassio_onedrive_backup
             DateTimeHelper.Initialize(timeZoneId);
             TimeSpan intervalDelay = TimeSpan.FromMinutes(5);
 
-            if (_addonOptions.RecoveryMode)
+            ConsoleLogger.LogInfo($"Backup interval configured to every {_addonOptions.BackupIntervalHours} hours");
+            if (string.IsNullOrWhiteSpace(_addonOptions.BackupAllowedHours) == false)
             {
-                ConsoleLogger.LogInfo($"Addon Started in Recovery Mode! Any existing backups in OneDrive will be synced locally. No additional local backups will be created. No other syncing will occur.");
+                ConsoleLogger.LogInfo($"Backups / Syncs will only run during these hours: {_allowedBackupHours.ToAllowedHoursText()}");
             }
-            else
-            {
-                ConsoleLogger.LogInfo($"Backup interval configured to every {_addonOptions.BackupIntervalHours} hours");
-                if (string.IsNullOrWhiteSpace(_addonOptions.BackupAllowedHours) == false)
-                {
-                    ConsoleLogger.LogInfo($"Backups / Syncs will only run during these hours: {_allowedBackupHours.ToAllowedHoursText()}");
-                }
 
-                // Initialize File Sync Manager
-                if (_addonOptions.FileSyncEnabled)
-                {
-                    var syncManager = new SyncManager(_serviceProvider, _allowedBackupHours);
-                    var tokenSource = new CancellationTokenSource();
-                    await _graphHelper.GetAndCacheUserTokenAsync();
-                    var fileSyncTask = Task.Run(() => syncManager.SyncLoop(tokenSource.Token), tokenSource.Token);
-                }
+            // Initialize File Sync Manager
+            if (_addonOptions.FileSyncEnabled)
+            {
+                var syncManager = new SyncManager(_serviceProvider, _allowedBackupHours);
+                var tokenSource = new CancellationTokenSource();
+                await _graphHelper.GetAndCacheUserTokenAsync();
+                var fileSyncTask = Task.Run(() => syncManager.SyncLoop(tokenSource.Token), tokenSource.Token);
             }
 
             while (_enabled)
@@ -72,33 +65,15 @@ namespace hassio_onedrive_backup
                     await _hassOnedriveFreeSpaceEntityState.UpdateOneDriveFreespaceSensorInHass(oneDriveSpace);
                     ConsoleLogger.LogInfo("Checking backups");
 
-                    if (_addonOptions.RecoveryMode)
-                    {
-                        await BackupManager.DownloadCloudBackupsAsync();
-                        Console.WriteLine();
-                    }
-                    else
-                    {
-                        BackupManager.PerformBackupsAsync();
-                    }
-
+                    BackupManager.PerformBackupsAsync();
                 }
                 catch (Exception ex)
                 {
                     ConsoleLogger.LogError($"Unexpected error. {ex}");
                 }
 
-                if (_addonOptions.RecoveryMode)
-                {
-                    ConsoleLogger.LogInfo("Recovery run done. New scan will begin in 10 minutes");
-                    ConsoleLogger.LogInfo($"To switch back to Normal backup mode please stop the addon, disable Recovery_Mode in the configuration and restart");
-                    await Task.Delay(TimeSpan.FromMinutes(10));
-                }
-                else
-                {
-                    ConsoleLogger.LogInfo("Backup Interval Completed.");
-                    await Task.Delay(intervalDelay);
-                }
+                ConsoleLogger.LogInfo("Backup Interval Completed.");
+                await Task.Delay(intervalDelay);
             }
         }
 

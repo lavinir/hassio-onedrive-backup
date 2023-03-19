@@ -383,11 +383,7 @@ namespace hassio_onedrive_backup.Hass
             }
 
             HassOnedriveEntityState.BackupState state = HassOnedriveEntityState.BackupState.Unknown;
-            if (_addonOptions.RecoveryMode)
-            {
-                state = HassOnedriveEntityState.BackupState.RecoveryMode;
-            }
-            else if (onedriveSynced && localSynced)
+            if (onedriveSynced && localSynced)
             {
                 state = HassOnedriveEntityState.BackupState.Backed_Up;
             }

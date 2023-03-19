@@ -17,7 +17,6 @@ map:
   - share:rw
   - backup:rw
 options:
-  recovery_mode : false
   local_backup_num_to_keep : 2
   onedrive_backup_num_to_keep : 2
   backup_interval_days : 3
@@ -35,7 +34,6 @@ options:
   log_level: info
 
 schema:
-  recovery_mode : bool
   local_backup_num_to_keep : "int(0,)"
   onedrive_backup_num_to_keep : "int(1,100)"
   backup_interval_days : "float(0.0417,)"
