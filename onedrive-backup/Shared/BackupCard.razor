@@ -109,14 +109,27 @@
 
     private bool detailsDisabled => (Backup.Addons?.Count() > 0 || Backup.Folders?.Count() > 0) ? false : true;
 
-    private string timeAgoText => $"{(DateTimeHelper.Instance.Now - Backup.Date).Days} days ago";
+    private string timeAgoText => CalculateTimeAgoText();
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    private string CalculateTimeAgoText()
     {
-        if (firstRender)
+        TimeSpan timeAgo = DateTimeHelper.Instance.Now - Backup.Date;
+        if (timeAgo.TotalDays > 1)
         {
-            //await JS.InvokeVoidAsync("addTooltips");
+            return $"{timeAgo.Days} days ago";
         }
+        else if (timeAgo.TotalHours > 1)
+        {
+            return $"{timeAgo.Hours} hours ago";
+        }
+        else if (timeAgo.TotalMinutes > 1)
+        {
+            return $"{timeAgo.Minutes} minutes ago";
+        }
+        else
+        {
+            return "Now";
+        }        
     }
 
     private async void UploadBackup()

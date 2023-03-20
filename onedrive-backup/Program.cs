@@ -40,6 +40,7 @@ namespace hassio_onedrive_backup
 			LocalStorage.InitializeTempStorage();
             IGraphHelper graphHelper = new GraphHelper(scopes, clientId);
 			var addons = hassIoClient.GetAddonsAsync().Result;
+            ConsoleLogger.LogVerbose($"Detected Addons: {string.Join(",", addons.Select(addon => addon.Slug))}");
             HassContext hassContext = null;
 			var addonInfo = hassIoClient.GetAddonInfo("self").Result;
 			hassContext = new HassContext { IngressUrl = addonInfo.DataProperty.IngressUrl, Addons = addons };

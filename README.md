@@ -4,10 +4,10 @@
 This addon enables easy Home Assistant backup creation and sync to OneDrive. 
 
 ## Current Features
+- Dedicated Web UI
 - Set backup creation schedule
 - Syncs backups to OneDrive **(Personal Account only. OneDrive for business not currently supported)**
 - Additional File Sync to OneDrive
-- Recovery mode for loading backups back from OneDrive to Home Assistant
 - Supports backup retention for removing older backups
 - Supports multiple Home Assistant instances
 - Supports Home Assistant Persistent Notifications 
@@ -38,19 +38,16 @@ This addon enables easy Home Assistant backup creation and sync to OneDrive.
 4. Click **Install** and wait a few minutes for the addon to download
 5. I recommend setting a backup password for your Home Assistant backups. You can do this in the addon **Configuration**.
 
-6. **Start** the addon and wait a few seconds for it to start.
-7. You will need to **Authenticate** with OneDrive one time to allow the addon access to a dedicated backup folder in your OneDrive account. (If you're interested in the addon permissions and the authentication flow you can see more details below under [Security and Privacy](#security-and-privacy)). Open the Addon **Logs** from the Add-on menu on top and you should see the following lines: <kbd>To sign in, use a web browser to open the page https://microsoft.com/devicelogin and enter the code ********* to authenticate. </kbd>
+6. **Start** the addon and wait a few seconds for it to start. Once started you can navigate to the addon Web UI. 
+    > **Important**! If you are using a CloudFlare tunnel or similar service you may see this error message: ![add-repo](/onedrive-backup/images/blazorblocked.png) To resolve this please see the relevant section in the [FAQ](#im-getting-an-error-in-the-web-interface-about-html-content-filtering)
+7. You will need to **Authenticate** with OneDrive one time to allow the addon access to a dedicated backup folder in your OneDrive account. (If you're interested in the addon permissions and the authentication flow you can see more details below under [Security and Privacy](#security-and-privacy)). You can do this via the Web Interface, where there will be a banner prompting you to authenticate: ![add-repo](/onedrive-backup/images/authenticate.png) You can use the button to copy the auth code and click on the URL to start the authentication process. 
+   > You can also do this without the Web Interface by opening the Add-on logs where you will have a similar line telling you to authenticate with the appropriate code.
 8. Copy the code and navigate to the url as instructed. You will be asked to login to your Microsoft account and grant permissions to the App that will allow it to store your backups. ![consent](/onedrive-backup/images/consent.png). </br>
-After consent has been granted you're good to go (you can verify in the logs that authentication has indeed succeeded)
+After consent has been granted you're good to go. The authentication banner will disappear from the Web Interface and will start displaying data. 
+    > Alternatively, you can also verify in the logs that authentication has indeed succeeded.
 
 ## Configuration
 All configuration options for the addon can be found in the native **Configuration** section of the addon in Home Assistant. 
-
-### **Recovery mode**
-When this settings is toggled on, the add-on will not perform any backups and sync mode will reverse from OneDrive back to Home Assistant.
-This will still respect the [maximum local backups](#local_backup_num_to_keep) set and will try to sync back the latest backups that exist in OneDrive while remaining under the set limit.
-
-> See [Restoring from backup](#restoring-from-backup) for additional information on how to recover from a backup.
 
 ### **Number of local backups**
 The maximum amount of backups to keep locally in Home Assistant
@@ -123,17 +120,25 @@ This allows you to specify a list of paths for the addon to sync to OneDrive so 
 **Example**: 
 
 ```
- - path: /media/music/*.mp3
- - path: /ssl
-   recursive: true
+sync_paths:
+ - /share/
+ - /media/music/*.mp3
+ - /share/**/*.zip
+   
 ```
 
-> Wildcards (*, ?) are supported.
+> You can use '*' as a wild card representing 0 to many characters or **/ to represent an arbitrary depth. In the examples above the paths that will be synced are (1) contents share folder and all subfolders located underneath, (2) all the .mp3 files located inside the /media/music folder (no subfolders included) and (3) all .zip files located in any directory / subdirectory under the /share folder
 
 > Currently Sync is only preformed one way (Local -> OneDrive). 
 
 ### Remove deleted files during File Sync
 When enabled, the FileSync folder on OneDrive will mirror your included [Sync Paths](#file-sync-paths-optional) meaning any 'extra' content that remains in OneDrive will be removed.
+
+### Excluded Addons
+When enabled, partial backups will be created excluding the addons specified in this list. You need to specify the addon id (slug) in this list. To find the correct slug you can navigate in Home Assistant to **Settings** -> **Addons** and click on an addon. When you are in the addon Info screen you will see the addon slug in the url: https://your.homeassistant.host/hassio/addon/**addonslug**/info
+
+### Log Level
+You can opt to see more / less logs by adjusting the verbosity of the addon logs. Possible values are (verbose, info, warning, error)
 ## Backup Location in OneDrive
 The add-on has specific permissions to a single folder in your OneDrive known as the **App Folder**. (More details can be found in the [Security and Privacy](#security-and-privacy) section.)
 
@@ -229,15 +234,8 @@ This event will fire when deleting a local backup from Home Assistant (based on 
 
 ## Restoring from Backup 
 To restore a backup head to the **Settings** -> **System** -> **Backups** menu. From there you should see all your local backups. You can choose any one from the list and recover Home Assistant from them.
-> For backups in OneDrive only, you will first want to sync them back locally. See [Recovery Mode](#recovery-mode) below for details.
-
-### Recovery Mode
-Recovery Mode can be enabled from the add-on configuration panel. Once enabled, the add-on will cease all backup creation and syncing from Home Assistant to OneDrive. Instead, it will attempt to sync back the latest backups from OneDrive to Home Assistant. 
-The number of backups that will sync back will be capped by the amount of [maximum local backups](#local_backup_num_to_keep) configured. 
-
-> In case you cannot sync the backup you want because it is too old and you are unable to sync all the newer backups to Home Assistant because of storage capacity (or just prefer not to) you can manually download the backup from OneDrive and upload the backup from this screen by clicking the 3-dot menu on the top right and choosing the **Upload Backup** option.
-
-![upload_backup](onedrive-backup/images/upload_backup.png)
+> For backups in OneDrive only, you will first want to sync them back locally. 
+This can be done via the Web Interface by clicking the **Download** backup on the specific backup you wish to restore. It will be automatically uploaded to Home Assistant and visible in the **Backups** section. 
 
 ## Security and Privacy
 
@@ -265,9 +263,21 @@ This can be done using the [Allowed hours configuration](#backup_allowed_hours-o
 ### **I have more than one Home Assistant installation I want to back up** 
 See how to configure [Instance names](#backup_instance_name-optional)
 
+### **I'm getting an error in the Web Interface about Html Content Filtering** 
+The Web UI uses the Blazor framework which relies on injecting Html comments into the dom for tracking purposes for the Blazor components. Service like CloudFlare (e.g. for those using the CloudFlared addon to access Home Assistant outside of their network) have **"Auto Minify"** features, which can include removing comment blocks from served HTML pages. If this occurs it breaks the Blazor framework and you will receive an appropriate error in the Addon WebUI.
+Below are instructions to resolve this for a **CloudFlare** tunnel:
+
+**Option 1 - Disable Auto Minify**
+You can disable auto minify by [logging in to the Cloudflare dashboard](https://dash.cloudflare.com/login), selecting your account and website. Then go to the **Speed** -> **Optimization** section and uncheck **HTML** under **Auto Minify**
+![autominify](onedrive-backup/images/autominify.png) 
+**Option 2 - Use a Page Rule**
+If you do not want to do this globally you can also use a **Page Rule** by going to **Rules** -> **Page Rules** instead. You can then select the URL you want to disable HTML minification for (e.g. https://your.homeassistant.host/*) and choose the **Auto Minify** settings and deselect **HTML**:
+![pagerule](onedrive-backup/images/pagerule.png) 
+> Note: If you want to use a more specific URL just for the addon (though you probably don't really need that) you will need to use the Home Assistant assigned Ingress URL allocated to the Addon. You can get this from the logs when setting them to **Verbose**
+
 ## Feedback / Feature requests
 If you use and like this addon and want to show support you could do so by starring the official [Repo on GitHub]("https://github.com/lavinir/hassio-onedrive-backup") or [<img src ="https://raw.githubusercontent.com/lavinir/hassio-onedrive-backup/main/onedrive-backup/images/bmc.svg" height = 25>](https://www.buymeacoffee.com/snirlavis)
 
 For Bugs / Issues please open an [Issue on GitHub]("https://github.com/lavinir/hassio-onedrive-backup/issues")
 
-For new suggestions / feedback please use the official repo [GitHub Disucssions](https://github.com/lavinir/hassio-onedrive-backup/discussions)
+For new suggestions / feedback please use the official repo [GitHub Disucssions](https://github.com/lavinir/hassio-onedrive-backup/discussions/categories/ideas)
