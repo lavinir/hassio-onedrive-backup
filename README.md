@@ -2,6 +2,7 @@
 
 ## Intro
 This addon enables easy Home Assistant backup creation and sync to OneDrive. 
+![add-repo](/onedrive-backup/images/webui.png)
 
 ## Current Features
 - Dedicated Web UI
