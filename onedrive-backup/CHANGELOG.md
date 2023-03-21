@@ -1,3 +1,7 @@
+## v2.01 [March 21st 2023]
+### Fixed
+* Removed addon list from backup details in webui to workaround onedrive size limitation causing backup uplaods to fail when a lot of addons are backed up.
+
 ## v2.0 [March 21st 2023]
 ### Summary
 This is a very big release 🎉 with many new features and some breaking changes, please see details below.
