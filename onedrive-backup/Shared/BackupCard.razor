@@ -43,12 +43,6 @@
             <div class="card-text">@Backup.Size MB</div>
         }
         <div class="collapse" id="details-@Backup.Slug">
-            @if (Backup.Addons != null && Backup.Addons.Any())
-            {
-                <div class="card-text">
-                    <p><strong>Addons:</strong>@string.Join(", ", Backup.Addons.Select(addon => addon.Name))</p>
-                </div>
-            }
             @if (Backup.Folders != null && Backup.Folders.Any())
             {
                 <div class="card-text">

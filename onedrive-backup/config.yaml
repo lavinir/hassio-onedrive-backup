@@ -1,5 +1,5 @@
 name: "OneDrive Backup"
-version: "2.0"
+version: "2.01"
 slug: hassio_onedrive_backup
 description: >-
   Automatic backups from Home Assistant to OneDrive
