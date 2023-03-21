@@ -258,7 +258,7 @@ No. Currently OneDrive for Business does not support the special **App Folder** 
 The default timeout for backup creation is 30 minutes. For large installations, backup creation could exceed this time. You can increase the [timeout value](#hass_api_timeout_minutes) in your configuration.
 
 ### **I only want my backups to run at specific hours** 
-This can be done using the [Allowed hours configuration](#backup_allowed_hours-optional)
+This can be done using the [Allowed hours (Optional) configuration](#allowed-hours-optional)
 
 ### **I have more than one Home Assistant installation I want to back up** 
 See how to configure [Instance names](#backup_instance_name-optional)
