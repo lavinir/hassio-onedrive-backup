@@ -71,7 +71,7 @@ When enabled the add-on will monitor all local backups whether created by the ad
 
 ### **Backup password**
 The password to use to protect the backups created and uploaded to OneDrive.
-> Currently this is mandatory to set as I don't think it makes sense to store these unprotected.
+> You need to toggle the "Show unused optional configuration options" to see it in the Configuration screen.
 
 ### **Hass api timeout (minutes)**
 This allows you to set the timeout configured when calling the Home Assistant APIs. 
@@ -135,7 +135,7 @@ sync_paths:
 When enabled, the FileSync folder on OneDrive will mirror your included [Sync Paths](#file-sync-paths-optional) meaning any 'extra' content that remains in OneDrive will be removed.
 
 ### Excluded Addons (Optional)
-When enabled, partial backups will be created excluding the addons specified in this list. You need to specify the addon id (slug) in this list. To find the correct slug you can navigate in Home Assistant to **Settings** -> **Addons** and click on an addon. When you are in the addon Info screen you will see the addon slug in the url: https://your.homeassistant.host/hassio/addon/**addonslug**/info
+When enabled, partial backups will be created excluding the addons specified in this list. You need to specify the addon id (slug) in this list. To find the correct slug you can navigate in Home Assistant to **Settings** -> **Addons** and click on an addon. When you are in the addon Info screen you will see the addon slug in the url: ht<area>tps://your.homeassistant.host/hassio/addon/**addonslug**/info
 
 ### Log Level
 You can opt to see more / less logs by adjusting the verbosity of the addon logs. Possible values are (verbose, info, warning, error)
