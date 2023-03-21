@@ -65,7 +65,7 @@
                 @if (uploading)
                 {
                     <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                    <span class="oi oi-cloud-upload">Uploading @uploadPercent</span>
+                    <span class="oi oi-cloud-upload">Uploading @uploadPercent%</span>
                 }
                 else
                 {
@@ -130,6 +130,14 @@
         {
             return "Now";
         }        
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("addTooltips");
+        }
     }
 
     private async void UploadBackup()

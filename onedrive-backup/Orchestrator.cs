@@ -52,6 +52,10 @@ namespace hassio_onedrive_backup
                 await _graphHelper.GetAndCacheUserTokenAsync();
                 var fileSyncTask = Task.Run(() => syncManager.SyncLoop(tokenSource.Token), tokenSource.Token);
             }
+            else
+            {
+                ConsoleLogger.LogVerbose($"File Sync disabled");
+            }
 
             while (_enabled)
             {

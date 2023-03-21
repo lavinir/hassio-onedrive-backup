@@ -14,8 +14,13 @@
   "exclude_local_addons_folder": false,
   "backup_allowed_hours": "0-23",
   "sync_paths": [
-    "/synctemp/**/*.zip",
-    "/synctemp2/"
+    {
+      "path": "/media",
+      "isRecursive": true
+    },
+    {
+      "path": "/ssl"
+    }
   ],
   "file_sync_remove_deleted": true,
   "backup_instance_name": "LocalTest",

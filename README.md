@@ -134,7 +134,7 @@ sync_paths:
 ### Remove deleted files during File Sync
 When enabled, the FileSync folder on OneDrive will mirror your included [Sync Paths](#file-sync-paths-optional) meaning any 'extra' content that remains in OneDrive will be removed.
 
-### Excluded Addons
+### Excluded Addons (Optional)
 When enabled, partial backups will be created excluding the addons specified in this list. You need to specify the addon id (slug) in this list. To find the correct slug you can navigate in Home Assistant to **Settings** -> **Addons** and click on an addon. When you are in the addon Info screen you will see the addon slug in the url: https://your.homeassistant.host/hassio/addon/**addonslug**/info
 
 ### Log Level
@@ -193,7 +193,7 @@ Number of backups that exist in OneDrive
 When a backup upload is in progress this will show the progress of the upload.
 
 #### <kbd>**Backup download percentage**</kbd>
-When a backup download is in progress (Recovery Mode), this shows the progres of the download.
+When a backup download is in progress this shows the progres of the download.
 
 ## Home Assistant file sync sensor
 The add-on creates a native Home Assistant Sensor entity <kbd>sensor.onedrivefilesync</kbd> which grants visibility to the file sync status as well as allows you to create automations on these values as needed.
@@ -231,7 +231,6 @@ This event will fire when deleting a backup from OneDrive (based on [defined ret
 
 ### <kbd>onedrive.LocalBackupDeleteFailed</kbd>
 This event will fire when deleting a local backup from Home Assistant (based on [defined retention](#local_backup_num_to_keep)) has failed.
-
 ## Restoring from Backup 
 To restore a backup head to the **Settings** -> **System** -> **Backups** menu. From there you should see all your local backups. You can choose any one from the list and recover Home Assistant from them.
 > For backups in OneDrive only, you will first want to sync them back locally. 
@@ -263,7 +262,7 @@ This can be done using the [Allowed hours configuration](#backup_allowed_hours-o
 ### **I have more than one Home Assistant installation I want to back up** 
 See how to configure [Instance names](#backup_instance_name-optional)
 
-### **I'm getting an error in the Web Interface about Html Content Filtering** 
+### **HTML Content Filtering Error** 
 The Web UI uses the Blazor framework which relies on injecting Html comments into the dom for tracking purposes for the Blazor components. Service like CloudFlare (e.g. for those using the CloudFlared addon to access Home Assistant outside of their network) have **"Auto Minify"** features, which can include removing comment blocks from served HTML pages. If this occurs it breaks the Blazor framework and you will receive an appropriate error in the Addon WebUI.
 Below are instructions to resolve this for a **CloudFlare** tunnel:
 

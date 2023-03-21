@@ -25,7 +25,7 @@ function checkBlazorStatus() {
     var markup = document.documentElement.innerHTML;
     if (markup.includes("<!--Blazor") == false) {
         blazorPassThrough = true;
-        showAlert("Error! ", "Html Content Filtering Detected - Web Interface will not work. If you are using Cloudflare or a similar service please follow", "danger", "#", " this link ", "for instructions");
+        showAlert("Error! ", "Html Content Filtering Detected - Web Interface will not work. If you are using Cloudflare or a similar service please follow", "danger", "https://github.com/lavinir/hassio-onedrive-backup#html-content-filtering-error", " this link ", "for instructions");
     }
 }
 

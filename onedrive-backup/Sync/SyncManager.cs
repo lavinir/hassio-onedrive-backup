@@ -175,7 +175,6 @@ namespace hassio_onedrive_backup.Sync
 					folderItems = await _graphHelper.GetItemsInAppFolderAsync(remotePath);
                     if (folderItems.Count == 0)
                     {
-                        ConsoleLogger.LogInfo($"Removing Folder: {remotePath}");
 						await _graphHelper.DeleteItemFromAppFolderAsync(remotePath);
 					}
 				}
