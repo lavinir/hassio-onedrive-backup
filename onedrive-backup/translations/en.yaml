@@ -54,4 +54,9 @@ configuration:
   file_sync_remove_deleted: 
     name: Remove deleted files during File Sync
     description: When enabled, the FileSync folder on OneDrive will mirror your included sync_paths meaning any 'extra' content that remains in OneDrive will be removed.
-                
+  excluded_addons:
+    name: Excluded Addons
+    description: When enabled, partial backups will be created excluding the addons specified in this list. You need to specify the addon id (slug) in this list.
+  log_level:
+    name: Log Level
+    description: You can opt to see more / less logs by adjusting the verbosity of the addon logs. 

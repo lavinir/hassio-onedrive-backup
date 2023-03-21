@@ -1,0 +1,42 @@
+﻿@page "/"
+@using Microsoft.AspNetCore.Components.Web
+@using onedrive_backup;
+@using onedrive_backup.Hass;
+@namespace hassio_onedrive_backup.Pages
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@inject HassContext IngressSettings
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="@IngressSettings.IngressUrl" />
+    <link rel="stylesheet" href="lib/bootstrap/css/bootstrap.min.css" />
+    <link href="css/site.css" rel="stylesheet" />
+    <link href="onedrive-backup.styles.css" rel="stylesheet" />
+    <link rel="icon" type="image/png" href="favicon.png"/>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <component type="typeof(HeadOutlet)" render-mode="ServerPrerendered" />
+</head>
+<body style="background: #f4f4f4; background-image: linear-gradient(to bottom, #f4f4f4, #e6e6e6);">
+    <div id="alertPlaceholder"></div>
+    <component type="typeof(App)" render-mode="ServerPrerendered" />
+    <div id="blazor-error-ui">
+        <environment include="Staging,Production">
+            An error has occurred. This application may no longer respond until reloaded.
+        </environment>
+        <environment include="Development">
+            An unhandled exception has occurred. See browser dev tools for details.
+        </environment>
+        <a href="" class="reload">Reload</a>
+        <a class="dismiss">🗙</a>
+    </div>
+
+    <script src="lib/jquery/jquery.slim.min.js"></script>
+    <script src="lib/popper.js/umd/popper.min.js"></script>
+    <script src="lib/bootstrap/js/bootstrap.min.js"></script>
+    <script src="scripts/BlazorHelpers.js"></script>
+    <script src="_framework/blazor.server.js"></script>    
+</body>
+</html>

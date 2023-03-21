@@ -1,6 +1,6 @@
 ﻿namespace hassio_onedrive_backup.Hass.Events
 {
-    internal enum OneDriveEvents
+    public enum OneDriveEvents
     {
         BackupCreateFailed,
         BackupUploadFailed,

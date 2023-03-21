@@ -1,112 +1,106 @@
-﻿using hassio_onedrive_backup.Contracts;
+using hassio_onedrive_backup.Contracts;
 using hassio_onedrive_backup.Graph;
 using hassio_onedrive_backup.Hass;
 using hassio_onedrive_backup.Storage;
 using hassio_onedrive_backup.Sync;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Logging.Console;
+using onedrive_backup;
+using onedrive_backup.Extensions;
+using onedrive_backup.Hass;
 using System.Collections;
 
 namespace hassio_onedrive_backup
 {
-    internal class Program
+    public class Program
     {
         private const string clientId = "b8a647cf-eccf-4c7f-a0a6-2cbec5d0b94d";
         private const string addonDirectory = "/data";
         private static readonly List<string> scopes = new() { "Files.ReadWrite.AppFolder" };
 
-        static async Task Main(string[] args)
+        private static Orchestrator _orchestrator;
+        private static string _baseDirectory;
+
+        static void Main(string[] args)
         {
+            _baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
 
 #if DEBUG
             IHassioClient hassIoClient = new HassioClientMock();
             var addonOptions = AddonOptionsReader.ReadOptions();
 #else
+
             Directory.SetCurrentDirectory(addonDirectory);
             var addonOptions = AddonOptionsReader.ReadOptions();
             string supervisorToken = Environment.GetEnvironmentVariable("SUPERVISOR_TOKEN")!;
-            IHassioClient hassIoClient = new HassioClient(supervisorToken, TimeSpan.FromMinutes(addonOptions.HassAPITimeoutMinutes));
+            IHassioClient hassIoClient = new HassioClient(supervisorToken, addonOptions.HassAPITimeoutMinutes);
 #endif
-            LocalStorage.InitializeTempStorage();
-            IGraphHelper graphHelper = new GraphHelper(scopes, clientId, (info, cancel) =>
+            ConsoleLogger.SetLogLevel(addonOptions.LogLevel);
+			var builder = WebApplication.CreateBuilder(args);
+			LocalStorage.InitializeTempStorage();
+            IGraphHelper graphHelper = new GraphHelper(scopes, clientId);
+			var addons = hassIoClient.GetAddonsAsync().Result;
+            ConsoleLogger.LogVerbose($"Detected Addons: {string.Join(",", addons.Select(addon => addon.Slug))}");
+            HassContext hassContext = null;
+			var addonInfo = hassIoClient.GetAddonInfo("self").Result;
+			hassContext = new HassContext { IngressUrl = addonInfo.DataProperty.IngressUrl, Addons = addons };
+			ConsoleLogger.LogVerbose($"Ingress URL: {addonInfo.DataProperty.IngressUrl}");
+			builder.Services.AddSingleton(hassContext);
+            
+            // Add services to the container.
+            builder.Services.AddRazorPages();
+            builder.Services.AddServerSideBlazor();
+            builder.Services.AddSingleton(addonOptions);
+            builder.Services.AddSingleton<IHassioClient>(hassIoClient);
+            builder.Services.AddSingleton<IGraphHelper>(graphHelper);
+            builder.Services.AddSingleton<HassOnedriveEntityState>();
+            builder.Services.AddSingleton<HassOnedriveFileSyncEntityState>();
+            builder.Services.AddSingleton<HassOnedriveFreeSpaceEntityState>();
+            builder.Services.AddSingleton<Orchestrator>();
+            builder.WebHost.UseUrls("http://*:8099");
+
+            if (!builder.Environment.IsDevelopment())
             {
-                ConsoleLogger.LogInfo(info.Message);
-                return Task.FromResult(0);
-            });
+                builder.Logging.ClearProviders();
+                // builder.Logging.AddConsole();
+			}
 
-            //**********************Temp TESTS******************* //
-            //await graphHelper.GetAndCacheUserTokenAsync();
-            //var items = await graphHelper.GetItemsInAppFolderAsync("dudaoger");
+            var app = builder.Build();
+            _orchestrator = app.Services.GetService<Orchestrator>();
+            _orchestrator.Start();
 
-            //*********************************************** //
-
-            string timeZoneId = await hassIoClient.GetTimeZoneAsync();
-            DateTimeHelper.Initialize(timeZoneId);
-            TimeSpan intervalDelay = TimeSpan.FromMinutes(5);
-
-            BitArray allowedBackupHours = TimeRangeHelper.GetAllowedHours(addonOptions.BackupAllowedHours);
-            var backupManager = new BackupManager(addonOptions, graphHelper, hassIoClient, allowedBackupHours);
-                        
-            if (addonOptions.RecoveryMode)
+            app.UseIncomingHassFirewallMiddleware();
+            if (!app.Environment.IsDevelopment())
             {
-                ConsoleLogger.LogInfo($"Addon Started in Recovery Mode! Any existing backups in OneDrive will be synced locally. No additional local backups will be created. No other syncing will occur.");
+                app.UseWhen(ctx => !ctx.Request.Path
+                .StartsWithSegments("/_framework/blazor.server.js"),
+                    subApp => subApp.UseStaticFiles(new StaticFileOptions
+                    {
+                        FileProvider = new PhysicalFileProvider($"{_baseDirectory}/wwwroot")
+                    }));
             }
             else
             {
-                ConsoleLogger.LogInfo($"Backup interval configured to every {addonOptions.BackupIntervalHours} hours");
-                if (string.IsNullOrWhiteSpace(addonOptions.BackupAllowedHours) == false)
-                {
-                    ConsoleLogger.LogInfo($"Backups / Syncs will only run during these hours: {allowedBackupHours.ToAllowedHoursText()}");
-                }
-
-                // Initialize File Sync Manager
-                if (addonOptions.FileSyncEnabled)
-                {
-                    var syncManager = new SyncManager(addonOptions, graphHelper, hassIoClient, allowedBackupHours);
-                    var tokenSource = new CancellationTokenSource();
-                    await graphHelper.GetAndCacheUserTokenAsync();
-                    var fileSyncTask = Task.Run(() => syncManager.SyncLoop(tokenSource.Token), tokenSource.Token);
-                }
+                ConsoleLogger.LogInfo("Dev Mode");
             }
 
-            while (true)
+
+            app.UsePathBase($"{hassContext?.HeaderIngressPath ?? "/"}");
+
+            // Configure the HTTP request pipeline.
+            if (!app.Environment.IsDevelopment())
             {
-                try
-                {
-                    // Refresh Graph Token
-                    await graphHelper.GetAndCacheUserTokenAsync();
-
-                    // Update OneDrive Freespace Sensor
-                    double? freeSpaceGB = await graphHelper.GetFreeSpaceInGB();
-                    await HassOnedriveFreeSpaceEntityState.UpdateOneDriveFreespaceSensorInHass(freeSpaceGB, hassIoClient);
-                    ConsoleLogger.LogInfo("Checking backups");
-
-                    if (addonOptions.RecoveryMode)
-                    {
-                        await backupManager.DownloadCloudBackupsAsync();
-                        Console.WriteLine();
-                    }
-                    else
-                    {                             
-                        await backupManager.PerformBackupsAsync();
-                    }
-
-                }
-                catch (Exception ex)
-                {
-                    ConsoleLogger.LogError($"Unexpected error. {ex}");
-                }
-
-                if (addonOptions.RecoveryMode)
-                {
-                    ConsoleLogger.LogInfo("Recovery run done. New scan will begin in 10 minutes");
-                    ConsoleLogger.LogInfo($"To switch back to Normal backup mode please stop the addon, disable Recovery_Mode in the configuration and restart");
-                    await Task.Delay(TimeSpan.FromMinutes(10));
-                }
-                else
-                {
-                    ConsoleLogger.LogInfo("Backup Interval Completed.");
-                    await Task.Delay(intervalDelay);
-                }
+                app.UseExceptionHandler("/Error");
             }
+
+            app.UseStaticFiles();
+            app.UseRouting();
+
+            // app.UseHassUrlExtractor();
+
+            app.MapBlazorHub();
+            app.MapFallbackToPage("/_Host");
+            app.Run();
         }
-    }
+	}
 }

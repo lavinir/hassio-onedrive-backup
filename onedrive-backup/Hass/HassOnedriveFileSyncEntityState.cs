@@ -1,9 +1,10 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using System.ComponentModel;
 
 namespace hassio_onedrive_backup.Hass
 {
-    internal class HassOnedriveFileSyncEntityState
+    internal class HassOnedriveFileSyncEntityState : INotifyPropertyChanged
     {
         private const string OneDrive_FileSync_Entity_ID = "sensor.onedrivefilesync";
 
@@ -15,24 +16,12 @@ namespace hassio_onedrive_backup.Hass
             new StringEnumConverter()
         };
 
-        private HassOnedriveFileSyncEntityState()
+        public event PropertyChangedEventHandler? PropertyChanged;
+
+        public HassOnedriveFileSyncEntityState(IHassioClient hassioClient)
         {
+            _hassioClient = hassioClient;
             State = FileState.Unknown;
-        }
-
-        public static HassOnedriveFileSyncEntityState Instance
-        {
-            get
-            {
-                _instance = _instance ?? new HassOnedriveFileSyncEntityState();
-                return _instance;
-            }
-        }
-
-        public static HassOnedriveFileSyncEntityState Initialize(IHassioClient hassioClient)
-        {
-            Instance._hassioClient = hassioClient;
-            return _instance!;
         }
 
         [JsonConverter(typeof(StringEnumConverter))]
@@ -69,6 +58,7 @@ namespace hassio_onedrive_backup.Hass
                 Converters = entityStateConverters
             });
 
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(null));
             await _hassioClient.UpdateHassEntityStateAsync(OneDrive_FileSync_Entity_ID, payloadStr);
         }
 

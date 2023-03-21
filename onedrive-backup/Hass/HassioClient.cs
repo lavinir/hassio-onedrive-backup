@@ -2,9 +2,11 @@
 using hassio_onedrive_backup.Hass.Events;
 using hassio_onedrive_backup.Storage;
 using Newtonsoft.Json;
+using onedrive_backup.Contracts;
 using System.Globalization;
 using System.Net.Http.Headers;
 using System.Text;
+using static hassio_onedrive_backup.Contracts.HassAddonsResponse;
 using static hassio_onedrive_backup.Contracts.HassBackupsResponse;
 
 namespace hassio_onedrive_backup.Hass
@@ -15,11 +17,11 @@ namespace hassio_onedrive_backup.Hass
         private const string Hass_Base_Uri_Str = "http://supervisor/core/api";
         private readonly HttpClient _httpClient;
 
-        public HassioClient(string token, TimeSpan clientTimeout) 
+		public HassioClient(string token, int hassioTimeout) 
         {
             _httpClient = new HttpClient();
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            _httpClient.Timeout = clientTimeout;
+            _httpClient.Timeout = TimeSpan.FromMinutes(hassioTimeout);
         }
 
         public async Task<bool> DeleteBackupAsync(Backup backup)
@@ -166,11 +168,11 @@ namespace hassio_onedrive_backup.Hass
             }
         }
 
-        public async Task<List<string>> GetAddonsAsync()
+        public async Task<List<Addon>> GetAddonsAsync()
         {
             Uri uri = new Uri(Supervisor_Base_Uri_Str + "/addons");
             var response = await GetJsonResponseAsync<HassAddonsResponse>(uri);
-            var ret = response.DataProperty.Addons.Select(addon => addon.Slug).ToList();
+            var ret = response.DataProperty.Addons.ToList();
             return ret;
         }
 
@@ -211,6 +213,13 @@ namespace hassio_onedrive_backup.Hass
             string response = await _httpClient.GetStringAsync(uri);
             T ret = JsonConvert.DeserializeObject<T>(response)!;
             return ret;
+        }
+
+        public async Task<HassAddonInfoResponse> GetAddonInfo(string slug)
+        {
+            Uri uri = new Uri(Supervisor_Base_Uri_Str + $"/addons/{slug}/info");
+            var response = await GetJsonResponseAsync<HassAddonInfoResponse>(uri);
+            return response;
         }
     }
 }

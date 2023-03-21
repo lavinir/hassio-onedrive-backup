@@ -1,9 +1,11 @@
 ﻿using hassio_onedrive_backup.Hass.Events;
+using onedrive_backup.Contracts;
+using static hassio_onedrive_backup.Contracts.HassAddonsResponse;
 using static hassio_onedrive_backup.Contracts.HassBackupsResponse;
 
 namespace hassio_onedrive_backup.Hass
 {
-    internal interface IHassioClient
+    public interface IHassioClient
     {
         Task<List<Backup>> GetBackupsAsync(Predicate<Backup> filter);
 
@@ -19,7 +21,9 @@ namespace hassio_onedrive_backup.Hass
 
         Task<bool> UploadBackupAsync(string filePath);
 
-        Task<List<string>> GetAddonsAsync();
+        Task<List<Addon>> GetAddonsAsync();
+
+        Task<HassAddonInfoResponse> GetAddonInfo(string slug);
 
         Task<string> GetTimeZoneAsync();
 

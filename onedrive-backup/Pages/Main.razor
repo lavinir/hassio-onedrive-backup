@@ -1,0 +1,73 @@
+﻿@page "/"
+@using hassio_onedrive_backup.Contracts;
+@using hassio_onedrive_backup.Graph;
+@using hassio_onedrive_backup;
+@using onedrive_backup.Extensions;
+@using onedrive_backup.Hass;
+@using onedrive_backup.Models;
+@using static hassio_onedrive_backup.Contracts.HassBackupsResponse;
+@inject IGraphHelper GraphHelper
+@inject Orchestrator Orchestrator
+@inject HassContext HassContext;
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-12 d-flex justify-content-center">
+            <onedrive_backup.Shared.OneDriveSummaryCard />
+        </div>
+    </div>
+</div>
+<div class="container">
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        @foreach (var backup in Backups)
+        {
+            <div class="col">
+                <onedrive_backup.Shared.BackupCard Backup="@backup" />
+            </div>
+        }
+    </div>
+</div>
+
+@code
+{
+    private List<BackupModel> Backups => GetBackupModels();
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        GraphHelper.AuthStatusChangedEventHandler += OnStateChanged;
+        Orchestrator.BackupManager.OneDriveBackupsUpdated += OnStateChanged;
+        Orchestrator.BackupManager.LocalBackupsUpdated += OnStateChanged;
+    }
+
+    private List<BackupModel> GetBackupModels()
+    {        
+        var ret = new List<BackupModel>();
+        var _localBackups = Orchestrator.BackupManager.LocalBackups?.Select(backup => backup.ToBackupModel(HassContext)) ?? Enumerable.Empty<BackupModel>();
+        var _onedriveBackups = Orchestrator.BackupManager.OnlineBackups?.Select(backup => backup.ToBackupModel(HassContext)) ?? Enumerable.Empty<BackupModel>();
+
+        ret.AddRange(_onedriveBackups);
+        foreach (var localBackup in _localBackups)
+        {
+            if (_onedriveBackups.Any(oneDriveBackup => oneDriveBackup.Slug == localBackup.Slug))
+            {
+                var syncedBackup = ret.Find(backup => backup.Slug == localBackup.Slug);
+                syncedBackup.Location = BackupModel.BackupLocation.Both;
+                continue;
+            }
+
+            ret.Add(localBackup);
+        }
+
+        ret = ret.OrderByDescending(backup => backup.Date).ToList();
+        return ret;
+    }
+    private async void OnStateChanged()
+    {
+        await InvokeAsync(() =>
+        {
+            StateHasChanged();
+        });
+    }
+
+}    

@@ -1,9 +1,18 @@
 ﻿using Microsoft.Graph;
+using onedrive_backup.Contracts;
 
 namespace hassio_onedrive_backup.Graph
 {
-    internal interface IGraphHelper
+    public interface IGraphHelper
     {
+        string AuthUrl { get; }
+
+        string AuthCode { get; }
+
+        bool? IsAuthenticated { get; }
+
+        event AuthStatusChanged AuthStatusChangedEventHandler;
+
         Task<string> GetAndCacheUserTokenAsync();
 
         Task<List<DriveItem>> GetItemsInAppFolderAsync(string subPath = "");
@@ -12,12 +21,14 @@ namespace hassio_onedrive_backup.Graph
 
         Task<bool> DeleteItemFromAppFolderAsync(string itemPath);
 
-        Task<bool> UploadFileAsync(string filePath, DateTime date, string? instanceName, string? destinationFileName = null, Action<int>? progressCallback = null, bool flatten = true, bool omitDescription = false);
+        Task<bool> UploadFileAsync(string filePath, DateTime date, string? instanceName, string? destinationFileName = null, Action<int>? progressCallback = null, bool flatten = true, string description = null);
 
         Task<string?> DownloadFileAsync(string fileName, Action<int?>? progressCallback);
 
-        Task<double?> GetFreeSpaceInGB();
+        Task<OneDriveFreeSpaceData> GetFreeSpaceInGB();
 
         Task<DriveItem> GetOrCreateFolder(string path);
     }
+
+    public delegate void AuthStatusChanged();
 }

@@ -1,14 +1,57 @@
-﻿using hassio_onedrive_backup.Hass.Events;
+﻿using hassio_onedrive_backup.Contracts;
+using hassio_onedrive_backup.Hass.Events;
 using Newtonsoft.Json;
+using onedrive_backup.Contracts;
 using System.Diagnostics;
 using System.Net.Http;
+using static hassio_onedrive_backup.Contracts.HassAddonsResponse;
 using static hassio_onedrive_backup.Contracts.HassBackupsResponse;
 
 namespace hassio_onedrive_backup.Hass
 {
     internal class HassioClientMock : IHassioClient
     {
-        private List<Backup> _backups = new List<Backup>();
+        private List<Backup> _backups = new List<Backup>
+        {
+            new Backup
+            {
+                Compressed = true,
+                Date = DateTime.Now.AddDays(-10),
+                Name = "Mock1",
+                Protected = false,
+                Size = 1,
+                Slug = "Mock1",
+                Type = "partial",
+                Content = new Content
+                {
+                    Addons = new string[]
+                    {
+                        "Addon1", "Addon2"
+                    }
+                }
+            },
+            new Backup
+            {
+                Compressed = true,
+                Date = DateTime.Now.AddDays(-1),
+                Name = "Mock2",
+                Protected = false,
+                Size = 2,
+                Slug = "Mock2",
+                Type = "full",
+                Content = new Content
+                {
+                    Addons = new string[]
+                    {
+                        "Addon1", "Addon2"
+                    },
+                    Folders = new string[]
+                    {
+                        "Folder1"
+                    }
+                }
+            }
+        };
 
         public Task<bool> CreateBackupAsync(string backupName, bool appendTimestamp = true, bool compressed = true, string? password = null, IEnumerable<string>? folders = null, IEnumerable<string>? addons = null)
         {
@@ -19,7 +62,7 @@ namespace hassio_onedrive_backup.Hass
                 Compressed = compressed,
                 Name = finalBackupName,
                 Protected = !string.IsNullOrEmpty(password),
-                Type = folders == null && addons == null ? "Full" : "Partial",
+                Type = folders == null && addons == null ? "full" : "partial",
                 Date = DateTime.Now,
                 Slug = Guid.NewGuid().ToString()
             };
@@ -42,21 +85,33 @@ namespace hassio_onedrive_backup.Hass
 
         public Task<string> DownloadBackupAsync(string backupSlug)
         {
-            string backupFile = $"./mockBackup_{Guid.NewGuid()}.tar";
+            string backupFile = $"./{backupSlug}.tar";
             
-            // 1MB File
-            byte[] data = new byte[1 * 1024 * 1024];
+            // 15MB File
+            byte[] data = new byte[15 * 1024 * 1024];
             new Random().NextBytes(data);
             File.WriteAllBytes(backupFile, data); 
             return Task.FromResult(backupFile);
         }
 
-        public Task<List<string>> GetAddonsAsync()
+        public Task<HassAddonInfoResponse> GetAddonInfo(string slug)
         {
-            return Task.FromResult(new List<string>()
+            return Task.FromResult(new HassAddonInfoResponse
             {
-                "Addon1",
-                "Addon2"
+                DataProperty = new HassAddonInfoResponse.Data
+                {
+                    IngressEntry = "/",
+                    IngressUrl = "/"
+                }
+            });
+        }
+
+        public Task<List<HassAddonsResponse.Addon>> GetAddonsAsync()
+        {
+            return Task.FromResult(new List<HassAddonsResponse.Addon>()
+            {
+                new HassAddonsResponse.Addon{ Slug = "Addon1", Name = "First Addon" },
+                new HassAddonsResponse.Addon { Slug = "Addon2", Name = "Second Addon" }
             });
         }
 

@@ -15,9 +15,17 @@
   "backup_allowed_hours": "0-23",
   "sync_paths": [
     {
-      "path": "/synctemp/*.*",
-      "recursive": true
+      "path": "/media",
+      "isRecursive": true
+    },
+    {
+      "path": "/ssl"
     }
   ],
-  "file_sync_remove_deleted": true
+  "file_sync_remove_deleted": true,
+  "backup_instance_name": "LocalTest",
+  "log_level": "info",
+  "excluded_addons" :  [
+    "addon2"
+  ]
 }

@@ -1,3 +1,22 @@
+## v2.0 [March 21st 2023]
+### Summary
+This is a very big release 🎉 with many new features and some breaking changes, please see details below.
+
+### Added
+* **Web Interface!** - There is now a dedicated Web UI for the addon, where you can easily see an overview of all your backups, trigger manual backups, retrieve backups and more. **CloudFlared** users please see [relevant prerequisites]((https://github.com/lavinir/hassio-onedrive-backup#html-content-filtering-error))
+* **On Demand Backups** - Available through the new Web Interface
+* **Log Verbosity Config** - You can now specify the [verbosity](https://github.com/lavinir/hassio-onedrive-backup#log-level) of the addon logs from the config.
+* **Exclude Addons from Backup** - It is now possible to [exclude addons](https://github.com/lavinir/hassio-onedrive-backup#excluded-addons-optional) from your backups
+
+### Updated
+* <kbd>[Breaking change]</kbd> **File Sync Engine** - The File Syncing engine has been rewritten. Along with it the relevant configuration for specifying the [sync paths](https://github.com/lavinir/hassio-onedrive-backup#file-sync-paths-optional) has changed. Please see the [documentation]((https://github.com/lavinir/hassio-onedrive-backup#file-sync-paths-optional)) for proper configuration.
+
+### Fixed
+* **Sync Drift** - Updating backup interval logic to avoid an issue where backup times could slowly drift and if you were using a short **Allowed Hours** window you could reach an issue where an update would be skipped because a window was missed.
+
+### Removed
+* <kbd>[Breaking change]</kbd> **Recovery Mode** - With the introduction of the dedicated Web UI, Recovery mode is no longer needed and has been removed. You can now load a Backup from OneDrive to Home Assistant with a single button from the Web UI. See [Restoring from Backup](https://github.com/lavinir/hassio-onedrive-backup#restoring-from-backup)
+
 ## v1.41 [January 26th 2023]
 ### Added
  * [**Monitor *all* backups**](https://github.com/lavinir/hassio-onedrive-backup#monitor-all-local-backups) - You can now optionally choose to have the addon monitor **any** created local backup, treating it as any other and backing them up to OneDrive.

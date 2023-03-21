@@ -27,9 +27,6 @@ namespace hassio_onedrive_backup.Contracts
         [JsonProperty("notify_on_error")]
         public bool NotifyOnError { get; set; }
 
-        [JsonProperty("recovery_mode")]
-        public bool RecoveryMode { get; set; }
-
         [JsonProperty("hass_api_timeout_minutes")]
         public int HassAPITimeoutMinutes { get; set; }
 
@@ -52,20 +49,37 @@ namespace hassio_onedrive_backup.Contracts
         public string? InstanceName { get; set; }
 
         [JsonProperty("sync_paths")]
-        public List<SyncPath>? SyncPaths { get; set; }
+        public List<string>? SyncPaths { get; set; }
 
         [JsonProperty("file_sync_remove_deleted")]
         public bool FileSyncRemoveDeleted { get; set; } = false;
 
+        [JsonProperty("excluded_addons")]
+        public List<string> ExcludedAddons { get; set; } = new List<string>();
+
+		[JsonProperty("log_level")]
+		public string LogLevelStr { get; set; }
 
         [JsonIgnore]
+		public ConsoleLogger.LogLevel LogLevel => LogLevelStr switch
+        {
+			"verbose" => ConsoleLogger.LogLevel.Verbose,
+			"info" => ConsoleLogger.LogLevel.Info,
+			"warning" => ConsoleLogger.LogLevel.Warning,
+			"error" => ConsoleLogger.LogLevel.Error,
+			_ => ConsoleLogger.LogLevel.Info
+		};
+
+        [JsonIgnore]
+		public string BackupPasswordSafe => string.IsNullOrEmpty(BackupPassword) ? "backup" : BackupPassword;
+		[JsonIgnore]
         public float BackupIntervalHours => BackupIntervalDays * 24;
 
         [JsonIgnore]
         public string BackupNameSafe => string.IsNullOrEmpty(BackupName) ? "hass_backup" : BackupName;
 
         [JsonIgnore]
-        public bool IsPartialBackup => ExcludeLocalAddonsFolder || ExcludeMediaFolder || ExcludeShareFolder || ExcludeSSLFolder;
+        public bool IsPartialBackup => ExcludeLocalAddonsFolder || ExcludeMediaFolder || ExcludeShareFolder || ExcludeSSLFolder || ExcludedAddons.Any();
 
         [JsonIgnore]
         public bool FileSyncEnabled => SyncPaths != null && SyncPaths.Count > 0;
@@ -98,14 +112,5 @@ namespace hassio_onedrive_backup.Contracts
                 return folders;
             }
         }
-    }
-    
-    public class SyncPath
-    {
-        [JsonProperty("path")]
-        public string Path { get; set; }
-
-        [JsonProperty("recursive")]
-        public bool Recursive { get; set; } = false;
     }
 }

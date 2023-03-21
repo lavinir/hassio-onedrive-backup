@@ -6,6 +6,7 @@ Simple OneDrive integration for seamless Home Assistant Backups to the cloud.
 ### Current Features
 - Set backup creation schedule
 - Syncs backups to OneDrive **(Personal Account only. OneDrive for business not currently supported)**
+- Dedicated Web UI
 - Additional File Sync to OneDrive
 - Recovery mode for loading backups back from OneDrive to Home Assistant
 - Supports backup retention for removing older backups
