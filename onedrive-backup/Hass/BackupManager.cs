@@ -352,11 +352,13 @@ namespace hassio_onedrive_backup.Hass
                 BackupType = backup.Type,
                 IsProtected = backup.Protected,
                 Size = backup.Size,
-                Addons = backup.Content?.Addons ?? Enumerable.Empty<string>(),
+                Addons = Enumerable.Empty<string>(), //Temporary workaround for size issue
                 Folders = backup.Content?.Folders ?? Enumerable.Empty<string>()
             };
 
-            return JsonConvert.SerializeObject(description);
+            string serializedDesc = JsonConvert.SerializeObject(description);
+            ConsoleLogger.LogVerbose($"Backup Description: {serializedDesc}");
+            return serializedDesc;
         }
 
         private async Task UpdateHassEntity()
