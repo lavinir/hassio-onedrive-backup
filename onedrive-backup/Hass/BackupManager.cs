@@ -49,18 +49,18 @@ namespace hassio_onedrive_backup.Hass
             var now = DateTimeHelper.Instance!.Now;
 
             // Get existing local backups
-            ConsoleLogger.LogInfo("Retrieving existing local backups...");
+            ConsoleLogger.LogVerbose("Retrieving existing local backups...");
             var localBackups = await GetLocalBackups();
 
             // Get existing online backups
-            ConsoleLogger.LogInfo("Retrieving existing online backups...");
+            ConsoleLogger.LogVerbose("Retrieving existing online backups...");
             var onlineBackups = await GetOnlineBackupsAsync(_addonOptions.InstanceName);
 
             DateTime lastLocalBackupTime = localBackups.Any() ? localBackups.Max(backup => backup.Date) : DateTime.MinValue;
-            ConsoleLogger.LogInfo($"Last local backup Date: {(lastLocalBackupTime == DateTime.MinValue ? "None" : lastLocalBackupTime)}");
+            ConsoleLogger.LogVerbose($"Last local backup Date: {(lastLocalBackupTime == DateTime.MinValue ? "None" : lastLocalBackupTime)}");
 
             DateTime lastOnlineBackupTime = onlineBackups.Any() ? onlineBackups.Max(backup => backup.BackupDate) : DateTime.MinValue;
-            ConsoleLogger.LogInfo($"Last online backup Date: {(lastOnlineBackupTime== DateTime.MinValue ? "None" : lastOnlineBackupTime)}");
+            ConsoleLogger.LogVerbose($"Last online backup Date: {(lastOnlineBackupTime== DateTime.MinValue ? "None" : lastOnlineBackupTime)}");
 
             // Create local backups if needed
             if ((now - lastLocalBackupTime).TotalHours >= _addonOptions.BackupIntervalHours && (now - lastOnlineBackupTime).TotalHours >= _addonOptions.BackupIntervalHours)
@@ -113,7 +113,7 @@ namespace hassio_onedrive_backup.Hass
             }
             else
             {
-                ConsoleLogger.LogInfo("Online backups synced. No upload required");
+                ConsoleLogger.LogVerbose("Online backups synced. No upload required");
             }
 
             // Refresh Online Backups
