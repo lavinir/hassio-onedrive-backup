@@ -139,7 +139,7 @@
         uploading = true;
         uploadPercent = 0;
         var backup = Backup.ToBackup();
-        await Orchestrator.BackupManager.UploadLocalBackupToOneDrive(backup, updateHassEntityState: false, progressCallback: (prog) =>
+        await Orchestrator.BackupManager.UploadLocalBackupToOneDrive(backup, updateHassEntityState: false, progressCallback: (prog, speed) =>
         {
             uploadPercent = prog ?? 0;
             TriggerStateChanged();
