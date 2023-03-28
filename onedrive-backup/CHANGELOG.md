@@ -1,3 +1,10 @@
+## v.202 [Martch 28th 2023]
+### Fixed
+* Fixed a scenario where potentially temporary backup files would be uploaded as part of the addon's own backup
+
+### Updated
+* Log verbosity for INFO level has been decreased. Those logs will still be available at the VERBOSE level.
+
 ## v2.01 [March 21st 2023]
 ### Fixed
 * Removed addon list from backup details in webui to workaround onedrive size limitation causing backup uplaods to fail when a lot of addons are backed up.
