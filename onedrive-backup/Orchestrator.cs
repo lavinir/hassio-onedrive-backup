@@ -2,6 +2,7 @@
 using hassio_onedrive_backup.Graph;
 using hassio_onedrive_backup.Hass;
 using hassio_onedrive_backup.Sync;
+using onedrive_backup.Graph;
 using System.Collections;
 
 namespace hassio_onedrive_backup
@@ -26,7 +27,7 @@ namespace hassio_onedrive_backup
             _hassOnedriveFreeSpaceEntityState = serviceProvider.GetService<HassOnedriveFreeSpaceEntityState>();
 
             _allowedBackupHours = TimeRangeHelper.GetAllowedHours(_addonOptions.BackupAllowedHours);
-            BackupManager = new BackupManager(_serviceProvider, _allowedBackupHours);
+            BackupManager = new BackupManager(_serviceProvider, _allowedBackupHours, new TransferSpeedHelper(_addonOptions.SpeedCapKBPerSecond));
         }
 
         public BackupManager BackupManager { get; set; }
@@ -48,7 +49,8 @@ namespace hassio_onedrive_backup
             if (_addonOptions.FileSyncEnabled)
             {
 				ConsoleLogger.LogInfo($"File Sync Enabled");
-				var syncManager = new SyncManager(_serviceProvider, _allowedBackupHours);
+                var transferSpeedHelper = _addonOptions.UploadSpeedCap ? new TransferSpeedHelper(_addonOptions.SpeedCapKBPerSecond!.Value) : null;
+                var syncManager = new SyncManager(_serviceProvider, _allowedBackupHours, transferSpeedHelper);
                 var tokenSource = new CancellationTokenSource();
                 await _graphHelper.GetAndCacheUserTokenAsync();
                 var fileSyncTask = Task.Run(() => syncManager.SyncLoop(tokenSource.Token), tokenSource.Token);

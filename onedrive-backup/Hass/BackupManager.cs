@@ -2,6 +2,7 @@
 using hassio_onedrive_backup.Graph;
 using Microsoft.Graph;
 using Newtonsoft.Json;
+using onedrive_backup.Graph;
 using onedrive_backup.Hass;
 using System.Collections;
 using static hassio_onedrive_backup.Contracts.HassAddonsResponse;
@@ -13,7 +14,8 @@ namespace hassio_onedrive_backup.Hass
     {
 		private const int InstanceNameMaxLength = 20;
 		private readonly HassOnedriveEntityState _hassEntityState;
-		private readonly HassContext _hassContext;
+        private readonly TransferSpeedHelper? _transferSpeedHelper;
+        private readonly HassContext _hassContext;
 		private AddonOptions _addonOptions;
         private IGraphHelper _graphHelper;
         private IHassioClient _hassIoClient;
@@ -23,12 +25,13 @@ namespace hassio_onedrive_backup.Hass
         public List<Backup> LocalBackups { get; private set; }
         public List<OnedriveBackup> OnlineBackups { get; private set; }
 
-        public BackupManager(IServiceProvider serviceProvider, BitArray allowedHours)
+        public BackupManager(IServiceProvider serviceProvider, BitArray allowedHours, TransferSpeedHelper? transferSpeedHelper)
         {
             _addonOptions = serviceProvider.GetService<AddonOptions>();
             _graphHelper = serviceProvider.GetService<IGraphHelper>();
             _hassIoClient = serviceProvider.GetService<IHassioClient>();
-            _hassEntityState = serviceProvider.GetService<HassOnedriveEntityState>();    
+            _hassEntityState = serviceProvider.GetService<HassOnedriveEntityState>();
+            _transferSpeedHelper = transferSpeedHelper;
             _hassContext = serviceProvider.GetService<HassContext>();
             _allowedHours = allowedHours;
         }
@@ -214,7 +217,7 @@ namespace hassio_onedrive_backup.Hass
 			return backupCreated;		
 		}
 
-		public async Task<bool> UploadLocalBackupToOneDrive(Backup backup, Action<int?>? progressCallback = null,  bool updateHassEntityState = true)
+		public async Task<bool> UploadLocalBackupToOneDrive(Backup backup, Action<int?, int?>? progressCallback = null,  bool updateHassEntityState = true)
         {
             string? tempBackupFilePath = null;
             try
@@ -223,8 +226,8 @@ namespace hassio_onedrive_backup.Hass
                 string? instanceSuffix = _addonOptions.InstanceName == null ? null : $".{_addonOptions.InstanceName.Substring(0, Math.Min(InstanceNameMaxLength, _addonOptions.InstanceName.Length))}";
                 string destinationFileName = $"{backup.Name}{instanceSuffix}.tar";
                 tempBackupFilePath = await _hassIoClient.DownloadBackupAsync(backup.Slug);
-                var uploadSuccessful = await _graphHelper.UploadFileAsync(tempBackupFilePath, backup.Date, _addonOptions.InstanceName, destinationFileName,
-                    async (prog) =>
+                var uploadSuccessful = await _graphHelper.UploadFileAsync(tempBackupFilePath, backup.Date, _addonOptions.InstanceName, _transferSpeedHelper, destinationFileName,
+                    async (prog, speed) =>
                     {
                         if (updateHassEntityState)
                         {
@@ -232,7 +235,7 @@ namespace hassio_onedrive_backup.Hass
 							await _hassEntityState.UpdateBackupEntityInHass();
 						}
 
-                        progressCallback?.Invoke(prog);
+                        progressCallback?.Invoke(prog, speed);
 					},
                     description: SerializeBackupDescription(tempBackupFilePath, backup)
                    );

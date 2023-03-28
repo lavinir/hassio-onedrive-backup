@@ -3,6 +3,7 @@ using Azure.Identity;
 using hassio_onedrive_backup.Storage;
 using Microsoft.Graph;
 using onedrive_backup.Contracts;
+using onedrive_backup.Graph;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -21,7 +22,7 @@ namespace hassio_onedrive_backup.Graph
 		protected GraphServiceClient? _userClient;
 		private IEnumerable<string> _scopes;
 		private string _clientId;
-		private string _persistentDataPath;
+        private string _persistentDataPath;
 		private HttpClient _downloadHttpClient;
 		private bool? _isAuthenticated = null;
 
@@ -128,7 +129,7 @@ namespace hassio_onedrive_backup.Graph
 			return folder;
 		}
 
-		public async Task<bool> UploadFileAsync(string filePath, DateTime date, string? instanceName, string? destinationFileName = null, Action<int>? progressCallback = null, bool flatten = true, string description = null)
+		public async Task<bool> UploadFileAsync(string filePath, DateTime date, string? instanceName, TransferSpeedHelper transferSpeedHelper, string? destinationFileName = null, Action<int, int>? progressCallback = null, bool flatten = true, string description = null)
 		{
 			if (File.Exists(filePath) == false)
 			{
@@ -140,8 +141,8 @@ namespace hassio_onedrive_backup.Graph
 			destinationFileName = destinationFileName ?? (flatten ? Path.GetFileName(filePath) : filePath);
 			// string originalFileName = Path.GetFileNameWithoutExtension(filePath);
 			var uploadSession = await _userClient.Drive.Special.AppRoot.ItemWithPath(destinationFileName).CreateUploadSession(new DriveItemUploadableProperties
-			{
-				Description = description // ? null : SerializeBackupDescription(originalFileName, date, instanceName)
+			{				 
+				Description = description
 			}
 
 			).Request().PostAsync();
@@ -151,16 +152,21 @@ namespace hassio_onedrive_backup.Graph
 			long totalFileLength = fileStream.Length;
 			var fileUploadTask = new LargeFileUploadTask<DriveItem>(uploadSession, fileStream, maxSlizeSize);
 			var lastShownPercentageHolder = new UploadProgressHolder();
-			IProgress<long> progress = new Progress<long>(prog =>
+			IProgress<long> progress = new Progress<long>(async prog =>
 			{
+				(double delayMS, double speed) = transferSpeedHelper.MarkAndCalcThrottle(prog);
 				double percentage = Math.Round((prog / (double)totalFileLength), 2) * 100;
 				if (percentage - lastShownPercentageHolder.Percentage >= 10 || percentage == 100)
 				{
 					ConsoleLogger.LogInfo($"Uploaded {percentage}%");
 					lastShownPercentageHolder.Percentage = percentage;
 				}
-
-				progressCallback?.Invoke((int)percentage);
+				
+				progressCallback?.Invoke((int)percentage, (int)speed);
+				if (delayMS >= 1)
+				{
+					await Task.Delay((int)delayMS);
+				}
 			});
 
 			int uploadAttempt = 0;
