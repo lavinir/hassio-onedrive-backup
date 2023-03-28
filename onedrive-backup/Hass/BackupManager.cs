@@ -49,18 +49,18 @@ namespace hassio_onedrive_backup.Hass
             var now = DateTimeHelper.Instance!.Now;
 
             // Get existing local backups
-            ConsoleLogger.LogInfo("Retrieving existing local backups...");
+            ConsoleLogger.LogVerbose("Retrieving existing local backups...");
             var localBackups = await GetLocalBackups();
 
             // Get existing online backups
-            ConsoleLogger.LogInfo("Retrieving existing online backups...");
+            ConsoleLogger.LogVerbose("Retrieving existing online backups...");
             var onlineBackups = await GetOnlineBackupsAsync(_addonOptions.InstanceName);
 
             DateTime lastLocalBackupTime = localBackups.Any() ? localBackups.Max(backup => backup.Date) : DateTime.MinValue;
-            ConsoleLogger.LogInfo($"Last local backup Date: {(lastLocalBackupTime == DateTime.MinValue ? "None" : lastLocalBackupTime)}");
+            ConsoleLogger.LogVerbose($"Last local backup Date: {(lastLocalBackupTime == DateTime.MinValue ? "None" : lastLocalBackupTime)}");
 
             DateTime lastOnlineBackupTime = onlineBackups.Any() ? onlineBackups.Max(backup => backup.BackupDate) : DateTime.MinValue;
-            ConsoleLogger.LogInfo($"Last online backup Date: {(lastOnlineBackupTime== DateTime.MinValue ? "None" : lastOnlineBackupTime)}");
+            ConsoleLogger.LogVerbose($"Last online backup Date: {(lastOnlineBackupTime== DateTime.MinValue ? "None" : lastOnlineBackupTime)}");
 
             // Create local backups if needed
             if ((now - lastLocalBackupTime).TotalHours >= _addonOptions.BackupIntervalHours && (now - lastOnlineBackupTime).TotalHours >= _addonOptions.BackupIntervalHours)
@@ -113,7 +113,7 @@ namespace hassio_onedrive_backup.Hass
             }
             else
             {
-                ConsoleLogger.LogInfo("Online backups synced. No upload required");
+                ConsoleLogger.LogVerbose("Online backups synced. No upload required");
             }
 
             // Refresh Online Backups
@@ -216,12 +216,13 @@ namespace hassio_onedrive_backup.Hass
 
 		public async Task<bool> UploadLocalBackupToOneDrive(Backup backup, Action<int?>? progressCallback = null,  bool updateHassEntityState = true)
         {
+            string? tempBackupFilePath = null;
             try
             {
                 ConsoleLogger.LogInfo($"Uploading {backup.Name} ({backup.Date})");
                 string? instanceSuffix = _addonOptions.InstanceName == null ? null : $".{_addonOptions.InstanceName.Substring(0, Math.Min(InstanceNameMaxLength, _addonOptions.InstanceName.Length))}";
                 string destinationFileName = $"{backup.Name}{instanceSuffix}.tar";
-                string tempBackupFilePath = await _hassIoClient.DownloadBackupAsync(backup.Slug);
+                tempBackupFilePath = await _hassIoClient.DownloadBackupAsync(backup.Slug);
                 var uploadSuccessful = await _graphHelper.UploadFileAsync(tempBackupFilePath, backup.Date, _addonOptions.InstanceName, destinationFileName,
                     async (prog) =>
                     {
@@ -243,14 +244,19 @@ namespace hassio_onedrive_backup.Hass
                         await _hassIoClient.SendPersistentNotificationAsync("Failed uploading backup to onedrive. Check Addon logs for more details");
                     }
                 }
-
-                // Delete temporary backup file
-                System.IO.File.Delete(tempBackupFilePath);
             }
             catch (Exception ex)
             {
                 ConsoleLogger.LogError($"Error uploading backup: {ex}");
                 return false;
+            }
+            finally
+            {
+                // Delete temporary backup file
+                if (tempBackupFilePath != null)
+                {
+                    System.IO.File.Delete(tempBackupFilePath);
+                }
             }
 
             return true;
@@ -308,10 +314,11 @@ namespace hassio_onedrive_backup.Hass
 
         public async Task<bool> DownloadBackupFromOneDrive(OnedriveBackup onlineBackup, Action<int?>? progressCallback = null, bool updateHassEntityState = true)
 		{
+            string? backupFile = null;
             try
             {
                 ConsoleLogger.LogInfo($"Downloading backup {onlineBackup.FileName}");
-                string? backupFile = await _graphHelper.DownloadFileAsync(onlineBackup.FileName, async (prog) =>
+                backupFile = await _graphHelper.DownloadFileAsync(onlineBackup.FileName, async (prog) =>
                 {
 					if (updateHassEntityState)
 					{
@@ -331,12 +338,18 @@ namespace hassio_onedrive_backup.Hass
                 // Upload backup to Home Assistant
                 ConsoleLogger.LogInfo($"Loading backup {onlineBackup.FileName} to Home Assisant");
                 await _hassIoClient.UploadBackupAsync(backupFile);
-                System.IO.File.Delete(backupFile);
             }
             catch (Exception ex)
             {
                 ConsoleLogger.LogError($"Error fetching backup {onlineBackup.FileName} from Onedrive to Home Assistant. {ex}");
                 return false;
+            }
+            finally
+            {
+                if (backupFile != null)
+                {
+                    System.IO.File.Delete(backupFile);
+                }
             }
 
             return true;

@@ -47,17 +47,18 @@ namespace hassio_onedrive_backup
             // Initialize File Sync Manager
             if (_addonOptions.FileSyncEnabled)
             {
-                var syncManager = new SyncManager(_serviceProvider, _allowedBackupHours);
+				ConsoleLogger.LogInfo($"File Sync Enabled");
+				var syncManager = new SyncManager(_serviceProvider, _allowedBackupHours);
                 var tokenSource = new CancellationTokenSource();
                 await _graphHelper.GetAndCacheUserTokenAsync();
                 var fileSyncTask = Task.Run(() => syncManager.SyncLoop(tokenSource.Token), tokenSource.Token);
             }
             else
             {
-                ConsoleLogger.LogVerbose($"File Sync disabled");
+                ConsoleLogger.LogInfo($"File Sync Disabled");
             }
 
-            while (_enabled)
+			while (_enabled)
             {
                 try
                 {
@@ -67,7 +68,7 @@ namespace hassio_onedrive_backup
                     // Update OneDrive Freespace Sensor
                     var oneDriveSpace = await _graphHelper.GetFreeSpaceInGB();
                     await _hassOnedriveFreeSpaceEntityState.UpdateOneDriveFreespaceSensorInHass(oneDriveSpace);
-                    ConsoleLogger.LogInfo("Checking backups");
+                    ConsoleLogger.LogVerbose("Checking backups");
 
                     BackupManager.PerformBackupsAsync();
                 }
@@ -76,7 +77,7 @@ namespace hassio_onedrive_backup
                     ConsoleLogger.LogError($"Unexpected error. {ex}");
                 }
 
-                ConsoleLogger.LogInfo("Backup Interval Completed.");
+                ConsoleLogger.LogVerbose("Backup Interval Completed.");
                 await Task.Delay(intervalDelay);
             }
         }
