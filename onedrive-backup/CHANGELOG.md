@@ -1,4 +1,4 @@
-## v.202 [Martch 28th 2023]
+## v2.02 [Martch 28th 2023]
 ### Fixed
 * Fixed a scenario where potentially temporary backup files would be uploaded as part of the addon's own backup
 
