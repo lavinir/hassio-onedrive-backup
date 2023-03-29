@@ -11,7 +11,7 @@ namespace onedrive_backup.Graph
 
         public TransferSpeedHelper(double? speedCapKBSec) 
         {
-            _speedCap = speedCapKBSec != null ? speedCapKBSec.Value * 1000 : double.MaxValue;
+            _speedCap = speedCapKBSec != null ? speedCapKBSec.Value * 1024 : double.MaxValue;
         }
         public void Start()
         {
@@ -22,7 +22,7 @@ namespace onedrive_backup.Graph
         public void Reset()
         {
             _stopWatch.Reset();
-            _prevProgress = 0;
+            _prevTimeStamp = 0;
             _prevProgress = 0;
         }
 
@@ -32,9 +32,13 @@ namespace onedrive_backup.Graph
             var ellapsedMS = _stopWatch.ElapsedMilliseconds;
             double timefromPrev = ellapsedMS - _prevTimeStamp;
             double ratePerSecond = 1000 * bytesTransfered / timefromPrev;
+			
+            _prevTimeStamp = ellapsedMS;
+			_prevProgress = progress;
+			
             if (ratePerSecond > _speedCap)
             {
-                var targetTimeForSpeedMS = bytesTransfered / _speedCap;
+                var targetTimeForSpeedMS = (bytesTransfered / _speedCap) * 1000;
                 var remainingTimeToWait = targetTimeForSpeedMS - _prevTimeStamp;
                 return (remainingTimeToWait, ratePerSecond);
             }

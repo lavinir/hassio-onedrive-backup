@@ -163,10 +163,10 @@ namespace hassio_onedrive_backup.Graph
 				}
 				
 				progressCallback?.Invoke((int)percentage, (int)speed);
-				if (delayMS >= 1)
-				{
-					await Task.Delay((int)delayMS);
-				}
+				//if (delayMS >= 1)
+				//{
+				//	await Task.Delay((int)delayMS);
+				//}
 			});
 
 			int uploadAttempt = 0;
@@ -176,6 +176,7 @@ namespace hassio_onedrive_backup.Graph
 				{
 					ConsoleLogger.LogInfo($"Starting file upload. (Size:{totalFileLength} bytes. Attempt: {uploadAttempt}/{UploadRetryCount})");
 					UploadResult<DriveItem> uploadResult;
+					transferSpeedHelper.Start();
 					if (uploadAttempt > 1)
 					{
 						uploadResult = await fileUploadTask.ResumeAsync(progress);
@@ -185,6 +186,7 @@ namespace hassio_onedrive_backup.Graph
 						uploadResult = await fileUploadTask.UploadAsync(progress);
 					}
 
+					transferSpeedHelper.Reset();
 					await Task.Delay(TimeSpan.FromSeconds(2));
 					if (uploadResult.UploadSucceeded)
 					{

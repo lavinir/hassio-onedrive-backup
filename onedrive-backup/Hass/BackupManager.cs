@@ -232,6 +232,7 @@ namespace hassio_onedrive_backup.Hass
                         if (updateHassEntityState)
                         {
 							_hassEntityState.UploadPercentage = prog;
+                            _hassEntityState.UploadSpeed = speed / 1024;
 							await _hassEntityState.UpdateBackupEntityInHass();
 						}
 
@@ -325,7 +326,7 @@ namespace hassio_onedrive_backup.Hass
                 {
 					if (updateHassEntityState)
 					{
-						_hassEntityState.UploadPercentage = prog;
+						_hassEntityState.DownloadPercentage = prog;
 						await _hassEntityState.UpdateBackupEntityInHass();
 					}
 

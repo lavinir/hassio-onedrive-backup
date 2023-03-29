@@ -51,7 +51,8 @@
             }
         </div>
     </div>
-    <div class="card-footer">
+    <div class="card-footer d-flex">
+
         @*Upload Button*@
         @if (@Backup.Location == BackupModel.BackupLocation.Local)
         {
@@ -86,6 +87,11 @@
 
         @*Details Button*@
         <button type="button" class="btn btn-sm m-1 btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#details-@Backup.Slug" disabled="@detailsDisabled"><span class="oi oi-expand-down" title="Backup details">Details</span></button>
+
+        @if (transferSpeed > 0)
+        {
+            <span class="text-end ms-auto my-auto text-dark">@TransferSpeedText</span>
+        }
     </div>
 </div>
 
@@ -95,6 +101,7 @@
     private bool downloading = false;
     private int uploadPercent = 0;
     private int downloadPercent = 0;
+    private int transferSpeed = 0;
 
     [Parameter]
     public BackupModel Backup { get; set; }
@@ -104,6 +111,8 @@
     private bool detailsDisabled => (Backup.Addons?.Count() > 0 || Backup.Folders?.Count() > 0) ? false : true;
 
     private string timeAgoText => CalculateTimeAgoText();
+
+    private string TransferSpeedText => ViewHelpers.GetSpeedDisplayText(transferSpeed / 1000);
 
     private string CalculateTimeAgoText()
     {
@@ -142,10 +151,12 @@
         await Orchestrator.BackupManager.UploadLocalBackupToOneDrive(backup, updateHassEntityState: false, progressCallback: (prog, speed) =>
         {
             uploadPercent = prog ?? 0;
+            transferSpeed = speed ?? 0;
             TriggerStateChanged();
 
         });
         uploading = false;
+        transferSpeed = 0;
         await Orchestrator.BackupManager.GetOnlineBackupsAsync(AddonOptions.InstanceName);
     }
 

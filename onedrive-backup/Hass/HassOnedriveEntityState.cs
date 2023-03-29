@@ -48,6 +48,9 @@ namespace hassio_onedrive_backup.Hass
 
         public int? DownloadPercentage { get; set; }
 
+        // KB/s
+        public int? UploadSpeed { get; set; }
+
         public async Task UpdateBackupEntityInHass()
         {
             var payload = new
@@ -59,7 +62,8 @@ namespace hassio_onedrive_backup.Hass
                     { BackupStateAttribute.LastOnedriveBackupDate, LastOnedriveBackupDate?.ToString(DateTimeHelper.DateTimeFormat) },
                     { BackupStateAttribute.BackupsInHomeAssistant, BackupsInHomeAssistant.ToString() },
                     { BackupStateAttribute.BackupsInOnedrive, BackupsInOnedrive.ToString() },
-                    { BackupStateAttribute.UploadPercentage, UploadPercentage == null ? null : $"{UploadPercentage}%" },
+					{ BackupStateAttribute.UploadPercentage, UploadPercentage == null ? null : $"{UploadPercentage}%" },
+					{ BackupStateAttribute.UploadSpeed, UploadSpeed== null ? null : $"{UploadSpeed} KB/s" },
                     { BackupStateAttribute.DownloadPercentage, DownloadPercentage == null ? null : $"{DownloadPercentage}%" }
                 }
             };
@@ -87,6 +91,8 @@ namespace hassio_onedrive_backup.Hass
             public const string UploadPercentage = "Current backup upload percentage";
 
             public const string DownloadPercentage = "Backup download percentage";
+
+            public const string UploadSpeed = "Current backup upload speed (KB/s)";
         }
         public enum BackupState
         {

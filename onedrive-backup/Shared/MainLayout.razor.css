@@ -24,6 +24,7 @@ footer {
     min-height: calc(100vh - 140px);
 }
 
+
 ::deep nav.navbar {
     box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.05);
 }

@@ -60,8 +60,8 @@ namespace hassio_onedrive_backup.Contracts
 		[JsonProperty("log_level")]
 		public string LogLevelStr { get; set; }
 
-        [JsonProperty("upload_speed_cap")]
-        public int? SpeedCapKBPerSecond { get; set; }
+        //[JsonProperty("upload_speed_cap")]
+        //public int? UploadSpeedCapKBPerSecond { get; set; }
 
         [JsonIgnore]
 		public ConsoleLogger.LogLevel LogLevel => LogLevelStr switch
@@ -87,8 +87,8 @@ namespace hassio_onedrive_backup.Contracts
         [JsonIgnore]
         public bool FileSyncEnabled => SyncPaths != null && SyncPaths.Count > 0;
 
-        [JsonIgnore]
-        public bool UploadSpeedCap => SpeedCapKBPerSecond != null;
+        //[JsonIgnore]
+        //public bool UploadSpeedCap => UploadSpeedCapKBPerSecond != null;
         
         public List<string> IncludedFolderList
         {

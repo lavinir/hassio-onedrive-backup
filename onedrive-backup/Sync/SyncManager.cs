@@ -124,6 +124,7 @@ namespace hassio_onedrive_backup.Sync
                 async (prog, speed) =>
                 {
                     _hassEntityState.UploadPercentage = prog;
+                    _hassEntityState.UploadSpeed = speed / 1024;
                     await _hassEntityState.UpdateBackupEntityInHass();
                     Debug.WriteLine($"Progress: {prog}");
 
