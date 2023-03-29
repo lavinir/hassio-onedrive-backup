@@ -483,8 +483,35 @@ namespace hassio_onedrive_backup.Hass
 
         private bool IsMonitoredBackup(Backup backup)
         {
-            return _addonOptions.MonitorAllLocalBackups 
-                || backup.Name.StartsWith(_addonOptions.BackupNameSafe, StringComparison.OrdinalIgnoreCase);
+            // Monitoring All Backups
+            if (_addonOptions.MonitorAllLocalBackups)
+            {
+                // If should ignore upgrade backups and backup seems like an upgrade backup skip it
+                if (_addonOptions.IgnoreUpgradeBackups && IsUpgradeBackup(backup))
+                {
+                    ConsoleLogger.LogVerbose($"Ignoring Upgrade Backup: {backup.Name}");
+                    return false;
+                }
+
+                // Otherwise back it up
+                return true;
+            }
+
+            // If addon backup always back up
+            if (backup.Name.StartsWith(_addonOptions.BackupNameSafe, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+            else
+            {
+                ConsoleLogger.LogVerbose($"Ignoring 'External' backup: {backup.Name}");
+                return false;
+            }
+        }
+
+        private bool IsUpgradeBackup(Backup backup)
+        {
+            throw new NotImplementedException();
         }
     }
 }
