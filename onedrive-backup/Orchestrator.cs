@@ -1,4 +1,4 @@
-﻿using hassio_onedrive_backup.Contracts;
+using hassio_onedrive_backup.Contracts;
 using hassio_onedrive_backup.Graph;
 using hassio_onedrive_backup.Hass;
 using hassio_onedrive_backup.Sync;

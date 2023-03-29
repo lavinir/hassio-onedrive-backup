@@ -1,3 +1,21 @@
+## v2.1 [March 30th 2023]
+### Added
+* Option to ignore Home Assistant Upgrade Backups
+* Show Upload Transfer Speed in UI
+
+### Fixed
+* UI bugfixes
+
+### Updated
+* More log verbosity updates (Info -> Verbose)
+
+## v2.02 [Martch 28th 2023]
+### Fixed
+* Fixed a scenario where potentially temporary backup files would be uploaded as part of the addon's own backup
+
+### Updated
+* Log verbosity for INFO level has been decreased. Those logs will still be available at the VERBOSE level.
+
 ## v2.01 [March 21st 2023]
 ### Fixed
 * Removed addon list from backup details in webui to workaround onedrive size limitation causing backup uplaods to fail when a lot of addons are backed up.
