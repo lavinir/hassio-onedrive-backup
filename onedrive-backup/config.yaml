@@ -1,5 +1,5 @@
 name: "OneDrive Backup"
-version: "2.02"
+version: "2.1"
 slug: hassio_onedrive_backup
 description: >-
   Automatic backups from Home Assistant to OneDrive
@@ -22,6 +22,7 @@ options:
   backup_interval_days : 3
   backup_name : "hass_backup"
   monitor_all_local_backups: false
+  ignore_upgrade_backups: false
   hass_api_timeout_minutes: 30
   notify_on_error : true
   exclude_media_folder: false
@@ -39,6 +40,7 @@ schema:
   backup_interval_days : "float(0.0417,)"
   backup_name : "match([a-zA-Z_]*)"
   monitor_all_local_backups: bool
+  ignore_upgrade_backups: bool
   backup_passwd : "password?"
   hass_api_timeout_minutes : "int(30,)"
   notify_on_error : bool

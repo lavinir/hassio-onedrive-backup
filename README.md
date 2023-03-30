@@ -70,6 +70,8 @@ Name to use for the backups created by the add-on.
 ### **Monitor all local backups**
 When enabled the add-on will monitor all local backups whether created by the addon or not
 
+### **Ignore Home Assistant Upgrade Backups**
+When enabled, the add-on will ignore backups that are automatically created during upgrades (of Home Assistant / Addons)
 ### **Backup password**
 The password to use to protect the backups created and uploaded to OneDrive.
 > You need to toggle the "Show unused optional configuration options" to see it in the Configuration screen.
@@ -193,6 +195,9 @@ Number of backups that exist in OneDrive
 #### <kbd>**Current backup upload percentage**</kbd>
 When a backup upload is in progress this will show the progress of the upload.
 
+#### <kbd>**Current backup upload speed (KB/s)**</kbd>
+When a backup upload is in progress this will show the transfer speed of the upload.
+
 #### <kbd>**Backup download percentage**</kbd>
 When a backup download is in progress this shows the progres of the download.
 
@@ -217,6 +222,9 @@ The sensor also exposes the following attributes:
 
 #### <kbd>**Current File upload percentage**</kbd>
 When a file upload is in progress this will show the progress of the upload.
+
+#### <kbd>**Current file upload speed (KB/s)**</kbd>
+When a file upload is in progress this will show the transfer speed of the upload.
 
 ## Events
 Upon a failure in the backup process, the addon will fire different events you can use in your automations:

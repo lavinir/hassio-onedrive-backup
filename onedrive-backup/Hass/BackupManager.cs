@@ -1,7 +1,8 @@
-﻿using hassio_onedrive_backup.Contracts;
+using hassio_onedrive_backup.Contracts;
 using hassio_onedrive_backup.Graph;
 using Microsoft.Graph;
 using Newtonsoft.Json;
+using onedrive_backup.Graph;
 using onedrive_backup.Hass;
 using System.Collections;
 using static hassio_onedrive_backup.Contracts.HassAddonsResponse;
@@ -13,7 +14,8 @@ namespace hassio_onedrive_backup.Hass
     {
 		private const int InstanceNameMaxLength = 20;
 		private readonly HassOnedriveEntityState _hassEntityState;
-		private readonly HassContext _hassContext;
+        private readonly TransferSpeedHelper? _transferSpeedHelper;
+        private readonly HassContext _hassContext;
 		private AddonOptions _addonOptions;
         private IGraphHelper _graphHelper;
         private IHassioClient _hassIoClient;
@@ -23,12 +25,13 @@ namespace hassio_onedrive_backup.Hass
         public List<Backup> LocalBackups { get; private set; }
         public List<OnedriveBackup> OnlineBackups { get; private set; }
 
-        public BackupManager(IServiceProvider serviceProvider, BitArray allowedHours)
+        public BackupManager(IServiceProvider serviceProvider, BitArray allowedHours, TransferSpeedHelper? transferSpeedHelper)
         {
             _addonOptions = serviceProvider.GetService<AddonOptions>();
             _graphHelper = serviceProvider.GetService<IGraphHelper>();
             _hassIoClient = serviceProvider.GetService<IHassioClient>();
-            _hassEntityState = serviceProvider.GetService<HassOnedriveEntityState>();    
+            _hassEntityState = serviceProvider.GetService<HassOnedriveEntityState>();
+            _transferSpeedHelper = transferSpeedHelper;
             _hassContext = serviceProvider.GetService<HassContext>();
             _allowedHours = allowedHours;
         }
@@ -214,7 +217,7 @@ namespace hassio_onedrive_backup.Hass
 			return backupCreated;		
 		}
 
-		public async Task<bool> UploadLocalBackupToOneDrive(Backup backup, Action<int?>? progressCallback = null,  bool updateHassEntityState = true)
+		public async Task<bool> UploadLocalBackupToOneDrive(Backup backup, Action<int?, int?>? progressCallback = null,  bool updateHassEntityState = true)
         {
             string? tempBackupFilePath = null;
             try
@@ -223,16 +226,17 @@ namespace hassio_onedrive_backup.Hass
                 string? instanceSuffix = _addonOptions.InstanceName == null ? null : $".{_addonOptions.InstanceName.Substring(0, Math.Min(InstanceNameMaxLength, _addonOptions.InstanceName.Length))}";
                 string destinationFileName = $"{backup.Name}{instanceSuffix}.tar";
                 tempBackupFilePath = await _hassIoClient.DownloadBackupAsync(backup.Slug);
-                var uploadSuccessful = await _graphHelper.UploadFileAsync(tempBackupFilePath, backup.Date, _addonOptions.InstanceName, destinationFileName,
-                    async (prog) =>
+                var uploadSuccessful = await _graphHelper.UploadFileAsync(tempBackupFilePath, backup.Date, _addonOptions.InstanceName, _transferSpeedHelper, destinationFileName,
+                    async (prog, speed) =>
                     {
                         if (updateHassEntityState)
                         {
 							_hassEntityState.UploadPercentage = prog;
+                            _hassEntityState.UploadSpeed = speed / 1024;
 							await _hassEntityState.UpdateBackupEntityInHass();
 						}
 
-                        progressCallback?.Invoke(prog);
+                        progressCallback?.Invoke(prog, speed);
 					},
                     description: SerializeBackupDescription(tempBackupFilePath, backup)
                    );
@@ -322,7 +326,7 @@ namespace hassio_onedrive_backup.Hass
                 {
 					if (updateHassEntityState)
 					{
-						_hassEntityState.UploadPercentage = prog;
+						_hassEntityState.DownloadPercentage = prog;
 						await _hassEntityState.UpdateBackupEntityInHass();
 					}
 
@@ -479,8 +483,55 @@ namespace hassio_onedrive_backup.Hass
 
         private bool IsMonitoredBackup(Backup backup)
         {
-            return _addonOptions.MonitorAllLocalBackups 
-                || backup.Name.StartsWith(_addonOptions.BackupNameSafe, StringComparison.OrdinalIgnoreCase);
+            // Monitoring All Backups
+            if (_addonOptions.MonitorAllLocalBackups)
+            {
+                // If should ignore upgrade backups and backup seems like an upgrade backup skip it
+                if (_addonOptions.IgnoreUpgradeBackups && IsUpgradeBackup(backup))
+                {
+                    ConsoleLogger.LogVerbose($"Ignoring Upgrade Backup: {backup.Name}");
+                    return false;
+                }
+
+                // Otherwise back it up
+                return true;
+            }
+
+            // If addon backup always back up
+            if (backup.Name.StartsWith(_addonOptions.BackupNameSafe, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+            else
+            {
+                ConsoleLogger.LogVerbose($"Ignoring 'External' backup: {backup.Name}");
+                return false;
+            }
+        }
+
+        private bool IsUpgradeBackup(Backup backup)
+        {
+            // Check if addon upgrade backup
+            if (backup.Name.StartsWith("addon_", StringComparison.OrdinalIgnoreCase))
+            {
+                if (backup.Content?.Homeassistant != true && backup.Content?.Addons?.Count() == 1)
+                {
+                    ConsoleLogger.LogVerbose($"Backup {backup.Name} detected as Addon auto upgrade backup");
+                    return true;
+                }
+            }
+
+            // check if core upgrade backup
+            if (backup.Name.StartsWith("core_", StringComparison.OrdinalIgnoreCase))
+            {
+                if (backup.Content?.Homeassistant == true && backup.Content?.Addons.Count() == 0)
+                {
+                    ConsoleLogger.LogVerbose($"Backup {backup.Name} detected as Home Assistant auto upgrade backup");
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }

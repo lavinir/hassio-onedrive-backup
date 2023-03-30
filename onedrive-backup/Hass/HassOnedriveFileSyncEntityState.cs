@@ -34,23 +34,27 @@ namespace hassio_onedrive_backup.Hass
                 if (state != FileState.Syncing)
                 {
                     UploadPercentage = null;
+                    UploadSpeed = null;
                 }
             }
         }
 
-        public int? UploadPercentage { get; set; }
+		public int? UploadPercentage { get; set; }
+
+		public int? UploadSpeed { get; set; }
 
 
-        public async Task UpdateBackupEntityInHass()
+		public async Task UpdateBackupEntityInHass()
         {
             var payload = new
             {
                 state = State,
                 attributes = new Dictionary<string, string?>
                 {
-                    { FileStateAttribute.UploadPercentage, UploadPercentage == null ? null : $"{UploadPercentage}%" },
-                }
-            };
+					{ FileStateAttribute.UploadPercentage, UploadPercentage == null ? null : $"{UploadPercentage}%" },
+					{ FileStateAttribute.UploadSpeed, UploadSpeed == null ? null : $"{UploadSpeed} KB/s" },
+}
+			};
 
             string payloadStr = JsonConvert.SerializeObject(payload, new JsonSerializerSettings
             {
@@ -64,10 +68,11 @@ namespace hassio_onedrive_backup.Hass
 
         public class FileStateAttribute
         {
-            public const string UploadPercentage = "Current file upload percentage";
-        }
-        
-        public enum FileState
+			public const string UploadPercentage = "Current file upload percentage";
+			public const string UploadSpeed = "Current file upload speed (KB/s)";
+		}
+
+		public enum FileState
         {
             Syncing,
             Synced,

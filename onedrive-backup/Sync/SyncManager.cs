@@ -3,6 +3,7 @@ using hassio_onedrive_backup.Graph;
 using hassio_onedrive_backup.Hass;
 using Microsoft.Extensions.FileSystemGlobbing;
 using Microsoft.Graph;
+using onedrive_backup.Graph;
 using System.Collections;
 using System.Diagnostics;
 using System.Security.Cryptography;
@@ -19,15 +20,17 @@ namespace hassio_onedrive_backup.Sync
         private BitArray _allowedHours;
         private HassOnedriveFileSyncEntityState _hassEntityState;
 		private IWebHostEnvironment? _environment;
-		private Matcher _fileMatcher;
+        private TransferSpeedHelper _transferSpeedHelper;
+        private Matcher _fileMatcher;
 
-        public SyncManager(IServiceProvider serviceProvider, BitArray allowedHours)
+        public SyncManager(IServiceProvider serviceProvider, BitArray allowedHours, TransferSpeedHelper? transferSpeedHelper)
         {
             _addonOptions = serviceProvider.GetService<AddonOptions>();
             _graphHelper = serviceProvider.GetService<IGraphHelper>();
             _hassIoClient = serviceProvider.GetService<IHassioClient>();
             _hassEntityState = serviceProvider.GetService<HassOnedriveFileSyncEntityState>();
             _environment = serviceProvider.GetService<IWebHostEnvironment>();
+            _transferSpeedHelper = transferSpeedHelper;
             _allowedHours = allowedHours;
             _fileMatcher = new();
             _fileMatcher.AddIncludePatterns(_addonOptions.SyncPaths);
@@ -116,10 +119,12 @@ namespace hassio_onedrive_backup.Sync
                 path, 
                 now, 
                 _addonOptions.InstanceName, 
+                _transferSpeedHelper,
                 remotePath,
-                async (prog) =>
+                async (prog, speed) =>
                 {
                     _hassEntityState.UploadPercentage = prog;
+                    _hassEntityState.UploadSpeed = speed / 1024;
                     await _hassEntityState.UpdateBackupEntityInHass();
                     Debug.WriteLine($"Progress: {prog}");
 

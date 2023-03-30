@@ -17,6 +17,9 @@ configuration:
   monitor_all_local_backups:
     name: Monitor all local backups
     description: Use this to monitor all locally created backups not just ones created by the Addon. All backup quota rules defined will be applied here including backup deletion when this is enabled.
+  ignore_upgrade_backups:
+    name: Ignore upgrade backups
+    description: When enabled, the add-on will ignore backups that are automatically created during upgrades (of Home Assistant / Addons)
   backup_passwd:
     name: Backup password
     description: The password to use to protect the backups created and uploaded to OneDrive.

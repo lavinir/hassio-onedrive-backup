@@ -1,5 +1,6 @@
 ﻿using Microsoft.Graph;
 using onedrive_backup.Contracts;
+using onedrive_backup.Graph;
 
 namespace hassio_onedrive_backup.Graph
 {
@@ -21,7 +22,7 @@ namespace hassio_onedrive_backup.Graph
 
         Task<bool> DeleteItemFromAppFolderAsync(string itemPath);
 
-        Task<bool> UploadFileAsync(string filePath, DateTime date, string? instanceName, string? destinationFileName = null, Action<int>? progressCallback = null, bool flatten = true, string description = null);
+        Task<bool> UploadFileAsync(string filePath, DateTime date, string? instanceName, TransferSpeedHelper transferSpeedHelper, string? destinationFileName = null, Action<int, int>? progressCallback = null, bool flatten = true, string description = null);
 
         Task<string?> DownloadFileAsync(string fileName, Action<int?>? progressCallback);
 

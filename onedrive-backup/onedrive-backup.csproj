@@ -22,6 +22,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="wwwroot\images\Bitcoin-Logo.svg" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Update="wwwroot\bmc\bmc-button.svg">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
