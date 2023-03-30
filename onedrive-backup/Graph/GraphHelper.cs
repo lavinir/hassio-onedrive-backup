@@ -158,7 +158,7 @@ namespace hassio_onedrive_backup.Graph
 				double percentage = Math.Round((prog / (double)totalFileLength), 2) * 100;
 				if (percentage - lastShownPercentageHolder.Percentage >= 10 || percentage == 100)
 				{
-					ConsoleLogger.LogInfo($"Uploaded {percentage}%");
+					ConsoleLogger.LogVerbose($"Uploaded {percentage}%");
 					lastShownPercentageHolder.Percentage = percentage;
 				}
 				
