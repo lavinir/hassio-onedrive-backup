@@ -34,6 +34,7 @@ namespace hassio_onedrive_backup.Hass
                 if (state != FileState.Syncing)
                 {
                     UploadPercentage = null;
+                    UploadSpeed = null;
                 }
             }
         }

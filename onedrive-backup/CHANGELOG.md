@@ -1,6 +1,6 @@
 ## v2.1 [March 30th 2023]
 ### Added
-* Option to ignore Home Assistant Upgrade Backups
+* Option to [ignore Home Assistant Upgrade Backups](https://github.com/lavinir/hassio-onedrive-backup#ignore-home-assistant-upgrade-backups)
 * Show Upload Transfer Speed in UI
 
 ### Fixed
@@ -25,7 +25,7 @@
 This is a very big release 🎉 with many new features and some breaking changes, please see details below.
 
 ### Added
-* **Web Interface!** - There is now a dedicated Web UI for the addon, where you can easily see an overview of all your backups, trigger manual backups, retrieve backups and more. **CloudFlared** users please see [relevant prerequisites]((https://github.com/lavinir/hassio-onedrive-backup#html-content-filtering-error))
+* **Web Interface!** - There is now a dedicated Web UI for the addon, where you can easily see an overview of all your backups, trigger manual backups, retrieve backups and more. **CloudFlared** users please see [relevant prerequisites](https://github.com/lavinir/hassio-onedrive-backup#html-content-filtering-error)
 * **On Demand Backups** - Available through the new Web Interface
 * **Log Verbosity Config** - You can now specify the [verbosity](https://github.com/lavinir/hassio-onedrive-backup#log-level) of the addon logs from the config.
 * **Exclude Addons from Backup** - It is now possible to [exclude addons](https://github.com/lavinir/hassio-onedrive-backup#excluded-addons-optional) from your backups

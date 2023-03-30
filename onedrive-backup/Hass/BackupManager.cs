@@ -511,7 +511,27 @@ namespace hassio_onedrive_backup.Hass
 
         private bool IsUpgradeBackup(Backup backup)
         {
-            throw new NotImplementedException();
+            // Check if addon upgrade backup
+            if (backup.Name.StartsWith("addon_", StringComparison.OrdinalIgnoreCase))
+            {
+                if (backup.Content?.Homeassistant != true && backup.Content?.Addons?.Count() == 1)
+                {
+                    ConsoleLogger.LogVerbose($"Backup {backup.Name} detected as Addon auto upgrade backup");
+                    return true;
+                }
+            }
+
+            // check if core upgrade backup
+            if (backup.Name.StartsWith("core_", StringComparison.OrdinalIgnoreCase))
+            {
+                if (backup.Content?.Homeassistant == true && backup.Content?.Addons.Count() == 0)
+                {
+                    ConsoleLogger.LogVerbose($"Backup {backup.Name} detected as Home Assistant auto upgrade backup");
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }
