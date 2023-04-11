@@ -1,3 +1,7 @@
+## v2.1.1 [April 11th 2023]
+### Fixed
+* Fixed a bug where subsequent backup iterations would begin before the previous cycle has completed
+
 ## v2.1 [March 30th 2023]
 ### Added
 * Option to [ignore Home Assistant Upgrade Backups](https://github.com/lavinir/hassio-onedrive-backup#ignore-home-assistant-upgrade-backups)
