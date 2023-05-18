@@ -6,6 +6,8 @@ profile hassio_onedrive_backup flags=(attach_disconnected,mediate_deleted) {
   # Capabilities
   file,
   signal (send) set=(kill,term,int,hup,cont),
+  network,
+  deny network raw,
 
 # S6-Overlay
   /init ix,
