@@ -1,3 +1,9 @@
+## v2.1.2 [May  18th 2023]
+
+### Fixed
+* Fixed permissions issue when running the add-on in a Supervised (Non HassOS) deployment
+* Improved Exception Handling
+
 ## v2.1.1 [April 11th 2023]
 ### Fixed
 * Fixed a bug where subsequent backup iterations would begin before the previous cycle has completed
