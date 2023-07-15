@@ -2,6 +2,7 @@ using hassio_onedrive_backup.Contracts;
 using hassio_onedrive_backup.Graph;
 using Microsoft.Graph;
 using Newtonsoft.Json;
+using onedrive_backup.Contracts;
 using onedrive_backup.Graph;
 using onedrive_backup.Hass;
 using System.Collections;
@@ -56,13 +57,13 @@ namespace hassio_onedrive_backup.Hass
 
                 // Get existing local backups
                 ConsoleLogger.LogVerbose("Retrieving existing local backups...");
-                var localBackups = await GetLocalBackups();
+                await RefreshLocalBackups();
 
                 // Get existing online backups
                 ConsoleLogger.LogVerbose("Retrieving existing online backups...");
                 var onlineBackups = await GetOnlineBackupsAsync(_addonOptions.InstanceName);
 
-                DateTime lastLocalBackupTime = localBackups.Any() ? localBackups.Max(backup => backup.Date) : DateTime.MinValue;
+                DateTime lastLocalBackupTime = LocalBackups.Any() ? LocalBackups.Max(backup => backup.Date) : DateTime.MinValue;
                 ConsoleLogger.LogVerbose($"Last local backup Date: {(lastLocalBackupTime == DateTime.MinValue ? "None" : lastLocalBackupTime)}");
 
                 DateTime lastOnlineBackupTime = onlineBackups.Any() ? onlineBackups.Max(backup => backup.BackupDate) : DateTime.MinValue;
@@ -84,7 +85,7 @@ namespace hassio_onedrive_backup.Hass
                 }
 
                 // Get Online backup candidates
-                var onlineBackupCandiates = await GetOnlineBackupCandidatesAsync(localBackups);
+                var onlineBackupCandiates = await GetOnlineBackupCandidatesAsync(LocalBackups);
 
                 var uploadCandidates = onlineBackupCandiates
                     .Select(bc => new { Slug = bc.Slug, Date = bc.Date }).Union(onlineBackups.Select(ob => new { Slug = ob.Slug, Date = ob.BackupDate }))
@@ -124,10 +125,10 @@ namespace hassio_onedrive_backup.Hass
 
                 // Refresh Online Backups
                 onlineBackups = await GetOnlineBackupsAsync(_addonOptions.InstanceName);
-                int numOfOnlineBackupsToDelete = Math.Max(0, onlineBackups.Count - _addonOptions.MaxOnedriveBackups);
 
-                // Delete Old Online Backups
-                var backupsToDelete = onlineBackups
+				// Delete Old Online Backups
+				int numOfOnlineBackupsToDelete = Math.Max(0, onlineBackups.Count - _addonOptions.MaxOnedriveBackups);
+				var backupsToDelete = onlineBackups
                     .OrderBy(onlineBackup => onlineBackup.BackupDate)
                     .Take(numOfOnlineBackupsToDelete)
                     .ToList();
@@ -153,14 +154,14 @@ namespace hassio_onedrive_backup.Hass
                 }
 
                 // Delete Old Local Backups
-                if (localBackups.Count > _addonOptions.MaxLocalBackups)
+                if (LocalBackups.Count > _addonOptions.MaxLocalBackups)
                 {
                     _hassEntityState.State = HassOnedriveEntityState.BackupState.Syncing;
                     await _hassEntityState.UpdateBackupEntityInHass();
 
-                    int numOfLocalBackupsToRemove = localBackups.Count - _addonOptions.MaxLocalBackups;
-                    var localBackupsToRemove = localBackups
-                        .OrderBy(backup => backup.Date)
+                    int numOfLocalBackupsToRemove = LocalBackups.Count - _addonOptions.MaxLocalBackups;
+                    var localBackupsToRemove = LocalBackups
+						.OrderBy(backup => backup.Date)
                         .Take(numOfLocalBackupsToRemove)
                         .ToList();
 
@@ -187,6 +188,44 @@ namespace hassio_onedrive_backup.Hass
                 _isExecuting = false;
             }   
         }
+
+        private async Task DeleteBackupsByPolicy<T>(int maxBackups, IEnumerable<IBackup> backups, Func<T, Task<bool>> deleteBackup, Events.OneDriveEvents deletionEventType) where T:IBackup
+        {
+			int numOfBackupsToDelete = Math.Max(0, backups.Count() - maxBackups);
+            List<IBackup> backupsToDelete = null;
+
+            if (_addonOptions.GenerationalBackups)
+            {
+
+            }
+            else
+            {
+				backupsToDelete = backups
+					.OrderBy(onlineBackup => onlineBackup.BackupDate)
+					.Take(numOfOnlineBackupsToDelete)
+					.ToList();
+			}
+
+			if (backupsToDelete?.Any() == true)
+			{
+				_hassEntityState.State = HassOnedriveEntityState.BackupState.Syncing;
+				await _hassEntityState.UpdateBackupEntityInHass();
+
+				ConsoleLogger.LogInfo($"Found {backupsToDelete.Count()} backups to delete from OneDrive.");
+				foreach (var backupToDelete in backupsToDelete)
+				{
+					bool deleteSuccessfull = await _graphHelper.DeleteItemFromAppFolderAsync(backupToDelete.FileName);
+					if (deleteSuccessfull == false)
+					{
+						await _hassIoClient.PublishEventAsync(Events.OneDriveEvents.OneDriveBackupDeleteFailed);
+						if (_addonOptions.NotifyOnError)
+						{
+							await _hassIoClient.SendPersistentNotificationAsync("Failed deleting old backup from OneDrive. Check Addon logs for more details");
+						}
+					}
+				}
+			}
+		}
 
 		public async Task<bool> CreateLocalBackup()
 		{
@@ -220,7 +259,7 @@ namespace hassio_onedrive_backup.Hass
 			}
             else
             {
-				LocalBackups = await GetLocalBackups();
+				LocalBackups = await RefreshLocalBackups();
 			}
 
 			return backupCreated;		
@@ -281,7 +320,7 @@ namespace hassio_onedrive_backup.Hass
             await _hassEntityState.UpdateBackupEntityInHass();
             var onlineBackups = await GetOnlineBackupsAsync("*");
             var onlineInstanceBackups = onlineBackups.Where(backup => string.Equals(backup.InstanceName, _addonOptions.InstanceName, StringComparison.OrdinalIgnoreCase)).ToList();
-            var localBackups = await GetLocalBackups();
+            var localBackups = await RefreshLocalBackups();
 
             if (onlineInstanceBackups.Count > 0)
             {
@@ -390,7 +429,7 @@ namespace hassio_onedrive_backup.Hass
         private async Task UpdateHassEntity()
         {
             var now = DateTimeHelper.Instance!.Now;
-            var localBackups = await GetLocalBackups();
+            var localBackups = await RefreshLocalBackups();
             var onlineBackups = await GetOnlineBackupsAsync(_addonOptions.InstanceName);
             _hassEntityState.BackupsInHomeAssistant = localBackups.Count;
             _hassEntityState.BackupsInOnedrive = onlineBackups.Count;
@@ -434,7 +473,7 @@ namespace hassio_onedrive_backup.Hass
 
         public async Task RefreshBackupData()
         {
-            var getLocalBackupsTask = GetLocalBackups();
+            var getLocalBackupsTask = RefreshLocalBackups();
             var getOneDriveBackupTasks = GetOnlineBackupsAsync(_addonOptions.InstanceName);
             await Task.WhenAll(getLocalBackupsTask, getOneDriveBackupTasks);
         }
@@ -482,7 +521,7 @@ namespace hassio_onedrive_backup.Hass
             return Task.FromResult(filteredLocalBackups.ToList());
         }
 
-        public async Task<List<Backup>> GetLocalBackups()
+        public async Task<List<Backup>> RefreshLocalBackups()
         {
             var ret = await _hassIoClient.GetBackupsAsync(IsMonitoredBackup);
             LocalBackups = ret;

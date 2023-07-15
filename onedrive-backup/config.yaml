@@ -37,6 +37,10 @@ options:
 schema:
   local_backup_num_to_keep : "int(0,)"
   onedrive_backup_num_to_keep : "int(1,100)"
+  generational_days: "int(0,)?"
+  generational_weeks: "int(0,)?"
+  generational_months: "int(0,)?"
+  generational_years: "int(0,)?"
   backup_interval_days : "float(0.0417,)"
   backup_name : "match([a-zA-Z_]*)"
   monitor_all_local_backups: bool

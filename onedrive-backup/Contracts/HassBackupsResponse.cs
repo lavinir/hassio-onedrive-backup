@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using onedrive_backup.Contracts;
 
 namespace hassio_onedrive_backup.Contracts
 {
@@ -16,7 +17,7 @@ namespace hassio_onedrive_backup.Contracts
             public Backup[] Backups { get; set; }
         }
 
-        public class Backup
+		public class Backup : IBackup
         {
             [JsonProperty("slug")]
             public string Slug { get; set; }
@@ -41,9 +42,14 @@ namespace hassio_onedrive_backup.Contracts
 
             [JsonProperty("content")]
             public Content Content { get; set; }
-        }
 
-        public class Content
+            [JsonIgnore]
+            public DateTime BackupDate => Date;
+
+			public BackupTypeDisplayName TypeDisplayName => BackupTypeDisplayName.Local;
+		}
+
+		public class Content
         {
             [JsonProperty("homeassistant")]
             public bool Homeassistant { get; set; }

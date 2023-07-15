@@ -1,5 +1,6 @@
 ﻿using hassio_onedrive_backup;
 using hassio_onedrive_backup.Contracts;
+using onedrive_backup.Contracts;
 using onedrive_backup.Hass;
 using onedrive_backup.Models;
 using static hassio_onedrive_backup.Contracts.HassBackupsResponse;
@@ -74,11 +75,23 @@ namespace onedrive_backup.Extensions
             };
         }
 
+		public static List<IBackup> GetDailyGenerations(this IEnumerable<IBackup> backups, int maxDaily)
+		{
+			var now = DateTimeHelper.Instance.Now;
+			return backups.Where(backup => now - backup.BackupDate < TimeSpan.FromDays(maxDaily)).ToList();
+		}
+
+		public static List<IBackup> GetWeeklyGenerations(this IEnumerable<IBackup> backups, int maxWeekly)
+		{
+			var now = DateTimeHelper.Instance.Now;
+			return backups.Where(backup => now - backup.BackupDate < TimeSpan.FromDays(maxWeekly * 7)).ToList();
+		}
+
 		private static string GetAddonNameFromSlug(IEnumerable<Addon> addons, string slug)
 		{
             ConsoleLogger.LogVerbose($"Looking for Addon name matching slug: {slug}. Checking agaisnt {addons.Count()} Addons in cache ");
 			string name = addons.FirstOrDefault(addon => addon.Slug.Equals(slug, StringComparison.OrdinalIgnoreCase))?.Name;
 			return name ?? string.Empty;
-		}
+		}        
 	}
 }

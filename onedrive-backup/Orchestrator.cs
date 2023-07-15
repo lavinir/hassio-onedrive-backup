@@ -45,11 +45,6 @@ namespace hassio_onedrive_backup
                 ConsoleLogger.LogInfo($"Backups / Syncs will only run during these hours: {_allowedBackupHours.ToAllowedHoursText()}");
             }
 
-            //if (_addonOptions.UploadSpeedCap)
-            //{
-            //    ConsoleLogger.LogInfo($"Upload speed configured to cap at {_addonOptions.UploadSpeedCapKBPerSecond} KB/s");
-            //}
-
             // Initialize File Sync Manager
             if (_addonOptions.FileSyncEnabled)
             {

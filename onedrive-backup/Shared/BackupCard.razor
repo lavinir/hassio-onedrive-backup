@@ -173,7 +173,7 @@
         });
 
         downloading = false;
-        await Orchestrator.BackupManager.GetLocalBackups();
+        await Orchestrator.BackupManager.RefreshLocalBackups();
     }
 
     private async void TriggerStateChanged()

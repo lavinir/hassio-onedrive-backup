@@ -12,7 +12,19 @@ namespace hassio_onedrive_backup.Contracts
         [JsonProperty("onedrive_backup_num_to_keep")]
         public int MaxOnedriveBackups { get; set; }
 
-        [JsonProperty("backup_interval_days")]
+		[JsonProperty("generational_days")]
+		public int? GenerationalDays { get; set; }
+
+		[JsonProperty("generational_weeks")]
+		public int? GenerationalWeeks { get; set; }
+
+		[JsonProperty("generational_months")]
+		public int? GenerationalMonths { get; set; }
+
+		[JsonProperty("generational_years")]
+		public int? GenerationalYears { get; set; }
+
+		[JsonProperty("backup_interval_days")]
         public float BackupIntervalDays { get; set; }
 
         [JsonProperty("backup_passwd")]
@@ -90,9 +102,9 @@ namespace hassio_onedrive_backup.Contracts
         [JsonIgnore]
         public bool FileSyncEnabled => SyncPaths != null && SyncPaths.Count > 0;
 
-        //[JsonIgnore]
-        //public bool UploadSpeedCap => UploadSpeedCapKBPerSecond != null;
-        
+        [JsonIgnore]
+        public bool GenerationalBackups => GenerationalDays != null || GenerationalWeeks != null || GenerationalMonths != null || GenerationalYears != null;
+
         public List<string> IncludedFolderList
         {
             get
