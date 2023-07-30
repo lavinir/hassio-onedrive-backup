@@ -3,6 +3,7 @@ using hassio_onedrive_backup.Contracts;
 using onedrive_backup.Contracts;
 using onedrive_backup.Hass;
 using onedrive_backup.Models;
+using System.Globalization;
 using static hassio_onedrive_backup.Contracts.HassBackupsResponse;
 using Addon = hassio_onedrive_backup.Contracts.HassAddonsResponse.Addon;
 
@@ -75,16 +76,22 @@ namespace onedrive_backup.Extensions
             };
         }
 
-		public static List<IBackup> GetDailyGenerations(this IEnumerable<IBackup> backups, int maxDaily)
+		public static List<IBackup> GetDailyGenerations(this IEnumerable<IBackup> backups, int dailyBackupNum)
 		{
-			var now = DateTimeHelper.Instance.Now;
-			return backups.Where(backup => now - backup.BackupDate < TimeSpan.FromDays(maxDaily)).ToList();
+			var now = DateTimeHelper.Instance.Now.Date;
+			return backups.Where(backup => now - backup.BackupDate.Date < TimeSpan.FromDays(dailyBackupNum)).ToList();
 		}
 
-		public static List<IBackup> GetWeeklyGenerations(this IEnumerable<IBackup> backups, int maxWeekly)
+		public static List<IBackup> GetWeeklyGenerations(this IEnumerable<IBackup> backups, int weeklyBackupNum, DayOfWeek firstDayOfWeek)
 		{
-			var now = DateTimeHelper.Instance.Now;
-			return backups.Where(backup => now - backup.BackupDate < TimeSpan.FromDays(maxWeekly * 7)).ToList();
+            var now = DateTimeHelper.Instance.Now.Date;
+            var currentWeek = CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(now, CalendarWeekRule.FirstDay, firstDayOfWeek);
+             backups.GroupBy(backup => CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(backup.BackupDate.Date, CalendarWeekRule.FirstDay, firstDayOfWeek))
+                   .Select(weekGroup => weekGroup.Max())
+                   .OrderByDescending(backup => backup.BackupDate)
+                   .Take(weeklyBackupNum)
+                   .ToList();
+                   
 		}
 
 		private static string GetAddonNameFromSlug(IEnumerable<Addon> addons, string slug)
