@@ -40,6 +40,11 @@ namespace hassio_onedrive_backup
             TimeSpan intervalDelay = TimeSpan.FromMinutes(5);
 
             ConsoleLogger.LogInfo($"Backup interval configured to every {_addonOptions.BackupIntervalHours} hours");
+            if (_addonOptions.GenerationalBackups)
+            {
+                ConsoleLogger.LogInfo($"Generational backups enabled");
+            }
+
             if (string.IsNullOrWhiteSpace(_addonOptions.BackupAllowedHours) == false)
             {
                 ConsoleLogger.LogInfo($"Backups / Syncs will only run during these hours: {_allowedBackupHours.ToAllowedHoursText()}");

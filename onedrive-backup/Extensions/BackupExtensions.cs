@@ -1,5 +1,6 @@
 ﻿using hassio_onedrive_backup;
 using hassio_onedrive_backup.Contracts;
+using Microsoft.VisualBasic;
 using onedrive_backup.Contracts;
 using onedrive_backup.Hass;
 using onedrive_backup.Models;
@@ -76,22 +77,102 @@ namespace onedrive_backup.Extensions
             };
         }
 
-		public static List<IBackup> GetDailyGenerations(this IEnumerable<IBackup> backups, int dailyBackupNum)
+		public static IEnumerable<IBackup> GetDailyGenerations(this IEnumerable<IBackup> backups, int dailyBackupNum)
 		{
+            if (dailyBackupNum < 0)
+            {
+                ConsoleLogger.LogWarning($"Daily Backup Num configured to {dailyBackupNum}");
+                return Enumerable.Empty<IBackup>();
+            }
+
 			var now = DateTimeHelper.Instance.Now.Date;
-			return backups.Where(backup => now - backup.BackupDate.Date < TimeSpan.FromDays(dailyBackupNum)).ToList();
+			return backups.Where(backup => now - backup.BackupDate.Date < TimeSpan.FromDays(dailyBackupNum));
 		}
 
-		public static List<IBackup> GetWeeklyGenerations(this IEnumerable<IBackup> backups, int weeklyBackupNum, DayOfWeek firstDayOfWeek)
+		public static IEnumerable<IBackup> GetWeeklyGenerations(this IEnumerable<IBackup> backups, int weeklyBackupNum, DayOfWeek firstDayOfWeek)
 		{
-            var now = DateTimeHelper.Instance.Now.Date;
+			if (weeklyBackupNum < 0)
+			{
+				ConsoleLogger.LogWarning($"Weekly Backup Num configured to {weeklyBackupNum}");
+                yield break;
+			}
+
+			var now = DateTimeHelper.Instance.Now.Date;
             var currentWeek = CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(now, CalendarWeekRule.FirstDay, firstDayOfWeek);
-             backups.GroupBy(backup => CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(backup.BackupDate.Date, CalendarWeekRule.FirstDay, firstDayOfWeek))
+            var groupedBackups = backups.GroupBy(backup => CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(backup.BackupDate.Date, CalendarWeekRule.FirstDay, firstDayOfWeek))
                    .Select(weekGroup => weekGroup.Max())
                    .OrderByDescending(backup => backup.BackupDate)
                    .Take(weeklyBackupNum)
                    .ToList();
-                   
+
+            for (int i=0; i < weeklyBackupNum; i++)
+            {
+				var week = currentWeek - i;
+                if (week < 1)
+                {
+                    week = CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(now.AddYears(-1), CalendarWeekRule.FirstDay, firstDayOfWeek) - week;
+                }
+
+				var weeklyBackup = groupedBackups.FirstOrDefault(backup => CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(backup.BackupDate.Date, CalendarWeekRule.FirstDay, firstDayOfWeek) == week);
+				if (weeklyBackup != null)
+                {
+					yield return weeklyBackup;
+				}
+			}                   
+		}
+
+        public static IEnumerable<IBackup> GetMonthlyGenerations(this IEnumerable<IBackup> backups, int monthlyBackupNum)
+        {
+			if (monthlyBackupNum < 0)
+			{
+				ConsoleLogger.LogWarning($"Monthly Backup Num configured to {monthlyBackupNum}");
+                yield break;
+			}
+
+			var now = DateTimeHelper.Instance.Now.Date;
+            var currentMonth = now.Month;
+            var currentYear = now.Year;
+			var groupedBackups = backups.GroupBy(backup => backup.BackupDate.Month)
+				  .Select(monthGrp => monthGrp.Max())
+				  .OrderByDescending(backup => backup.BackupDate)
+				  .Take(monthlyBackupNum)
+				  .ToList();
+
+            var year = currentYear;
+			for (int i = 0; i < monthlyBackupNum; i++)
+			{
+				var month = currentMonth - i;
+				if (month < 1)
+				{
+                    month = 12 - month;
+                    year--;
+				}
+
+				var monthlyBackup = groupedBackups.FirstOrDefault(backup => backup.BackupDate.Month == month && backup.BackupDate.Year == year);
+				if (monthlyBackup != null)
+				{
+					yield return monthlyBackup;
+				}
+			}
+		}
+
+        public static IEnumerable<IBackup> GetYearlyGenerations(this IEnumerable<IBackup> backups, int yearlyBackups)
+        {
+			if (yearlyBackups < 0)
+			{
+				ConsoleLogger.LogWarning($"Yearly Backup Num configured to {yearlyBackups}");
+				return Enumerable.Empty<IBackup>();
+			}
+
+			var currentYear = DateTimeHelper.Instance.Now.Year;
+            var groupedBackups = backups.GroupBy(backup => backup.BackupDate.Year)
+              .Select(yearGroup => yearGroup.Max())
+              .OrderByDescending(backup => backup.BackupDate)
+              .Take(yearlyBackups)
+              .ToList();
+
+            return groupedBackups.Where(backup => (currentYear - backup.BackupDate.Year) < yearlyBackups);
+
 		}
 
 		private static string GetAddonNameFromSlug(IEnumerable<Addon> addons, string slug)

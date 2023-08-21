@@ -3,6 +3,7 @@ using hassio_onedrive_backup.Graph;
 using hassio_onedrive_backup.Hass;
 using Microsoft.Extensions.FileSystemGlobbing;
 using Microsoft.Graph;
+using onedrive_backup.Extensions;
 using onedrive_backup.Graph;
 using System.Collections;
 using System.Diagnostics;
@@ -191,7 +192,7 @@ namespace hassio_onedrive_backup.Sync
                     ConsoleLogger.LogInfo($"{localPath} does not exist locally. Deleting from OneDrive");
                     await _graphHelper.DeleteItemFromAppFolderAsync(remotePath);
                 }
-                else if (_fileMatcher.Match(localPath).HasMatches == false)
+                else if (_fileMatcher.Match(localPath.StripLeadingSlash()).HasMatches == false)
                 {
 					ConsoleLogger.LogInfo($"{localPath} not included in Sync Paths. Deleting from OneDrive");
 					await _graphHelper.DeleteItemFromAppFolderAsync(remotePath);
