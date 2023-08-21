@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace hassio_onedrive_backup.Storage
 {
-    internal class AddonOptionsReader
+    internal class AddonOptionsManager
     {
         public static AddonOptions ReadOptions(string path = "options.json")
         {
@@ -20,6 +20,11 @@ namespace hassio_onedrive_backup.Storage
             string optionContents = File.ReadAllText(path);
             var options = JsonConvert.DeserializeObject<AddonOptions>(optionContents);
             return options!;
+        }
+
+        public static async Task WriteOptions(AddonOptions options, string path = "options.json")
+        {
+            await File.WriteAllTextAsync(path, JsonConvert.SerializeObject(options));
         }
     }
 }

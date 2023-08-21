@@ -9,6 +9,7 @@ using onedrive_backup;
 using onedrive_backup.Extensions;
 using onedrive_backup.Graph;
 using onedrive_backup.Hass;
+using onedrive_backup.Models;
 using System.Collections;
 
 namespace hassio_onedrive_backup
@@ -28,7 +29,7 @@ namespace hassio_onedrive_backup
 
 #if DEBUG
             IHassioClient hassIoClient = new HassioClientMock();
-            var addonOptions = AddonOptionsReader.ReadOptions();
+            var addonOptions = AddonOptionsManager.ReadOptions();
 #else
 
             Directory.SetCurrentDirectory(addonDirectory);
@@ -58,6 +59,7 @@ namespace hassio_onedrive_backup
             builder.Services.AddSingleton<HassOnedriveFileSyncEntityState>();
             builder.Services.AddSingleton<HassOnedriveFreeSpaceEntityState>();
             builder.Services.AddSingleton<Orchestrator>();
+            builder.Services.AddSingleton<SettingsFields>();
             builder.WebHost.UseUrls("http://*:8099");
 
             if (!builder.Environment.IsDevelopment())

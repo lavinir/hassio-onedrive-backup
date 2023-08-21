@@ -1,0 +1,92 @@
+﻿@page "/settings"
+@using hassio_onedrive_backup.Contracts;
+@using onedrive_backup.Models;
+@inject AddonOptions AddonOptions
+@inject SettingsFields SettingsReader
+@inject IJSRuntime JS
+
+<h3>Settings</h3>
+
+<div class="container">
+    <form>
+        <div class="mb-3">
+            <label for="@SettingsReader.Settings.local_backup_num_to_keep.name" 
+                   class="form-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.local_backup_num_to_keep.description">
+                   @SettingsReader.Settings.local_backup_num_to_keep.name
+                   </label>
+            <input type="number" class="form-control" id="@SettingsReader.Settings.local_backup_num_to_keep.name" placeholder="Enter value (>=0)" @bind="AddonOptions.MaxLocalBackups">
+        </div>
+
+        <div class="mb-3">
+            <label for="@SettingsReader.Settings.onedrive_backup_num_to_keep.name"
+                   class="form-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.onedrive_backup_num_to_keep.description">
+                @SettingsReader.Settings.onedrive_backup_num_to_keep.name
+            </label>
+            <input type="number" class="form-control" id="@SettingsReader.Settings.onedrive_backup_num_to_keep.name" placeholder="Enter value (>=0)" @bind="AddonOptions.MaxOnedriveBackups">
+        </div>
+
+        <div class="mb-3">
+            <label for="backupInternalDays" class="form-label">Backup Interval Days</label>
+            <input type="number" class="form-control" id="backupInternalDays" placeholder="Enter value (>=1)" @bind="AddonOptions.BackupIntervalDays">
+        </div>
+
+        <div class="mb-3">
+            <label for="backupName" class="form-label">Backup Name</label>
+            <input type="text" class="form-control" id="backupName" placeholder="Enter value">
+        </div>
+
+        <!-- Add similar form groups for other inputs -->
+
+        <div class="mb-3">
+            <label class="form-check-label">
+                <input type="checkbox" class="form-check-input" id="monitorAllLocalBackups">
+                Monitor All Local Backups
+            </label>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-check-label">
+                <input type="checkbox" class="form-check-input" id="ignoreUpgradeBackups">
+                Ignore Upgrade Backups
+            </label>
+        </div>
+
+        <div class="mb-3">
+            <label for="backupPasswd" class="form-label">Backup Password</label>
+            <input type="password" class="form-control" id="backupPasswd" placeholder="Enter password">
+        </div>
+
+        <div class="mb-3">
+            <label for="hassApiTimeoutMinutes" class="form-label">Hass API Timeout (minutes)</label>
+            <input type="number" class="form-control" id="hassApiTimeoutMinutes" placeholder="Enter value">
+        </div>
+
+        <div class="mb-3">
+            <label class="form-check-label">
+                <input type="checkbox" class="form-check-input" id="notifyOnError">
+                Notify on Error
+            </label>
+        </div>
+
+        <!-- Add similar form groups for boolean inputs -->
+
+        <button type="submit" class="btn btn-primary" @onclick="Save">Save Settings</button>
+    </form>
+</div>
+
+@code{
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("addTooltips");
+        }
+    }
+
+    private void Save()
+    {
+        
+    }
+
+
+}
