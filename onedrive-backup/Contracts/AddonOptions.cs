@@ -61,7 +61,7 @@ namespace hassio_onedrive_backup.Contracts
         public string? InstanceName { get; set; }
 
         [JsonProperty("sync_paths")]
-        public List<string>? SyncPaths { get; set; }
+        public List<string> SyncPaths { get; set; } = new List<string>();
 
         [JsonProperty("file_sync_remove_deleted")]
         public bool FileSyncRemoveDeleted { get; set; } = false;

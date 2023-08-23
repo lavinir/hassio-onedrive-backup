@@ -17,7 +17,6 @@ namespace hassio_onedrive_backup.Sync
         private const string OneDriveFileSyncRootDir = "FileSync";
         private AddonOptions _addonOptions;
         private IGraphHelper _graphHelper;
-        private IHassioClient _hassIoClient;
         private BitArray _allowedHours;
         private HassOnedriveFileSyncEntityState _hassEntityState;
 		private IWebHostEnvironment? _environment;
@@ -28,13 +27,12 @@ namespace hassio_onedrive_backup.Sync
         {
             _addonOptions = serviceProvider.GetService<AddonOptions>();
             _graphHelper = serviceProvider.GetService<IGraphHelper>();
-            _hassIoClient = serviceProvider.GetService<IHassioClient>();
             _hassEntityState = serviceProvider.GetService<HassOnedriveFileSyncEntityState>();
             _environment = serviceProvider.GetService<IWebHostEnvironment>();
             _transferSpeedHelper = transferSpeedHelper;
             _allowedHours = allowedHours;
             _fileMatcher = new();
-            _fileMatcher.AddIncludePatterns(_addonOptions.SyncPaths);
+            _fileMatcher.AddIncludePatterns(_addonOptions.SyncPaths.Where(path => string.IsNullOrWhiteSpace(path) == false));
         }
 
         public async void SyncLoop(CancellationToken ct)

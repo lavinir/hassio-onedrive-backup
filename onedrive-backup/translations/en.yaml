@@ -11,6 +11,18 @@ configuration:
   backup_interval_days:
     name: Backup interval (days)
     description: The backup creation frequency in days. For setting a sub-day frequency you can use a number between 0 and 1, so for example if the value here is set to 0.5, the backup frequency will occur every 12 hours.
+  generational_days: 
+    name: Generational backups - Days
+    description: The number of daily backups to keep. This is used to create a daily backup for the specified number of days. 
+  generational_weeks:  
+    name: Generational backups - Weeks
+    description: The number of weekly backups to keep. This is used to create a weekly backup for the specified number of weeks.
+  generational_months:
+    name: Generational backups - Months
+    description: The number of monthly backups to keep. This is used to create a monthly backup for the specified number of months.
+  generational_years:
+    name: Generational backups - Years
+    description: The number of years backups to keep. This is used to create a yearly backup for the specified number of years.
   backup_name:
     name: Backup name
     description: Name to use for the backups created by the add-on.

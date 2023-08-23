@@ -30,6 +30,10 @@ namespace onedrive_backup.Models
             public FieldData local_backup_num_to_keep { get; set; }
             public FieldData onedrive_backup_num_to_keep { get; set; }
             public FieldData backup_interval_days { get; set; }
+            public FieldData generational_days { get; set; }
+            public FieldData generational_weeks { get; set; }
+            public FieldData generational_months { get; set; }
+            public FieldData generational_years { get; set; }
             public FieldData backup_name { get; set; }
             public FieldData monitor_all_local_backups { get; set; }
             public FieldData ignore_upgrade_backups { get; set; }

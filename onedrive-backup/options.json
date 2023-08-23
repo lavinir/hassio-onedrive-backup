@@ -4,7 +4,7 @@
   "backup_interval_days": 1,
   "backup_passwd": "alsdkfjslajfk",
   "backup_name": "hass_backup",
-  "include_all_local_backups": false,
+  "monitor_all_local_backups": true,
   "upload_speed_cap": 100,
   "notify_on_error": true,
   "recovery_mode": false,
@@ -15,6 +15,8 @@
   "exclude_local_addons_folder": false,
   "backup_allowed_hours": "0-23",
   "sync_paths": [
+    "/fake/path/1",
+    "/fake/path/2"
   ],
   "file_sync_remove_deleted": true,
   "backup_instance_name": "LocalTest",
