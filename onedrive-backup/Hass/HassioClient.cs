@@ -221,5 +221,11 @@ namespace hassio_onedrive_backup.Hass
             var response = await GetJsonResponseAsync<HassAddonInfoResponse>(uri);
             return response;
         }
-    }
+
+        public async Task RestartSelf()
+        {
+			Uri uri = new Uri(Supervisor_Base_Uri_Str + $"/addons/self/restart");
+            _ = await _httpClient.PostAsync(uri, null);
+		}
+	}
 }

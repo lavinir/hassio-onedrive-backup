@@ -131,7 +131,12 @@ namespace hassio_onedrive_backup.Hass
             return Task.CompletedTask;
         }
 
-        public Task SendPersistentNotificationAsync(string message)
+		public Task RestartSelf()
+		{
+            return Task.CompletedTask;
+		}
+
+		public Task SendPersistentNotificationAsync(string message)
         {
             var payload = new
             {

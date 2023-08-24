@@ -36,7 +36,7 @@ options:
 
 schema:
   local_backup_num_to_keep : "int(0,)"
-  onedrive_backup_num_to_keep : "int(1,100)"
+  onedrive_backup_num_to_keep : "int(1,)"
   generational_days: "int(0,)?"
   generational_weeks: "int(0,)?"
   generational_months: "int(0,)?"
