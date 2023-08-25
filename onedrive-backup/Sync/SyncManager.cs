@@ -44,7 +44,7 @@ namespace hassio_onedrive_backup.Sync
                     var now = DateTimeHelper.Instance!.Now;
 
                     // Check if we are in the allowed hours
-                    if (_allowedHours[now.Hour] == false)
+                    if (_allowedHours[now.Hour] == false && _addonOptions.IgnoreAllowedHoursForFileSync == false)
                     {
                         continue;
                     }

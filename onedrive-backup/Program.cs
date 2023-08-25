@@ -10,6 +10,7 @@ using onedrive_backup.Extensions;
 using onedrive_backup.Graph;
 using onedrive_backup.Hass;
 using onedrive_backup.Models;
+using onedrive_backup.Telemetry;
 using System.Collections;
 
 namespace hassio_onedrive_backup
@@ -60,6 +61,7 @@ namespace hassio_onedrive_backup
             builder.Services.AddSingleton<HassOnedriveFreeSpaceEntityState>();
             builder.Services.AddSingleton<Orchestrator>();
             builder.Services.AddSingleton<SettingsFields>();
+            builder.Services.AddSingleton<TelemetryManager>();
             builder.WebHost.UseUrls("http://*:8099");
 
             if (!builder.Environment.IsDevelopment())

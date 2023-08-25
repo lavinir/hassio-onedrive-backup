@@ -50,6 +50,8 @@ namespace onedrive_backup.Models
             public FieldData file_sync_remove_deleted { get; set; }
             public FieldData excluded_addons { get; set; }
             public FieldData log_level { get; set; }
+            public FieldData enable_anonymous_telemetry { get; set; }
+            public FieldData ignore_allowed_hours_for_file_sync { get; set; }
         }
 
         public record class FieldData

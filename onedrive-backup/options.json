@@ -33,5 +33,6 @@
     "addons/local",
     "media",
     "ssl"
-  ]
+  ],
+  "enable_anonymous_telemetry" :  true
 }

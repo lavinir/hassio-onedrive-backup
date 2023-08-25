@@ -3,6 +3,7 @@ using hassio_onedrive_backup.Graph;
 using hassio_onedrive_backup.Hass;
 using hassio_onedrive_backup.Sync;
 using onedrive_backup.Graph;
+using onedrive_backup.Telemetry;
 using System.Collections;
 
 namespace hassio_onedrive_backup
@@ -11,7 +12,8 @@ namespace hassio_onedrive_backup
     {
         private readonly IHassioClient _hassIoClient;
         private readonly HassOnedriveFreeSpaceEntityState? _hassOnedriveFreeSpaceEntityState;
-        private readonly IGraphHelper _graphHelper;
+		private readonly TelemetryManager? _telemetryManager;
+		private readonly IGraphHelper _graphHelper;
         private readonly IServiceProvider _serviceProvider;
         private readonly AddonOptions _addonOptions;
         private readonly BitArray _allowedBackupHours;
@@ -25,6 +27,7 @@ namespace hassio_onedrive_backup
             _graphHelper = serviceProvider.GetService<IGraphHelper>();
             _hassIoClient = serviceProvider.GetService<IHassioClient>();
             _hassOnedriveFreeSpaceEntityState = serviceProvider.GetService<HassOnedriveFreeSpaceEntityState>();
+            _telemetryManager = serviceProvider.GetService<TelemetryManager>();
 
             _allowedBackupHours = TimeRangeHelper.GetAllowedHours(_addonOptions.BackupAllowedHours);
             BackupManager = new BackupManager(_serviceProvider, _allowedBackupHours, new TransferSpeedHelper(null));
@@ -38,7 +41,9 @@ namespace hassio_onedrive_backup
             string timeZoneId = await _hassIoClient.GetTimeZoneAsync();
             DateTimeHelper.Initialize(timeZoneId);
             TimeSpan intervalDelay = TimeSpan.FromMinutes(5);
+            var lastTelemetrySend = DateTime.MinValue;
 
+			ConsoleLogger.LogInfo($"Anonymous Telemetry {(_addonOptions.EnableAnonymousTelemetry ? "Enabled" : "Disabled")}");            
             ConsoleLogger.LogInfo($"Backup interval configured to every {_addonOptions.BackupIntervalHours} hours");
             if (_addonOptions.GenerationalBackups)
             {
@@ -69,6 +74,14 @@ namespace hassio_onedrive_backup
             {
                 try
                 {
+                    // Telemetry
+                    if (_addonOptions.EnableAnonymousTelemetry && DateTime.UtcNow - lastTelemetrySend > TimeSpan.FromHours(24))
+                    {
+                        ConsoleLogger.LogVerbose($"Sending Telemetry");
+                        await _telemetryManager.SendConfig(_addonOptions);
+                        lastTelemetrySend = DateTime.UtcNow;
+                    }
+
                     // Refresh Graph Token
                     await _graphHelper.GetAndCacheUserTokenAsync();
 

@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System.Security.Principal;
 using System.Text.Json.Serialization;
 using JsonIgnoreAttribute = Newtonsoft.Json.JsonIgnoreAttribute;
 
@@ -75,8 +76,11 @@ namespace hassio_onedrive_backup.Contracts
         [JsonProperty("ignore_upgrade_backups")]
         public bool IgnoreUpgradeBackups { get; set; }
 
-        //[JsonProperty("upload_speed_cap")]
-        //public int? UploadSpeedCapKBPerSecond { get; set; }
+        [JsonProperty("enable_anonymous_telemetry")]
+        public bool EnableAnonymousTelemetry { get; set; } = false;
+
+		[JsonProperty("ignore_allowed_hours_for_file_sync")]
+		public bool IgnoreAllowedHoursForFileSync { get; set; } = false;
 
         [JsonIgnore]
 		public ConsoleLogger.LogLevel LogLevel => LogLevelStr switch

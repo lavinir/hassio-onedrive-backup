@@ -1,13 +1,21 @@
-﻿using Kusto.Data;
+﻿using hassio_onedrive_backup;
+using hassio_onedrive_backup.Contracts;
+using Kusto.Data;
+using Kusto.Data.Common;
 using Kusto.Ingest;
+using Newtonsoft.Json;
+using System.Runtime.CompilerServices;
+using System.Text;
 
 namespace onedrive_backup.Telemetry
 {
 	public class TelemetryManager
 	{
-		private const string appId = "560e1794-229c-4e58-8b22-a1675e4db7dc";
-		private const string appKey = "guJ8Q~WDYfjPXgwT6yzs8aZT4kqruVGDxxFCEaQr";
-		private const string tenantId = "fe1e0daa-f3d1-4177-995a-f2687da13b25";
+		private const string AppId = "560e1794-229c-4e58-8b22-a1675e4db7dc";
+		private const string AppKey = "guJ8Q~WDYfjPXgwT6yzs8aZT4kqruVGDxxFCEaQr";
+		private const string TenantId = "fe1e0daa-f3d1-4177-995a-f2687da13b25";
+		private const string ClientIdPath = ".cliendId";
+
 		private KustoConnectionStringBuilder _kcsb;
 		private Guid _clientId;
 
@@ -15,38 +23,113 @@ namespace onedrive_backup.Telemetry
 		{
 			_kcsb = new KustoConnectionStringBuilder($"https://onedrive-addon-telem.westeurope.kusto.windows.net")
 				.WithAadApplicationKeyAuthentication(
-					appId,
-					appKey,
-					tenantId);
+					AppId,
+					AppKey,
+					TenantId);
 
 			_clientId = CheckClientId();
 		}
 
 		private Guid CheckClientId()
 		{
-			throw new NotImplementedException();
+			if (File.Exists(ClientIdPath) == false)
+			{
+				var clientId = Guid.NewGuid();
+				File.WriteAllText(ClientIdPath, clientId.ToString());
+				return clientId;
+			}
+
+			string clientIdStr = File.ReadAllText(ClientIdPath);
+			return Guid.Parse(clientIdStr);
 		}
 
-		public async Task SendConfig()
+		public async Task SendConfig(AddonOptions options)
 		{
-			using var client = KustoIngestFactory.CreateQueuedIngestClient(
-				_kcsb,
-				new QueueOptions { MaxRetries = 2 });
-
-			var ingestionProperties = new KustoIngestionProperties("telemetry", "configs")
+			try
 			{
-				Format = Kusto.Data.Common.DataSourceFormat.json,
-			};
+				var configTelemetry = new
+				{
+					FileSyncEnabled = options.FileSyncEnabled,
+					GenerationalBackupsEnabled = options.GenerationalBackups,
+					AllowedHoursEnabled = string.IsNullOrWhiteSpace(options.BackupAllowedHours) == false,
+					InstanceNameEnabled = string.IsNullOrEmpty(options.InstanceName) == false,
+					MonitorAllBackups = options.MonitorAllLocalBackups,
+					IgnoreHassUpgradeBackups = options.IgnoreUpgradeBackups,
+					NotifyOnErrorEnabled = options.NotifyOnError
+				};
 
-			var memoryStream = new MemoryStream();
-			using (var streamWriter = new StreamWriter(memoryStream))
-			{								
-					streamWriter.Write(line);				
+				var telemetryMsg = new
+				{
+					clientid = _clientId,
+					timestamp = DateTime.UtcNow,
+					configdata = configTelemetry
+				};
+
+				var serializedMsg = JsonConvert.SerializeObject(telemetryMsg, Formatting.None);
+
+				using var client = KustoIngestFactory.CreateQueuedIngestClient(
+					_kcsb,
+					new QueueOptions { MaxRetries = 2 });
+
+				var ingestionProperties = new KustoIngestionProperties("telemetry", "configs")
+				{
+					Format = Kusto.Data.Common.DataSourceFormat.json,
+					IngestionMapping = new IngestionMapping
+					{
+						IngestionMappingKind = Kusto.Data.Ingestion.IngestionMappingKind.Json,
+						IngestionMappings = new[]
+						{
+							new ColumnMapping("clientid", "guid", new Dictionary<string, string>{ {"Path", "$.clientid" } }),
+							new ColumnMapping("timestamp", "datetime", new Dictionary<string, string>{ {"Path", "$.timestamp" } }),
+							new ColumnMapping("configdata", "dynamic", new Dictionary<string, string>{ {"Path", "$.configdata" } }),
+						}
+					}
+				};
+
+				await SendToKusto(serializedMsg, client, ingestionProperties);
+
 			}
-			memoryStream.Position = 0;
-			return memoryStream;
-			client.IngestFromStreamAsync()
+			catch (Exception e)
+			{
+				ConsoleLogger.LogError(e.ToString());
+			}		
+		}
 
+		public async Task SendError(Exception ex)
+		{
+			try
+			{
+				var telemetryMsg = new
+				{
+					clientId = _clientId,
+					Timestamp = DateTime.UtcNow,
+					error = ex.ToString()
+				};
+
+				var serializedMsg = JsonConvert.SerializeObject(telemetryMsg, Formatting.None);
+
+				using var client = KustoIngestFactory.CreateQueuedIngestClient(
+					_kcsb,
+					new QueueOptions { MaxRetries = 2 });
+
+				var ingestionProperties = new KustoIngestionProperties("telemetry", "error")
+				{
+					Format = Kusto.Data.Common.DataSourceFormat.json,
+				};
+
+				await SendToKusto(serializedMsg, client, ingestionProperties);
+
+			}
+			catch (Exception e)
+			{
+				ConsoleLogger.LogError(e.ToString());
+			}
+		}
+
+		private static async Task SendToKusto(string serializedMsg, IKustoQueuedIngestClient client, KustoIngestionProperties ingestionProperties)
+		{
+			var memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(serializedMsg));
+			var result = await client.IngestFromStreamAsync(memoryStream, ingestionProperties);
 		}
 	}
 }

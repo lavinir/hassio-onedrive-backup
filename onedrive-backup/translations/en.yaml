@@ -75,3 +75,9 @@ configuration:
   log_level:
     name: Log Level
     description: You can opt to see more / less logs by adjusting the verbosity of the addon logs. 
+  enable_anonymous_telemetry:
+    name: Enable Anonymous Telemetry
+    description: Sends anonymous telemetry once a day containing data about which features are enabled in the addon. This helps to focus on relevant features and improve the addon.
+  ignore_allowed_hours_for_file_sync:
+    name: Ignore allowed hours for File Sync
+    description: File syncing is always enabled regardless of the "Allowed Hours" time window for backups
