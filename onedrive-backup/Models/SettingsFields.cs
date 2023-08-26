@@ -13,8 +13,12 @@ namespace onedrive_backup.Models
 
         private void PopulateFieldMetadata()
         {
-            string fieldMetadataYaml = File.ReadAllText("./translations/en.yaml");
-            var deserializer = new DeserializerBuilder()
+#if DEBUG
+			string fieldMetadataYaml = File.ReadAllText("./translations/en.yaml");
+#else
+            string fieldMetadataYaml = File.ReadAllText("/app/translations/en.yaml");
+#endif
+			var deserializer = new DeserializerBuilder()
                 .Build();
             Settings = deserializer.Deserialize<Configuration>(fieldMetadataYaml).configuration;
         }

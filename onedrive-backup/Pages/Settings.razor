@@ -13,7 +13,7 @@
 		<h3>General</h3>
 		<div class="mb-3">
 			<label for="hassApiTimeoutMinutes" class="form-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.hass_api_timeout_minutes.description">@SettingsReader.Settings.hass_api_timeout_minutes.name</label>
-			<input type="number" class="form-control" min="30" id="@SettingsReader.Settings.hass_api_timeout_minutes.name" placeholder="Enter timeout" required>
+			<input type="number" class="form-control" min="30" id="@SettingsReader.Settings.hass_api_timeout_minutes.name" @bind="AddonOptions.HassAPITimeoutMinutes" placeholder="Enter timeout" required>
 		</div>
 
 
@@ -224,18 +224,17 @@
 			await JS.InvokeVoidAsync("addTooltips");
 		}
 
-		if (string.IsNullOrWhiteSpace(AddonOptions.SyncPaths.Last()) == false)
+		if (string.IsNullOrWhiteSpace(AddonOptions.SyncPaths.LastOrDefault()) == false)
 		{
 			AddonOptions.SyncPaths.Add(string.Empty);
 			TriggerStateChanged();
 		}
 
-		if (string.IsNullOrWhiteSpace(AddonOptions.ExcludedAddons.Last()) == false)
+		if (string.IsNullOrWhiteSpace(AddonOptions.ExcludedAddons.LastOrDefault()) == false)
 		{
 			AddonOptions.ExcludedAddons.Add(string.Empty);
 			TriggerStateChanged();
 		}
-
 	}
 
 	private async Task Save()
@@ -248,10 +247,7 @@
 	{
 		var val = e.Value.ToString();
 		AddonOptions.SyncPaths[index] = val;
-		// if (string.IsNullOrWhiteSpace(val) == false)
-		// {
-		//     AddonOptions.SyncPaths.Add(string.Empty);
-		// }
+
 	}
 
 	private void UpdateExcludedAddons(ChangeEventArgs e, int index)

@@ -11,7 +11,7 @@ namespace hassio_onedrive_backup.Contracts
         public int MaxLocalBackups { get; set; }
 
         [JsonProperty("onedrive_backup_num_to_keep")]
-        public int MaxOnedriveBackups { get; set; }
+        public int MaxOnedriveBackups { get; set; } = 1;
 
 		[JsonProperty("generational_days")]
 		public int? GenerationalDays { get; set; }
@@ -25,14 +25,14 @@ namespace hassio_onedrive_backup.Contracts
 		[JsonProperty("generational_years")]
 		public int? GenerationalYears { get; set; }
 
-		[JsonProperty("backup_interval_days")]
-        public float BackupIntervalDays { get; set; }
+        [JsonProperty("backup_interval_days")]
+        public float BackupIntervalDays { get; set; } = 1;
 
         [JsonProperty("backup_passwd")]
         public string? BackupPassword { get; set; }
 
         [JsonProperty("backup_name")]
-        public string? BackupName { get; set; }
+        public string? BackupName { get; set; } = "hass_backup";
 
         [JsonProperty("monitor_all_local_backups")]
         public bool MonitorAllLocalBackups{ get; set; }
@@ -41,7 +41,7 @@ namespace hassio_onedrive_backup.Contracts
         public bool NotifyOnError { get; set; }
 
         [JsonProperty("hass_api_timeout_minutes")]
-        public int HassAPITimeoutMinutes { get; set; }
+        public int HassAPITimeoutMinutes { get; set; } = 30;
 
         [JsonProperty("exclude_media_folder")]
         public bool ExcludeMediaFolder { get; set; }
@@ -70,8 +70,8 @@ namespace hassio_onedrive_backup.Contracts
         [JsonProperty("excluded_addons")]
         public List<string> ExcludedAddons { get; set; } = new List<string>();
 
-		[JsonProperty("log_level")]
-		public string LogLevelStr { get; set; }
+        [JsonProperty("log_level")]
+        public string LogLevelStr { get; set; } = "Info";
 
         [JsonProperty("ignore_upgrade_backups")]
         public bool IgnoreUpgradeBackups { get; set; }
@@ -92,8 +92,6 @@ namespace hassio_onedrive_backup.Contracts
 			_ => ConsoleLogger.LogLevel.Info
 		};
 
-        [JsonIgnore]
-		public string BackupPasswordSafe => string.IsNullOrEmpty(BackupPassword) ? "backup" : BackupPassword;
 		[JsonIgnore]
         public float BackupIntervalHours => BackupIntervalDays * 24;
 
@@ -104,7 +102,7 @@ namespace hassio_onedrive_backup.Contracts
         public bool IsPartialBackup => ExcludeLocalAddonsFolder || ExcludeMediaFolder || ExcludeShareFolder || ExcludeSSLFolder || ExcludedAddons.Any();
 
         [JsonIgnore]
-        public bool FileSyncEnabled => SyncPaths != null && SyncPaths.Count > 0;
+        public bool FileSyncEnabled => SyncPaths != null && SyncPaths.Where(sp => string.IsNullOrWhiteSpace(sp) == false).Any();
 
         [JsonIgnore]
         public bool GenerationalBackups => GenerationalDays != null || GenerationalWeeks != null || GenerationalMonths != null || GenerationalYears != null;
