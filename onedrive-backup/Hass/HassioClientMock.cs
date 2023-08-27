@@ -9,7 +9,7 @@ using static hassio_onedrive_backup.Contracts.HassBackupsResponse;
 
 namespace hassio_onedrive_backup.Hass
 {
-    internal class HassioClientMock : IHassioClient
+	internal class HassioClientMock : IHassioClient
     {
         private List<Backup> _backups = new List<Backup>
         {
@@ -155,7 +155,12 @@ namespace hassio_onedrive_backup.Hass
             return Task.CompletedTask;
         }
 
-        public Task<bool> UploadBackupAsync(string filePath)
+		public void UpdateTimeoutValue(int timeoutMinutes)
+		{
+            return;
+		}
+
+		public Task<bool> UploadBackupAsync(string filePath)
         {
             _backups.Add(new Backup
             {

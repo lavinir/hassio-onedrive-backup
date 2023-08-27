@@ -1,5 +1,6 @@
 ﻿using hassio_onedrive_backup.Hass.Events;
 using onedrive_backup.Contracts;
+using System.Security.Cryptography;
 using static hassio_onedrive_backup.Contracts.HassAddonsResponse;
 using static hassio_onedrive_backup.Contracts.HassBackupsResponse;
 
@@ -28,8 +29,9 @@ namespace hassio_onedrive_backup.Hass
         Task<string> GetTimeZoneAsync();
 
         Task PublishEventAsync(OneDriveEvents eventType, string payload = "");
-
+		
         Task RestartSelf();
 
+        void UpdateTimeoutValue(int timeoutMinutes);
 	}
 }

@@ -7,6 +7,8 @@ namespace hassio_onedrive_backup.Contracts
 {
     public class AddonOptions
     {
+        public event Action OnOptionsChanged;
+
         [JsonProperty("local_backup_num_to_keep")]
         public int MaxLocalBackups { get; set; }
 
@@ -134,6 +136,12 @@ namespace hassio_onedrive_backup.Contracts
 
                 return folders;
             }
+        }
+
+        public void RaiseOptionsChanged()
+        {
+            var handler = OnOptionsChanged;
+            handler?.Invoke();
         }
     }
 }

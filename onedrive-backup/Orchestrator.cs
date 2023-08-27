@@ -17,7 +17,7 @@ namespace hassio_onedrive_backup
         private readonly IServiceProvider _serviceProvider;
         private readonly AddonOptions _addonOptions;
         private readonly BitArray _allowedBackupHours;
-
+        private SyncManager _syncManager;
         private bool _enabled = false;
 
         public Orchestrator(IServiceProvider serviceProvider)
@@ -31,9 +31,10 @@ namespace hassio_onedrive_backup
 
             _allowedBackupHours = TimeRangeHelper.GetAllowedHours(_addonOptions.BackupAllowedHours);
             BackupManager = new BackupManager(_serviceProvider, _allowedBackupHours, new TransferSpeedHelper(null));
+			_addonOptions.OnOptionsChanged += OnOptionsChanged;
         }
 
-        public BackupManager BackupManager { get; set; }
+		public BackupManager BackupManager { get; set; }
 
         public async Task Start()
         {
@@ -60,10 +61,10 @@ namespace hassio_onedrive_backup
             {
 				ConsoleLogger.LogInfo($"File Sync Enabled");
                 var transferSpeedHelper = new TransferSpeedHelper(null);
-                var syncManager = new SyncManager(_serviceProvider, _allowedBackupHours, transferSpeedHelper);
+                _syncManager = new SyncManager(_serviceProvider, _allowedBackupHours, transferSpeedHelper);
                 var tokenSource = new CancellationTokenSource();
                 await _graphHelper.GetAndCacheUserTokenAsync();
-                var fileSyncTask = Task.Run(() => syncManager.SyncLoop(tokenSource.Token), tokenSource.Token);
+                var fileSyncTask = Task.Run(() => _syncManager.SyncLoop(tokenSource.Token), tokenSource.Token);
             }
             else
             {
@@ -110,5 +111,13 @@ namespace hassio_onedrive_backup
         {
             _enabled = false;
         }
-    }
+
+		private void OnOptionsChanged()
+		{
+			_hassIoClient.UpdateTimeoutValue(_addonOptions.HassAPITimeoutMinutes);
+			ConsoleLogger.SetLogLevel(_addonOptions.LogLevel);
+            _syncManager.UpdateFileMatcherPaths();
+
+		}
+	}
 }

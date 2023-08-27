@@ -24,7 +24,12 @@ namespace hassio_onedrive_backup.Hass
             _httpClient.Timeout = TimeSpan.FromMinutes(hassioTimeout);
         }
 
-        public async Task<bool> DeleteBackupAsync(Backup backup)
+        public void UpdateTimeoutValue(int timeoutMinutes)
+        {
+			_httpClient.Timeout = TimeSpan.FromMinutes(timeoutMinutes);
+		}
+
+		public async Task<bool> DeleteBackupAsync(Backup backup)
         {
             try
             {
