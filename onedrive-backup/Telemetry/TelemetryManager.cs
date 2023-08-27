@@ -55,7 +55,8 @@ namespace onedrive_backup.Telemetry
 					InstanceNameEnabled = string.IsNullOrEmpty(options.InstanceName) == false,
 					MonitorAllBackups = options.MonitorAllLocalBackups,
 					IgnoreHassUpgradeBackups = options.IgnoreUpgradeBackups,
-					NotifyOnErrorEnabled = options.NotifyOnError
+					NotifyOnErrorEnabled = options.NotifyOnError,
+					Version = AddonOptions.AddonVersion
 				};
 
 				var telemetryMsg = new

@@ -83,35 +83,35 @@
 		<div class="mb-3">
 			<label for="@SettingsReader.Settings.generational_days.name" class="form-label"
 				   data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.generational_days.description">@SettingsReader.Settings.generational_days.name</label>
-			<input type="number" class="form-control" id="@SettingsReader.Settings.generational_days.name" placeholder="GenDays (Optional)" @bind="AddonOptions.GenerationalDays">
+			<input type="number" class="form-control" min="0" id="@SettingsReader.Settings.generational_days.name" placeholder="GenDays (Optional)" @bind="AddonOptions.GenerationalDays">
 		</div>
 
 		<div class="mb-3">
 			<label for="@SettingsReader.Settings.generational_weeks.name" class="form-label"
 				   data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.generational_weeks.description">@SettingsReader.Settings.generational_weeks.name</label>
-			<input type="number" class="form-control" id="@SettingsReader.Settings.generational_weeks.name" placeholder="GenWeeks (Optional)" @bind="AddonOptions.GenerationalWeeks">
+			<input type="number" class="form-control" min="0" id="@SettingsReader.Settings.generational_weeks.name" placeholder="GenWeeks (Optional)" @bind="AddonOptions.GenerationalWeeks">
 		</div>
 
 		<div class="mb-3">
 			<label for="@SettingsReader.Settings.generational_months.name" class="form-label"
 				   data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.generational_months.description">@SettingsReader.Settings.generational_months.name</label>
-			<input type="number" class="form-control" id="@SettingsReader.Settings.generational_months.name" placeholder="GenMonths (Optional)" @bind="AddonOptions.GenerationalMonths">
+			<input type="number" class="form-control" min="0" id="@SettingsReader.Settings.generational_months.name" placeholder="GenMonths (Optional)" @bind="AddonOptions.GenerationalMonths">
 		</div>
 
 		<div class="mb-3">
 			<label for="@SettingsReader.Settings.generational_years.name" class="form-label"
 				   data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.generational_years.description">@SettingsReader.Settings.generational_years.name</label>
-			<input type="number" class="form-control" id="@SettingsReader.Settings.generational_years.name" placeholder="GenYears (Optional)" @bind="AddonOptions.GenerationalYears">
+			<input type="number" class="form-control" min="0" id="@SettingsReader.Settings.generational_years.name" placeholder="GenYears (Optional)" @bind="AddonOptions.GenerationalYears">
 		</div>
 
 		<div class="mb-3">
 			<label for="@SettingsReader.Settings.backup_name.name" class="form-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.backup_name.description">@SettingsReader.Settings.backup_name.name</label>
-			<input type="text" class="form-control" pattern="[A-Za-z_]+" id="@SettingsReader.Settings.backup_name.name" placeholder="hass_backup" @bind="AddonOptions.BackupName" required>
+			<input type="text" class="form-control" pattern="[A-Za-z0-9_]+" id="@SettingsReader.Settings.backup_name.name" placeholder="hass_backup" @bind="AddonOptions.BackupName" required>
 		</div>
 
 		<div class="mb-3">
 			<label for="@SettingsReader.Settings.backup_instance_name.name" class="form-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.backup_instance_name.description">@SettingsReader.Settings.backup_instance_name.name</label>
-			<input type="text" class="form-control" pattern="[A-Za-z_]+" id="@SettingsReader.Settings.backup_instance_name.name" @bind="AddonOptions.InstanceName" placeholder="Enter backup instance name (Optional)">
+			<input type="text" class="form-control" pattern="[A-Za-z0-9_]+" id="@SettingsReader.Settings.backup_instance_name.name" @bind="AddonOptions.InstanceName" placeholder="Enter backup instance name (Optional)">
 		</div>
 
 		<div class="mb-3">
@@ -226,13 +226,13 @@
 			await JS.InvokeVoidAsync("hideSettingsPopover");
 		}
 
-		if (string.IsNullOrWhiteSpace(AddonOptions.SyncPaths.LastOrDefault()) == false)
+		if (string.IsNullOrWhiteSpace(AddonOptions.SyncPaths.LastOrDefault()) == false || AddonOptions.SyncPaths.Any() == false)
 		{
 			AddonOptions.SyncPaths.Add(string.Empty);
 			TriggerStateChanged();
 		}
 
-		if (string.IsNullOrWhiteSpace(AddonOptions.ExcludedAddons.LastOrDefault()) == false)
+		if (string.IsNullOrWhiteSpace(AddonOptions.ExcludedAddons.LastOrDefault()) == false || AddonOptions.ExcludedAddons.Any() == false)
 		{
 			AddonOptions.ExcludedAddons.Add(string.Empty);
 			TriggerStateChanged();
@@ -243,6 +243,7 @@
 	{
 		await AddonOptionsManager.WriteOptions(AddonOptions);
 		AddonOptions.RaiseOptionsChanged();
+		TriggerStateChanged();
 		// await hassioClient.RestartSelf();
 	}
 

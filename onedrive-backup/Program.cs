@@ -68,7 +68,7 @@ namespace hassio_onedrive_backup
 
 				if (!builder.Environment.IsDevelopment())
 				{
-					builder.Logging.ClearProviders();
+					// builder.Logging.ClearProviders();
 					// builder.Logging.AddConsole();
 				}
 

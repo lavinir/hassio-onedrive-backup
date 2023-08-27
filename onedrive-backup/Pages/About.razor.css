@@ -1,0 +1,42 @@
+﻿/* Custom CSS for About Page */
+h1, h2 {
+    color: #3498db; /* Subtle blue color */
+    margin-bottom: 1rem;
+}
+
+h1 {
+    font-size: 2rem;
+}
+
+h2 {
+    font-size: 1.5rem;
+    margin-top: 2rem;
+}
+
+p {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+}
+
+a {
+    color: #3498db; /* Blue link color */
+}
+
+    a:hover {
+        text-decoration: underline;
+    }
+
+.d-flex {
+    margin-top: 2rem;
+}
+
+img {
+    width: 100px;
+    height: auto;
+    transform: scale(0.8);
+    margin-bottom: 0.5rem;
+}
+
+span {
+    font-size: 0.8rem;
+}

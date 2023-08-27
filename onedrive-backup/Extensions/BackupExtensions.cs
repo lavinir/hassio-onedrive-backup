@@ -177,7 +177,7 @@ namespace onedrive_backup.Extensions
 
 		private static string GetAddonNameFromSlug(IEnumerable<Addon> addons, string slug)
 		{
-            ConsoleLogger.LogVerbose($"Looking for Addon name matching slug: {slug}. Checking agaisnt {addons.Count()} Addons in cache ");
+            ConsoleLogger.LogVerbose($"Looking for Addon name matching slug: {slug}. Checking against {addons.Count()} Addons in cache ");
 			string name = addons.FirstOrDefault(addon => addon.Slug.Equals(slug, StringComparison.OrdinalIgnoreCase))?.Name;
 			return name ?? string.Empty;
 		}        

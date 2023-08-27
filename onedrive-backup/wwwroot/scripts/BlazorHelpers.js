@@ -7,13 +7,11 @@ function addTooltips() {
 }
 
 function initSettingsPopover() {
-//    settingsPopover = new bootstrap.Popover(document.querySelector('#settingsNav'), {
-//        container: 'body'
-    //    })
     settingsPopover = new bootstrap.Popover(document.querySelector('#settingsNav'), {
         container: "body", 
         placement: "bottom",
-        content: "Configuration is now done in the Settings tab"
+        content: "Configuration is now done in the Settings tab",
+        trigger: "manual"
     })
 }
 

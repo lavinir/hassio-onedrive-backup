@@ -7,6 +7,8 @@ namespace hassio_onedrive_backup.Contracts
 {
     public class AddonOptions
     {
+        public const string AddonVersion = "2.2";
+
         public event Action OnOptionsChanged;
 
         [JsonProperty("local_backup_num_to_keep")]
@@ -73,7 +75,7 @@ namespace hassio_onedrive_backup.Contracts
         public List<string> ExcludedAddons { get; set; } = new List<string>();
 
         [JsonProperty("log_level")]
-        public string LogLevelStr { get; set; } = "Info";
+        public string LogLevelStr { get; set; } = "info";
 
         [JsonProperty("ignore_upgrade_backups")]
         public bool IgnoreUpgradeBackups { get; set; }
