@@ -14,7 +14,7 @@ namespace onedrive_backup.Telemetry
 		private const string AppId = "560e1794-229c-4e58-8b22-a1675e4db7dc";
 		private const string AppKey = "guJ8Q~WDYfjPXgwT6yzs8aZT4kqruVGDxxFCEaQr";
 		private const string TenantId = "fe1e0daa-f3d1-4177-995a-f2687da13b25";
-		private const string ClientIdPath = ".cliendId";
+		private const string ClientIdPath = ".clientId";
 
 		private KustoConnectionStringBuilder _kcsb;
 		private Guid _clientId;

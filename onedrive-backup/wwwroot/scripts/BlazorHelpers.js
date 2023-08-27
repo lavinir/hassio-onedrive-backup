@@ -13,7 +13,7 @@ function initSettingsPopover() {
     settingsPopover = new bootstrap.Popover(document.querySelector('#settingsNav'), {
         container: "body", 
         placement: "bottom",
-        content: "Settings are now set here"
+        content: "Configuration is now done in the Settings tab"
     })
 }
 

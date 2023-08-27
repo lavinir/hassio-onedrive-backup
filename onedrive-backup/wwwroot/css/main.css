@@ -1,0 +1,14 @@
+﻿/* Custom Popover Styles */
+.popover-body {
+    background-color: #3498db; /* Light blue shade */
+    border: 1px solid #2980b9; /* Darker blue shade for border */
+    border-radius: 8px;
+    color: #ffffff !important;/* White text color */
+    font-size: 16px; /* Slightly larger font size */
+    padding: 12px 16px; /* Slightly more padding for better spacing */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+    .popover-arrow {
+        color: #3498db; /* Light blue shade for arrow */
+    }
