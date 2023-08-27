@@ -4,7 +4,7 @@ using System.ComponentModel;
 
 namespace hassio_onedrive_backup.Hass
 {
-    internal class HassOnedriveEntityState : INotifyPropertyChanged
+    public class HassOnedriveEntityState : INotifyPropertyChanged
     {
         private const string OneDrive_Backup_Entity_ID = "sensor.onedrivebackup";
         private IHassioClient? _hassioClient;

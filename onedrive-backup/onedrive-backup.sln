@@ -5,6 +5,8 @@ VisualStudioVersion = 17.4.33213.308
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "onedrive-backup", "onedrive-backup.csproj", "{F57B9442-408E-4DB1-ACDA-E8040B7812BA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "test.onedrive-backup", "..\test.onedrive-backup\test.onedrive-backup.csproj", "{0E567EA6-CC38-4827-8221-B263F1E51F00}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{F57B9442-408E-4DB1-ACDA-E8040B7812BA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F57B9442-408E-4DB1-ACDA-E8040B7812BA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F57B9442-408E-4DB1-ACDA-E8040B7812BA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0E567EA6-CC38-4827-8221-B263F1E51F00}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0E567EA6-CC38-4827-8221-B263F1E51F00}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0E567EA6-CC38-4827-8221-B263F1E51F00}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0E567EA6-CC38-4827-8221-B263F1E51F00}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

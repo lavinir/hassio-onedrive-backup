@@ -30,7 +30,7 @@ namespace hassio_onedrive_backup
             _telemetryManager = serviceProvider.GetService<TelemetryManager>();
 
             _allowedBackupHours = TimeRangeHelper.GetAllowedHours(_addonOptions.BackupAllowedHours);
-            BackupManager = new BackupManager(_serviceProvider, _allowedBackupHours, new TransferSpeedHelper(null));
+            BackupManager = new BackupManager(_serviceProvider, new TransferSpeedHelper(null));
 			_addonOptions.OnOptionsChanged += OnOptionsChanged;
         }
 
