@@ -223,6 +223,7 @@
 		if (firstRender)
 		{
 			await JS.InvokeVoidAsync("addTooltips");
+			await JS.InvokeVoidAsync("hideSettingsPopover");
 		}
 
 		if (string.IsNullOrWhiteSpace(AddonOptions.SyncPaths.LastOrDefault()) == false)
