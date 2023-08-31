@@ -37,6 +37,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="config.yaml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="translations\en.yaml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

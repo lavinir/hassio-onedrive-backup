@@ -1,4 +1,5 @@
 ﻿using Azure.Storage.Blobs.Models;
+using hassio_onedrive_backup.Contracts;
 using hassio_onedrive_backup.Hass;
 using onedrive_backup.Graph;
 using System;
@@ -22,6 +23,11 @@ namespace test.onedrive_backup.Mocks
 		public void SetIsExecuting(bool isExecuting)
 		{
 			_isExecuting = isExecuting;
+		}
+
+		public new bool IsMonitoredBackup(hassio_onedrive_backup.Contracts.HassBackupsResponse.Backup backup)
+		{
+			return base.IsMonitoredBackup(backup);
 		}
 	}
 }

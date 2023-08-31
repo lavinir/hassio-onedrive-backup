@@ -1,12 +1,14 @@
 using hassio_onedrive_backup.Contracts;
 using hassio_onedrive_backup.Graph;
 using Microsoft.Graph;
+using Microsoft.VisualBasic;
 using Newtonsoft.Json;
 using onedrive_backup.Contracts;
 using onedrive_backup.Extensions;
 using onedrive_backup.Graph;
 using onedrive_backup.Hass;
 using System.Collections;
+using System.Globalization;
 using static hassio_onedrive_backup.Contracts.HassAddonsResponse;
 using static hassio_onedrive_backup.Contracts.HassBackupsResponse;
 
@@ -225,36 +227,35 @@ namespace hassio_onedrive_backup.Hass
             // Daily Backups
             if (_addonOptions.GenerationalDays.HasValue)
             {
-                AddGenerationBackups(_addonOptions.GenerationalDays.Value, "Daily");
+                AddGenerationBackups(backups.GetDailyGenerations(_addonOptions.GenerationalDays.Value), "Daily");
 			}
 
 			// Weekly Backups
 			if (_addonOptions.GenerationalWeeks.HasValue)
 			{
-				AddGenerationBackups(_addonOptions.GenerationalWeeks.Value, "Weekly");
+				AddGenerationBackups(backups.GetWeeklyGenerations(_addonOptions.GenerationalWeeks.Value, CultureInfo.CurrentCulture.DateTimeFormat.FirstDayOfWeek), "Weekly");
 			}
 
 			// Monthly Backups
 			if (_addonOptions.GenerationalMonths.HasValue)
 			{
-				AddGenerationBackups(_addonOptions.GenerationalMonths.Value, "Monthly");
+				AddGenerationBackups(backups.GetMonthlyGenerations(_addonOptions.GenerationalMonths.Value), "Monthly");
 			}
 
 			// Yearly Backups
 			if (_addonOptions.GenerationalYears.HasValue)
 			{
-				AddGenerationBackups(_addonOptions.GenerationalYears.Value, "Yearly");
+				AddGenerationBackups(backups.GetYearlyGenerations(_addonOptions.GenerationalYears.Value), "Yearly");
 			}
 
-            var backupsToRemove = backups.Where(backup => requiredBackups.Contains(backup) == false).ToList();
+			var backupsToRemove = backups.Where(backup => requiredBackups.Contains(backup) == false).ToList();
             ConsoleLogger.LogVerbose($"Found {backupsToRemove.Count} backups that can be removed");
             return backupsToRemove;
 
             // Add Generation Backups to Retention List
-			void AddGenerationBackups(int backupNum, string generationName)
+			void AddGenerationBackups(IEnumerable<IBackup> requiredGenBackups, string generationName)
             {
-				var requiredGenerationBackups = backups.GetDailyGenerations(backupNum);
-				foreach (var backup in requiredGenerationBackups)
+				foreach (var backup in requiredGenBackups)
 				{
 					ConsoleLogger.LogVerbose($"Backup ({backup.Slug} retained for Generational {generationName} policy");
 					requiredBackups.Add(backup);
@@ -339,7 +340,7 @@ namespace hassio_onedrive_backup.Hass
 			return backupCreated;		
 		}
 
-		public async Task<bool> UploadLocalBackupToOneDrive(Backup backup, Action<int?, int?>? progressCallback = null,  bool updateHassEntityState = true)
+		public virtual async Task<bool> UploadLocalBackupToOneDrive(Backup backup, Action<int?, int?>? progressCallback = null,  bool updateHassEntityState = true)
         {
             string? tempBackupFilePath = null;
             try
@@ -603,7 +604,7 @@ namespace hassio_onedrive_backup.Hass
             return ret;
         }
 
-        private bool IsMonitoredBackup(Backup backup)
+        protected bool IsMonitoredBackup(Backup backup)
         {
             // Monitoring All Backups
             if (_addonOptions.MonitorAllLocalBackups)

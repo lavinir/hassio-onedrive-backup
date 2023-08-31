@@ -86,7 +86,7 @@ namespace onedrive_backup.Extensions
             }
 
 			var now = DateTimeHelper.Instance.Now.Date;
-			return backups.Where(backup => now - backup.BackupDate.Date < TimeSpan.FromDays(dailyBackupNum));
+			return backups.Where(backup => now.Date - backup.BackupDate.Date < TimeSpan.FromDays(dailyBackupNum));
 		}
 
 		public static IEnumerable<IBackup> GetWeeklyGenerations(this IEnumerable<IBackup> backups, int weeklyBackupNum, DayOfWeek firstDayOfWeek)
@@ -117,6 +117,10 @@ namespace onedrive_backup.Extensions
 				if (weeklyBackup != null)
                 {
 					yield return weeklyBackup;
+				}
+                else
+                {
+                    var closestCandidate = groupedBackups.FirstOrDefault(backup => CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(backup.BackupDate.Date, CalendarWeekRule.FirstDay, firstDayOfWeek) == week);
 				}
 			}                   
 		}
