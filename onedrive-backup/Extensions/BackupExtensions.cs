@@ -99,6 +99,7 @@ namespace onedrive_backup.Extensions
 
 			var now = DateTimeHelper.Instance.Now.Date;
             var currentWeek = CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(now, CalendarWeekRule.FirstDay, firstDayOfWeek);
+            var currentYear = now.Year;
             var groupedBackups = backups.GroupBy(backup => CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(backup.BackupDate.Date, CalendarWeekRule.FirstDay, firstDayOfWeek))
                    .Select(weekGroup => weekGroup.Max())
                    .OrderByDescending(backup => backup.BackupDate)
@@ -110,6 +111,7 @@ namespace onedrive_backup.Extensions
 				var week = currentWeek - i;
                 if (week < 1)
                 {
+                    currentYear -= 1;
                     week = CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(now.AddYears(-1), CalendarWeekRule.FirstDay, firstDayOfWeek) - week;
                 }
 
@@ -118,6 +120,17 @@ namespace onedrive_backup.Extensions
                 {
 					yield return weeklyBackup;
 				}
+                else
+                {
+                    var weekCutoffDate = DateTimeHelper.GetStartDateByWeekAndYear(currentYear, currentWeek, firstDayOfWeek);
+                    var nextCandidateBackup = backups.OrderByDescending(b => b.BackupDate).FirstOrDefault(b => b.BackupDate <= weekCutoffDate);
+                    if (nextCandidateBackup != null)
+                    {
+                        yield return nextCandidateBackup;
+                    }
+
+                    yield break;
+                }
 			}                   
 		}
 
@@ -153,6 +166,17 @@ namespace onedrive_backup.Extensions
 				{
 					yield return monthlyBackup;
 				}
+                else
+                {
+                    var cutoffDate = new DateTime(currentYear, currentMonth, 1);
+					var nextCandidateBackup = backups.OrderByDescending(b => b.BackupDate).FirstOrDefault(b => b.BackupDate <= cutoffDate);
+					if (nextCandidateBackup != null)
+					{
+						yield return nextCandidateBackup;
+					}
+
+					yield break;
+				}
 			}
 		}
 
@@ -161,18 +185,36 @@ namespace onedrive_backup.Extensions
 			if (yearlyBackups < 0)
 			{
 				ConsoleLogger.LogWarning($"Yearly Backup Num configured to {yearlyBackups}");
-				return Enumerable.Empty<IBackup>();
+                yield break;
 			}
 
 			var currentYear = DateTimeHelper.Instance.Now.Year;
-            var groupedBackups = backups.GroupBy(backup => backup.BackupDate.Year)
-              .Select(yearGroup => yearGroup.Max())
-              .OrderByDescending(backup => backup.BackupDate)
-              .Take(yearlyBackups)
-              .ToList();
 
-            return groupedBackups.Where(backup => (currentYear - backup.BackupDate.Year) < yearlyBackups);
+			var groupedBackups = backups.GroupBy(backup => backup.BackupDate.Year)
+			  .Select(yearGrp => yearGrp.Max())
+			  .OrderByDescending(backup => backup.BackupDate)
+			  .Take(yearlyBackups)
+			  .ToList();
 
+			for (int i = 0; i < yearlyBackups; i++)
+            {
+                var yearlyBackup = groupedBackups.FirstOrDefault(b => b.BackupDate.Year == currentYear - i);
+				if (yearlyBackup != null)
+				{
+					yield return yearlyBackup;
+				}
+				else
+				{
+					var cutoffDate = new DateTime(currentYear, 1, 1);
+					var nextCandidateBackup = backups.OrderByDescending(b => b.BackupDate).FirstOrDefault(b => b.BackupDate <= cutoffDate);
+					if (nextCandidateBackup != null)
+					{
+						yield return nextCandidateBackup;
+					}
+
+					yield break;
+				}
+			}
 		}
 
 		private static string GetAddonNameFromSlug(IEnumerable<Addon> addons, string slug)

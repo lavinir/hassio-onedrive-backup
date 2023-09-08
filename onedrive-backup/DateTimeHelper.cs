@@ -34,5 +34,12 @@
                 return ret;
             }
         }
+
+        public static DateTime GetStartDateByWeekAndYear(int year, int week, DayOfWeek firstDayOfWeek)
+        {
+			DateTime jan1 = new DateTime(year, 1, 1);
+			DateTime weekStartDate = jan1.AddDays((week - 1) * 7 - (int)jan1.DayOfWeek + (int)firstDayOfWeek);
+            return weekStartDate;
+		}
     }
 }
