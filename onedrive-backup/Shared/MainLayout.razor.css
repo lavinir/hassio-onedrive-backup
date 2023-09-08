@@ -47,3 +47,13 @@ footer {
             color: #0066CC;
             border-bottom-color: #0066CC;
         }
+
+/* Custom CSS for Styling Title */
+.navbar-brand {
+    font-size: 1.2rem; /* Slightly smaller font size */
+    font-weight: bold; /* Bold text */
+    color: #ffffff; /* White text color */
+    background-color: #3498db; /* Subtle blue background color */
+    padding: 0.3rem 0.8rem; /* Adjusted padding */
+    border-radius: 20px; /* Adjusted border-radius for a rounded "pill" shape */
+}

@@ -4,6 +4,7 @@
     {
         public const string TempFolder = "../tmp";
         private const string oldTempFolder = "./tmp";
+        private static HashSet<Flag> setFlags = new();
 
         public static void InitializeTempStorage()
         {
@@ -27,6 +28,24 @@
 
             // (Re)Create temporary directory
             Directory.CreateDirectory(TempFolder);
+        }
+
+        public static bool CheckAndMarkFlag(Flag flag)
+        {
+            string fileName = $"./.{flag}";
+            if (setFlags.Contains(flag) || File.Exists(fileName))
+            {
+                return true;
+            }
+
+            File.Create(fileName);
+            setFlags.Add(flag);
+            return false;        
+        }
+
+        public enum Flag
+        {
+            NativeSettings,
         }
     }
 }

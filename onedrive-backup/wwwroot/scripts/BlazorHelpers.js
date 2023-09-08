@@ -1,8 +1,26 @@
 ﻿var blazorPassThrough = false;
+var settingsPopover;
 
 function addTooltips() {
     const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
     const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+}
+
+function initSettingsPopover() {
+    settingsPopover = new bootstrap.Popover(document.querySelector('#settingsNav'), {
+        container: "body", 
+        placement: "bottom",
+        content: "Configuration is now done in the Settings tab",
+        trigger: "manual"
+    })
+}
+
+function showSettingsPopover() {
+    settingsPopover.show();
+}
+
+function hideSettingsPopover() {
+    settingsPopover.hide();
 }
 
 function copyToClipboard(txt) {

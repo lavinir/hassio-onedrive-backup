@@ -35,7 +35,13 @@ namespace hassio_onedrive_backup.Sync
             _fileMatcher.AddIncludePatterns(_addonOptions.SyncPaths.Where(path => string.IsNullOrWhiteSpace(path) == false));
         }
 
-        public async void SyncLoop(CancellationToken ct)
+        public void UpdateFileMatcherPaths()
+        {
+			_fileMatcher = new();
+			_fileMatcher.AddIncludePatterns(_addonOptions.SyncPaths.Where(path => string.IsNullOrWhiteSpace(path) == false));
+		}
+
+		public async void SyncLoop(CancellationToken ct)
         {
             while (true && ct.IsCancellationRequested == false)
             {

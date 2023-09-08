@@ -9,11 +9,12 @@
 @inject IJSRuntime JS
 
 <div class="container">
-	<form>
+	<EditForm Model="@AddonOptions" OnValidSubmit="Save">
+	<DataAnnotationsValidator />
 		<h3>General</h3>
 		<div class="mb-3">
 			<label for="hassApiTimeoutMinutes" class="form-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.hass_api_timeout_minutes.description">@SettingsReader.Settings.hass_api_timeout_minutes.name</label>
-			<input type="number" class="form-control" min="30" id="@SettingsReader.Settings.hass_api_timeout_minutes.name" @bind="AddonOptions.HassAPITimeoutMinutes" placeholder="Enter timeout" required>
+			<input type="number" class="form-control" min="30" id="@SettingsReader.Settings.hass_api_timeout_minutes.name" @bind="AddonOptions.HassAPITimeoutMinutes" placeholder="30" required>
 		</div>
 
 
@@ -62,7 +63,7 @@
 				   class="form-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.local_backup_num_to_keep.description">
 				@SettingsReader.Settings.local_backup_num_to_keep.name
 			</label>
-			<input type="number" class="form-control" min="0" id="@SettingsReader.Settings.local_backup_num_to_keep.name" placeholder="Max local backups (>=0)" @bind="AddonOptions.MaxLocalBackups" required>
+			<input type="number" class="form-control" min="0" id="@SettingsReader.Settings.local_backup_num_to_keep.name" placeholder="0" @bind="AddonOptions.MaxLocalBackups" required>
 		</div>
 
 		<div class="mb-3">
@@ -70,47 +71,47 @@
 				   class="form-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.onedrive_backup_num_to_keep.description">
 				@SettingsReader.Settings.onedrive_backup_num_to_keep.name
 			</label>
-			<input type="number" class="form-control" min="1" id="@SettingsReader.Settings.onedrive_backup_num_to_keep.name" placeholder="Max Online Backups (>=1)" @bind="AddonOptions.MaxOnedriveBackups" required>
+			<input type="number" class="form-control" min="1" id="@SettingsReader.Settings.onedrive_backup_num_to_keep.name" placeholder="1" @bind="AddonOptions.MaxOnedriveBackups" required>
 		</div>
 
 		<div class="mb-3">
 			<label for="@SettingsReader.Settings.backup_interval_days.name" class="form-label"
 				   data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.backup_interval_days.description">@SettingsReader.Settings.backup_interval_days.name</label>
-			<input type="number" min="1" class="form-control" id="@SettingsReader.Settings.backup_interval_days.name" placeholder="Enter value (>=1)" @bind="AddonOptions.BackupIntervalDays" required>
+			<input type="number" min="1" class="form-control" id="@SettingsReader.Settings.backup_interval_days.name" placeholder="1" @bind="AddonOptions.BackupIntervalDays" required>
 		</div>
 
 		<div class="mb-3">
 			<label for="@SettingsReader.Settings.generational_days.name" class="form-label"
 				   data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.generational_days.description">@SettingsReader.Settings.generational_days.name</label>
-			<input type="number" class="form-control" id="@SettingsReader.Settings.generational_days.name" placeholder="GenDays (Optional)" @bind="AddonOptions.GenerationalDays">
+			<input type="number" class="form-control" min="0" id="@SettingsReader.Settings.generational_days.name" placeholder="GenDays (Optional)" @bind="AddonOptions.GenerationalDays">
 		</div>
 
 		<div class="mb-3">
 			<label for="@SettingsReader.Settings.generational_weeks.name" class="form-label"
 				   data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.generational_weeks.description">@SettingsReader.Settings.generational_weeks.name</label>
-			<input type="number" class="form-control" id="@SettingsReader.Settings.generational_weeks.name" placeholder="GenWeeks (Optional)" @bind="AddonOptions.GenerationalWeeks">
+			<input type="number" class="form-control" min="0" id="@SettingsReader.Settings.generational_weeks.name" placeholder="GenWeeks (Optional)" @bind="AddonOptions.GenerationalWeeks">
 		</div>
 
 		<div class="mb-3">
 			<label for="@SettingsReader.Settings.generational_months.name" class="form-label"
 				   data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.generational_months.description">@SettingsReader.Settings.generational_months.name</label>
-			<input type="number" class="form-control" id="@SettingsReader.Settings.generational_months.name" placeholder="GenMonths (Optional)" @bind="AddonOptions.GenerationalMonths">
+			<input type="number" class="form-control" min="0" id="@SettingsReader.Settings.generational_months.name" placeholder="GenMonths (Optional)" @bind="AddonOptions.GenerationalMonths">
 		</div>
 
 		<div class="mb-3">
 			<label for="@SettingsReader.Settings.generational_years.name" class="form-label"
 				   data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.generational_years.description">@SettingsReader.Settings.generational_years.name</label>
-			<input type="number" class="form-control" id="@SettingsReader.Settings.generational_years.name" placeholder="GenYears (Optional)" @bind="AddonOptions.GenerationalYears">
+			<input type="number" class="form-control" min="0" id="@SettingsReader.Settings.generational_years.name" placeholder="GenYears (Optional)" @bind="AddonOptions.GenerationalYears">
 		</div>
 
 		<div class="mb-3">
 			<label for="@SettingsReader.Settings.backup_name.name" class="form-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.backup_name.description">@SettingsReader.Settings.backup_name.name</label>
-			<input type="text" class="form-control" pattern="[A-Za-z_]+" id="@SettingsReader.Settings.backup_name.name" placeholder="Enter backup name" @bind="AddonOptions.BackupName" required>
+			<input type="text" class="form-control" pattern="[A-Za-z0-9_]+" id="@SettingsReader.Settings.backup_name.name" placeholder="hass_backup" @bind="AddonOptions.BackupName" required>
 		</div>
 
 		<div class="mb-3">
 			<label for="@SettingsReader.Settings.backup_instance_name.name" class="form-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.backup_instance_name.description">@SettingsReader.Settings.backup_instance_name.name</label>
-			<input type="text" class="form-control" pattern="[A-Za-z_]+" id="@SettingsReader.Settings.backup_instance_name.name" @bind="AddonOptions.InstanceName" placeholder="Enter backup instance name (Optional)">
+			<input type="text" class="form-control" pattern="[A-Za-z0-9_]+" id="@SettingsReader.Settings.backup_instance_name.name" @bind="AddonOptions.InstanceName" placeholder="Enter backup instance name (Optional)">
 		</div>
 
 		<div class="mb-3">
@@ -211,8 +212,8 @@
 			</label>
 		</div>
 
-		<button type="submit" class="btn btn-primary position-fixed bottom-0 end-0 m-4 mb-5" @onclick="Save">Save and restart addon</button>
-	</form>
+		<button type="submit" class="btn btn-primary position-fixed bottom-0 end-0 m-4 mb-5">Save Settings</button>
+	</EditForm>
 </div>
 
 @code {
@@ -222,15 +223,16 @@
 		if (firstRender)
 		{
 			await JS.InvokeVoidAsync("addTooltips");
+			await JS.InvokeVoidAsync("hideSettingsPopover");
 		}
 
-		if (string.IsNullOrWhiteSpace(AddonOptions.SyncPaths.LastOrDefault()) == false)
+		if (string.IsNullOrWhiteSpace(AddonOptions.SyncPaths.LastOrDefault()) == false || AddonOptions.SyncPaths.Any() == false)
 		{
 			AddonOptions.SyncPaths.Add(string.Empty);
 			TriggerStateChanged();
 		}
 
-		if (string.IsNullOrWhiteSpace(AddonOptions.ExcludedAddons.LastOrDefault()) == false)
+		if (string.IsNullOrWhiteSpace(AddonOptions.ExcludedAddons.LastOrDefault()) == false || AddonOptions.ExcludedAddons.Any() == false)
 		{
 			AddonOptions.ExcludedAddons.Add(string.Empty);
 			TriggerStateChanged();
@@ -240,7 +242,9 @@
 	private async Task Save()
 	{
 		await AddonOptionsManager.WriteOptions(AddonOptions);
-		await hassioClient.RestartSelf();
+		AddonOptions.RaiseOptionsChanged();
+		TriggerStateChanged();
+		// await hassioClient.RestartSelf();
 	}
 
 	private void UpdateSyncPath(ChangeEventArgs e, int index)

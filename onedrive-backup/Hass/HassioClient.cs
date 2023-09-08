@@ -6,6 +6,7 @@ using onedrive_backup.Contracts;
 using System.Globalization;
 using System.Net.Http.Headers;
 using System.Text;
+using YamlDotNet.Core.Tokens;
 using static hassio_onedrive_backup.Contracts.HassAddonsResponse;
 using static hassio_onedrive_backup.Contracts.HassBackupsResponse;
 
@@ -15,16 +16,29 @@ namespace hassio_onedrive_backup.Hass
     {
         private const string Supervisor_Base_Uri_Str = "http://supervisor";
         private const string Hass_Base_Uri_Str = "http://supervisor/core/api";
-        private readonly HttpClient _httpClient;
+		private readonly string _token;
+		private HttpClient _httpClient;
 
 		public HassioClient(string token, int hassioTimeout) 
         {
+            _token = token;
             _httpClient = new HttpClient();
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             _httpClient.Timeout = TimeSpan.FromMinutes(hassioTimeout);
         }
 
-        public async Task<bool> DeleteBackupAsync(Backup backup)
+        public void UpdateTimeoutValue(int timeoutMinutes)
+        {
+            if (_httpClient.Timeout.TotalMinutes != timeoutMinutes)
+            {
+                ConsoleLogger.LogVerbose($"HassIoClient timeout value changed. Creating new httpclient");
+				_httpClient = new HttpClient();
+				_httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _token);
+				_httpClient.Timeout = TimeSpan.FromMinutes(timeoutMinutes);
+			}
+		}
+
+		public async Task<bool> DeleteBackupAsync(Backup backup)
         {
             try
             {

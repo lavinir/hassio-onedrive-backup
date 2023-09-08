@@ -232,3 +232,6 @@ _Pvt_Extensions
 .fake/
 
 record.auth*
+.NativeSettings
+.clientId
+settings.json
