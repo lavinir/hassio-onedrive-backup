@@ -71,11 +71,13 @@ namespace hassio_onedrive_backup.Tests
 			Assert.IsTrue(_localBackups.Single().Slug.Equals(_onedriveBackups.Single().Slug));
 		}
 
+		#region LocalBackupTests
+
 		[TestMethod]
 		public async Task Test_Generational_Retention_Days_Local()
 		{
 			_addonOptions.GenerationalDays = 3;
-			_addonOptions.MaxLocalBackups = 6;
+			_addonOptions.MaxLocalBackups = 4;
 
 			var now = DateTime.Now;
 			_localBackups.AddRange(new List<Backup>
@@ -104,13 +106,66 @@ namespace hassio_onedrive_backup.Tests
 					Slug = "4_remove",
 					Date = now.AddDays(-3),
 					Name = _addonOptions.BackupName
+				},
+				new Backup
+				{
+					Slug = "5_keep",
+					Date = now.AddDays(-20),
+					Name = _addonOptions.BackupName
 				}
 
 			});
 
 			await _backupManager.PerformBackupsAsync();
 			Assert.IsTrue(_localBackups.Any(backup => backup.Slug.Equals("4_remove") == false));
-			Assert.IsTrue(_localBackups.Count() == 3);
+			Assert.IsTrue(_localBackups.Count() == 4);
+		}
+
+		[TestMethod]
+		public async Task Test_Generational_Retention_Days_Local_NoDelete()
+		{
+			_addonOptions.GenerationalDays = 3;
+			_addonOptions.MaxLocalBackups = 5;
+
+			var now = DateTime.Now;
+			_localBackups.AddRange(new List<Backup>
+			{
+				new Backup
+				{
+					Slug = "1_keep",
+					Date = now,
+					Name = _addonOptions.BackupName
+				},
+				new Backup
+				{
+					Slug = "2_keep",
+					Date = now.AddDays(-1),
+					Name = _addonOptions.BackupName
+				},
+				new Backup
+				{
+					Slug = "3_keep",
+					Date = now.AddDays(-2),
+					Name = _addonOptions.BackupName
+
+				},
+				new Backup
+				{
+					Slug = "4_remove",
+					Date = now.AddDays(-3),
+					Name = _addonOptions.BackupName
+				},
+				new Backup
+				{
+					Slug = "5_keep",
+					Date = now.AddDays(-20),
+					Name = _addonOptions.BackupName
+				}
+
+			});
+
+			await _backupManager.PerformBackupsAsync();
+			Assert.IsTrue(_localBackups.Count() == 5);
 		}
 
 		[TestMethod]
@@ -153,8 +208,8 @@ namespace hassio_onedrive_backup.Tests
 		{
 			_addonOptions.GenerationalDays = 3;
 			_addonOptions.GenerationalWeeks = 2;
-			_addonOptions.GenerationalMonths = 2;			
-			_addonOptions.MaxLocalBackups = 6;
+			_addonOptions.GenerationalMonths = 4;			
+			_addonOptions.MaxLocalBackups = 5;
 
 			var now = DateTime.Now;
 			_localBackups.AddRange(new List<Backup>
@@ -168,40 +223,229 @@ namespace hassio_onedrive_backup.Tests
 				new Backup
 				{
 					Slug = "2_keep",
-					Date = now.AddDays(-1),
+					Date = now.AddDays(-7),
 					Name = _addonOptions.BackupName
 				},
 				new Backup
 				{
-					Slug = "3_keep",
-					Date = now.AddDays(-2),
+					Slug = "3_remove",
+					Date = now.AddDays(-8),
 					Name = _addonOptions.BackupName
-
 				},
 				new Backup
 				{
 					Slug = "4_keep",
-					Date = now.AddDays(-3),
+					Date = now.AddMonths(-1),
 					Name = _addonOptions.BackupName
 				},
 				new Backup
 				{
 					Slug = "5_keep",
-					Date = now.AddDays(-4),
+					Date = now.AddMonths(-2),
 					Name = _addonOptions.BackupName
 				},
 				new Backup
 				{
 					Slug = "6_keep",
-					Date = now.AddDays(-5),
+					Date = now.AddMonths(-3),
 					Name = _addonOptions.BackupName
 				}
 			});
 
 			await _backupManager.PerformBackupsAsync();
-			Assert.IsTrue(_localBackups.Count() == 6);
+			Assert.IsTrue(_localBackups.Any(backup => backup.Slug.Equals("3_remove") == false));
+			Assert.IsTrue(_localBackups.Count() == 5);
 		}
 
+		#endregion
+
+		#region OnlineBackupTests
+
+		[TestMethod]
+		public async Task Test_Generational_Retention_Days_Online()
+		{
+			_addonOptions.GenerationalDays = 3;
+			_addonOptions.MaxOnedriveBackups = 4;
+
+			var now = DateTime.Now;
+			_onedriveBackups.AddRange(new List<OnedriveBackup>
+			{
+				new OnedriveBackup
+				{
+					Slug = "1_keep",
+					BackupDate = now,
+					FileName = _addonOptions.BackupName
+				},
+				new OnedriveBackup
+				{
+					Slug = "2_keep",
+					BackupDate = now.AddDays(-1),
+					FileName = _addonOptions.BackupName
+				},
+				new OnedriveBackup
+				{
+					Slug = "3_keep",
+					BackupDate = now.AddDays(-2),
+					FileName = _addonOptions.BackupName
+
+				},
+				new OnedriveBackup
+				{
+					Slug = "4_remove",
+					BackupDate = now.AddDays(-3),
+					FileName = _addonOptions.BackupName
+				},
+				new OnedriveBackup
+				{
+					Slug = "5_keep",
+					BackupDate = now.AddDays(-20),
+					FileName = _addonOptions.BackupName
+				}
+
+			});
+
+			await _backupManager.PerformBackupsAsync();
+			Assert.IsTrue(_onedriveBackups.Any(backup => backup.Slug.Equals("4_remove") == false));
+			Assert.IsTrue(_onedriveBackups.Count() == 4);
+		}
+
+		[TestMethod]
+		public async Task Test_Generational_Retention_Days_Online_NoDelete()
+		{
+			_addonOptions.GenerationalDays = 3;
+			_addonOptions.MaxOnedriveBackups = 5;
+
+			var now = DateTime.Now;
+			_onedriveBackups.AddRange(new List<OnedriveBackup>
+			{
+				new OnedriveBackup
+				{
+					Slug = "1_keep",
+					BackupDate = now,
+					FileName = _addonOptions.BackupName
+				},
+				new OnedriveBackup
+				{
+					Slug = "2_keep",
+					BackupDate = now.AddDays(-1),
+					FileName = _addonOptions.BackupName
+				},
+				new OnedriveBackup
+				{
+					Slug = "3_keep",
+					BackupDate = now.AddDays(-2),
+					FileName = _addonOptions.BackupName
+
+				},
+				new OnedriveBackup
+				{
+					Slug = "4_remove",
+					BackupDate = now.AddDays(-3),
+					FileName = _addonOptions.BackupName
+				},
+				new OnedriveBackup
+				{
+					Slug = "5_keep",
+					BackupDate = now.AddDays(-20),
+					FileName = _addonOptions.BackupName
+				}
+
+			});
+
+			await _backupManager.PerformBackupsAsync();
+			Assert.IsTrue(_onedriveBackups.Count() == 5);
+		}
+
+		[TestMethod]
+		public async Task Test_Generational_Retention_Days_Online_MaxOnlineOverride()
+		{
+			_addonOptions.GenerationalDays = 3;
+			_addonOptions.MaxOnedriveBackups = 2;
+
+			var now = DateTime.Now;
+			_onedriveBackups.AddRange(new List<OnedriveBackup>
+			{
+				new OnedriveBackup
+				{
+					Slug = "1_keep",
+					BackupDate = now,
+					FileName = _addonOptions.BackupName
+				},
+				new OnedriveBackup
+				{
+					Slug = "2_keep",
+					BackupDate = now.AddDays(-1),
+					FileName = _addonOptions.BackupName
+				},
+				new OnedriveBackup
+				{
+					Slug = "3_remove",
+					BackupDate = now.AddDays(-2),
+					FileName = _addonOptions.BackupName
+
+				}
+			});
+
+			await _backupManager.PerformBackupsAsync();
+			Assert.IsTrue(_onedriveBackups.Any(backup => backup.Slug.Equals("3_remove") == false));
+			Assert.IsTrue(_onedriveBackups.Count() == 2);
+		}
+
+		[TestMethod]
+		public async Task Test_Generational_Retention_Mixed1_Online()
+		{
+			_addonOptions.GenerationalDays = 3;
+			_addonOptions.GenerationalWeeks = 2;
+			_addonOptions.GenerationalMonths = 4;
+			_addonOptions.MaxLocalBackups = 5;
+
+			var now = DateTime.Now;
+			_onedriveBackups.AddRange(new List<OnedriveBackup>
+			{
+				new OnedriveBackup
+				{
+					Slug = "1_keep",
+					BackupDate = now,
+					FileName = _addonOptions.BackupName
+				},
+				new OnedriveBackup
+				{
+					Slug = "2_keep",
+					BackupDate = now.AddDays(-7),
+					FileName = _addonOptions.BackupName
+				},
+				new OnedriveBackup
+				{
+					Slug = "3_remove",
+					BackupDate = now.AddDays(-8),
+					FileName = _addonOptions.BackupName
+				},
+				new OnedriveBackup
+				{
+					Slug = "4_keep",
+					BackupDate = now.AddMonths(-1),
+					FileName = _addonOptions.BackupName
+				},
+				new OnedriveBackup
+				{
+					Slug = "5_keep",
+					BackupDate = now.AddMonths(-2),
+					FileName = _addonOptions.BackupName
+				},
+				new OnedriveBackup
+				{
+					Slug = "6_keep",
+					BackupDate = now.AddMonths(-3),
+					FileName = _addonOptions.BackupName
+				}
+			});
+
+			await _backupManager.PerformBackupsAsync();
+			Assert.IsTrue(_onedriveBackups.Any(backup => backup.Slug.Equals("3_remove") == false));
+			Assert.IsTrue(_onedriveBackups.Count() == 5);
+		}
+
+		#endregion
 		private void SetupHassIoClient()
 		{
 			_hassIoClientMock = new Mock<IHassioClient>();

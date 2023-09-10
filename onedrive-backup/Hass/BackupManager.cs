@@ -23,12 +23,12 @@ namespace hassio_onedrive_backup.Hass
         private IGraphHelper _graphHelper;
         private IHassioClient _hassIoClient;
 		private BitArray _allowedHours;
-        private bool _isExecuting = false;
+        protected bool _isExecuting = false;
 
         public List<Backup> LocalBackups { get; private set; }
         public List<OnedriveBackup> OnlineBackups { get; private set; }
 
-        public BackupManager(IServiceProvider serviceProvider, BitArray allowedHours, TransferSpeedHelper? transferSpeedHelper)
+        public BackupManager(IServiceProvider serviceProvider, TransferSpeedHelper? transferSpeedHelper)
         {
             _addonOptions = serviceProvider.GetService<AddonOptions>();
             _graphHelper = serviceProvider.GetService<IGraphHelper>();
@@ -36,8 +36,8 @@ namespace hassio_onedrive_backup.Hass
             _hassEntityState = serviceProvider.GetService<HassOnedriveEntityState>();
             _transferSpeedHelper = transferSpeedHelper;
             _hassContext = serviceProvider.GetService<HassContext>();
-            _allowedHours = allowedHours;
-        }
+            _allowedHours = TimeRangeHelper.GetAllowedHours(_addonOptions.BackupAllowedHours);
+		}
 
         public event Action? LocalBackupsUpdated;
 
@@ -599,7 +599,7 @@ namespace hassio_onedrive_backup.Hass
             return ret;
         }
 
-        private bool IsMonitoredBackup(Backup backup)
+        protected bool IsMonitoredBackup(Backup backup)
         {
             // Monitoring All Backups
             if (_addonOptions.MonitorAllLocalBackups)

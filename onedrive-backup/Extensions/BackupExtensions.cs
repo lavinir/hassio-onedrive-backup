@@ -101,7 +101,7 @@ namespace onedrive_backup.Extensions
             var currentWeek = CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(now, CalendarWeekRule.FirstDay, firstDayOfWeek);
             var currentYear = now.Year;
             var groupedBackups = backups.GroupBy(backup => CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(backup.BackupDate.Date, CalendarWeekRule.FirstDay, firstDayOfWeek))
-                   .Select(weekGroup => weekGroup.Max())
+                   .Select(weekGroup => weekGroup.OrderBy(backup => backup.BackupDate).First())
                    .OrderByDescending(backup => backup.BackupDate)
                    .Take(weeklyBackupNum)
                    .ToList();
@@ -146,7 +146,7 @@ namespace onedrive_backup.Extensions
             var currentMonth = now.Month;
             var currentYear = now.Year;
 			var groupedBackups = backups.GroupBy(backup => backup.BackupDate.Month)
-				  .Select(monthGrp => monthGrp.Max())
+				  .Select(monthGrp => monthGrp.OrderBy(backup => backup.BackupDate).First())
 				  .OrderByDescending(backup => backup.BackupDate)
 				  .Take(monthlyBackupNum)
 				  .ToList();
@@ -191,7 +191,7 @@ namespace onedrive_backup.Extensions
 			var currentYear = DateTimeHelper.Instance.Now.Year;
 
 			var groupedBackups = backups.GroupBy(backup => backup.BackupDate.Year)
-			  .Select(yearGrp => yearGrp.Max())
+			  .Select(yearGrp => yearGrp.OrderBy(backup => backup.BackupDate).First())
 			  .OrderByDescending(backup => backup.BackupDate)
 			  .Take(yearlyBackups)
 			  .ToList();
