@@ -582,9 +582,13 @@ namespace hassio_onedrive_backup.Hass
             catch (Exception ex)
             {
                 ConsoleLogger.LogWarning($"Unrecognized file found in backup folder : {item.Name}");
-            }
+                if (string.IsNullOrEmpty(item.Description) == false)
+                {
+                    ConsoleLogger.LogVerbose($"{item.Name} Description: {item.Description}");
+                }
+			}
 
-            return ret;
+			return ret;
         }
 
         private Task<List<Backup>> GetOnlineBackupCandidatesAsync(IEnumerable<Backup> localBackups)
