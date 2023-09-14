@@ -1,7 +1,6 @@
 using hassio_onedrive_backup.Contracts;
 using hassio_onedrive_backup.Graph;
 using Microsoft.Graph;
-using Microsoft.VisualBasic;
 using Newtonsoft.Json;
 using onedrive_backup.Contracts;
 using onedrive_backup.Extensions;
@@ -37,8 +36,8 @@ namespace hassio_onedrive_backup.Hass
             _hassEntityState = serviceProvider.GetService<HassOnedriveEntityState>();
             _transferSpeedHelper = transferSpeedHelper;
             _hassContext = serviceProvider.GetService<HassContext>();
-            _allowedHours = TimeRangeHelper.GetAllowedHours(_addonOptions.BackupAllowedHours); 
-        }
+            _allowedHours = TimeRangeHelper.GetAllowedHours(_addonOptions.BackupAllowedHours);
+		}
 
         public event Action? LocalBackupsUpdated;
 
@@ -141,16 +140,12 @@ namespace hassio_onedrive_backup.Hass
 				int numOfOnlineBackupsToDelete = Math.Max(0, onlineBackups.Count - _addonOptions.MaxOnedriveBackups);
                 if (numOfOnlineBackupsToDelete > 0)
                 {
-                    ConsoleLogger.LogInfo($"Reached Max Online Backups ({_addonOptions.MaxOnedriveBackups}), will remove oldest backups to remain under limit");
+                    ConsoleLogger.LogInfo($"Reached Max Online Backups ({_addonOptions.MaxOnedriveBackups})");
                 }
 
-				var backupsToDelete = onlineBackups
-                    .OrderBy(onlineBackup => onlineBackup.BackupDate)
-                    .Take(numOfOnlineBackupsToDelete)
-                    .Union(generationalBackupsToDelete)
-                    .Cast<OnedriveBackup>()
-                    .ToList();
-
+                var backupsToDelete = generationalBackupsToDelete.OrderBy(gb => gb.BackupDate)
+                    .Union(onlineBackups.OrderBy(ob => ob.BackupDate)).Take(numOfOnlineBackupsToDelete).Cast<OnedriveBackup>();
+                    
                 if (backupsToDelete.Any())
                 {
                     _hassEntityState.State = HassOnedriveEntityState.BackupState.Syncing;
@@ -179,39 +174,38 @@ namespace hassio_onedrive_backup.Hass
 					generationalBackupsToDelete = GetGenerationalBackupsForRemoval(LocalBackups.Cast<IBackup>());
 				}
 
-				if (LocalBackups.Count > _addonOptions.MaxLocalBackups || generationalBackupsToDelete.Any())
+                int numOfLocalBackupsToRemove = LocalBackups.Count - _addonOptions.MaxLocalBackups;
+                if (numOfLocalBackupsToRemove > 0)
                 {
-                    _hassEntityState.State = HassOnedriveEntityState.BackupState.Syncing;
-                    await _hassEntityState.UpdateBackupEntityInHass();
+					ConsoleLogger.LogInfo($"Reached Max Local Backups ({_addonOptions.MaxOnedriveBackups})");
+				}
 
-                    int numOfLocalBackupsToRemove = LocalBackups.Count - _addonOptions.MaxLocalBackups;
-                    if (numOfLocalBackupsToRemove > 0)
-                    {
-						ConsoleLogger.LogInfo($"Reached Max Local Backups ({_addonOptions.MaxOnedriveBackups}), will remove oldest backups to remain under limit");
+
+				var localBackupsToRemove = generationalBackupsToDelete.OrderBy(gb => gb.BackupDate)
+					.Union(LocalBackups.OrderBy(ob => ob.BackupDate)).Take(numOfLocalBackupsToRemove).Cast<Backup>();
+
+				if (localBackupsToRemove.Any())
+                {
+					_hassEntityState.State = HassOnedriveEntityState.BackupState.Syncing;
+					await _hassEntityState.UpdateBackupEntityInHass();
+
+					ConsoleLogger.LogInfo($"Removing {numOfLocalBackupsToRemove} local backups");
+					foreach (var localBackup in localBackupsToRemove)
+					{
+						bool deleteSuccess = await _hassIoClient.DeleteBackupAsync(localBackup);
+						if (deleteSuccess == false)
+						{
+							await _hassIoClient.PublishEventAsync(Events.OneDriveEvents.LocalBackupDeleteFailed);
+							if (_addonOptions.NotifyOnError)
+							{
+								await _hassIoClient.SendPersistentNotificationAsync("Error Deleting Local Backup. Check Addon logs for more details");
+							}
+						}
 					}
 
-					var localBackupsToRemove = LocalBackups
-						.OrderBy(backup => backup.Date)
-                        .Take(numOfLocalBackupsToRemove)
-                        .Union(generationalBackupsToDelete.Cast<Backup>())
-                        .ToList();
+				}
 
-                    ConsoleLogger.LogInfo($"Removing {numOfLocalBackupsToRemove} local backups");
-                    foreach (var localBackup in localBackupsToRemove)
-                    {
-                        bool deleteSuccess = await _hassIoClient.DeleteBackupAsync(localBackup);
-                        if (deleteSuccess == false)
-                        {
-                            await _hassIoClient.PublishEventAsync(Events.OneDriveEvents.LocalBackupDeleteFailed);
-                            if (_addonOptions.NotifyOnError)
-                            {
-                                await _hassIoClient.SendPersistentNotificationAsync("Error Deleting Local Backup. Check Addon logs for more details");
-                            }
-                        }
-                    }
-                }
-
-                await UpdateHassEntity();
+				await UpdateHassEntity();
 
             }
             finally
@@ -220,42 +214,43 @@ namespace hassio_onedrive_backup.Hass
             }   
         }
 
-		protected virtual IEnumerable<IBackup> GetGenerationalBackupsForRemoval(IEnumerable<IBackup> backups)
+		private IEnumerable<IBackup> GetGenerationalBackupsForRemoval(IEnumerable<IBackup> backups)
 		{
             var requiredBackups = new HashSet<IBackup>();
 
             // Daily Backups
             if (_addonOptions.GenerationalDays.HasValue)
             {
-                AddGenerationBackups(backups.GetDailyGenerations(_addonOptions.GenerationalDays.Value), "Daily");
+                AddGenerationBackups("Daily", () => backups.GetDailyGenerations(_addonOptions.GenerationalDays.Value)); 
 			}
 
 			// Weekly Backups
 			if (_addonOptions.GenerationalWeeks.HasValue)
 			{
-				AddGenerationBackups(backups.GetWeeklyGenerations(_addonOptions.GenerationalWeeks.Value, CultureInfo.CurrentCulture.DateTimeFormat.FirstDayOfWeek), "Weekly");
+				AddGenerationBackups("Weekly", () => backups.GetWeeklyGenerations(_addonOptions.GenerationalWeeks.Value, DateTimeFormatInfo.CurrentInfo.FirstDayOfWeek));
 			}
 
 			// Monthly Backups
 			if (_addonOptions.GenerationalMonths.HasValue)
 			{
-				AddGenerationBackups(backups.GetMonthlyGenerations(_addonOptions.GenerationalMonths.Value), "Monthly");
+				AddGenerationBackups("Monthly", () => backups.GetMonthlyGenerations(_addonOptions.GenerationalMonths.Value));
 			}
 
 			// Yearly Backups
 			if (_addonOptions.GenerationalYears.HasValue)
 			{
-				AddGenerationBackups(backups.GetYearlyGenerations(_addonOptions.GenerationalYears.Value), "Yearly");
+				AddGenerationBackups("Yearly", () => backups.GetYearlyGenerations(_addonOptions.GenerationalYears.Value));
 			}
 
-			var backupsToRemove = backups.Where(backup => requiredBackups.Contains(backup) == false).ToList();
-            ConsoleLogger.LogVerbose($"Found {backupsToRemove.Count} backups that can be removed");
+            var backupsToRemove = backups.Where(backup => requiredBackups.Contains(backup) == false).ToList();
+            ConsoleLogger.LogInfo($"Found {backupsToRemove.Count} backups that can be removed");
             return backupsToRemove;
 
             // Add Generation Backups to Retention List
-			void AddGenerationBackups(IEnumerable<IBackup> requiredGenBackups, string generationName)
+			void AddGenerationBackups(string generationName, Func<IEnumerable<IBackup>> getGenerationalBackups)
             {
-				foreach (var backup in requiredGenBackups)
+                var requiredGenerationBackups = getGenerationalBackups();
+				foreach (var backup in requiredGenerationBackups)
 				{
 					ConsoleLogger.LogVerbose($"Backup ({backup.Slug} retained for Generational {generationName} policy");
 					requiredBackups.Add(backup);
@@ -340,7 +335,7 @@ namespace hassio_onedrive_backup.Hass
 			return backupCreated;		
 		}
 
-		public virtual async Task<bool> UploadLocalBackupToOneDrive(Backup backup, Action<int?, int?>? progressCallback = null,  bool updateHassEntityState = true)
+		public async Task<bool> UploadLocalBackupToOneDrive(Backup backup, Action<int?, int?>? progressCallback = null,  bool updateHassEntityState = true)
         {
             string? tempBackupFilePath = null;
             try
