@@ -21,7 +21,7 @@ namespace onedrive_backup.Telemetry
 
 		public TelemetryManager()
 		{
-			_kcsb = new KustoConnectionStringBuilder($"https://onedrive-addon-telem.westeurope.kusto.windows.net")
+			_kcsb = new KustoConnectionStringBuilder($"https://kvc-j6ah0s938pt6z0nead.northeurope.kusto.windows.net")
 				.WithAadApplicationKeyAuthentication(
 					AppId,
 					AppKey,

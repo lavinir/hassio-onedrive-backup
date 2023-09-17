@@ -1,6 +1,7 @@
 ﻿using hassio_onedrive_backup.Contracts;
 using hassio_onedrive_backup.Graph;
 using hassio_onedrive_backup.Hass;
+using Microsoft.Graph;
 using Moq;
 using Newtonsoft.Json;
 using onedrive_backup.Graph;
@@ -216,38 +217,38 @@ namespace hassio_onedrive_backup.Tests
 			{
 				new Backup
 				{
-					Slug = "1_keep",
+					Slug = "1_keep",           // Day, Week, Month
 					Date = now,
 					Name = _addonOptions.BackupName
 				},
 				new Backup
 				{
-					Slug = "2_keep",
+					Slug = "2_keep",           // Week
 					Date = now.AddDays(-7),
 					Name = _addonOptions.BackupName
 				},
 				new Backup
 				{
 					Slug = "3_remove",
-					Date = now.AddDays(-8),
+					Date = now.AddDays(-8),    
 					Name = _addonOptions.BackupName
 				},
 				new Backup
 				{
 					Slug = "4_keep",
-					Date = now.AddMonths(-1),
+					Date = now.AddMonths(-2),  //Month 
 					Name = _addonOptions.BackupName
 				},
 				new Backup
 				{
 					Slug = "5_keep",
-					Date = now.AddMonths(-2),
+					Date = now.AddMonths(-3),  //Month
 					Name = _addonOptions.BackupName
 				},
 				new Backup
 				{
 					Slug = "6_keep",
-					Date = now.AddMonths(-3),
+					Date = now.AddMonths(-4), //Month
 					Name = _addonOptions.BackupName
 				}
 			});
@@ -266,6 +267,7 @@ namespace hassio_onedrive_backup.Tests
 		{
 			_addonOptions.GenerationalDays = 3;
 			_addonOptions.MaxOnedriveBackups = 4;
+			_addonOptions.MaxLocalBackups = 0;
 
 			var now = DateTime.Now;
 			_onedriveBackups.AddRange(new List<OnedriveBackup>
@@ -274,38 +276,38 @@ namespace hassio_onedrive_backup.Tests
 				{
 					Slug = "1_keep",
 					BackupDate = now,
-					FileName = _addonOptions.BackupName
+					FileName = "1_keep"
 				},
 				new OnedriveBackup
 				{
 					Slug = "2_keep",
 					BackupDate = now.AddDays(-1),
-					FileName = _addonOptions.BackupName
+					FileName = "2_keep"
 				},
 				new OnedriveBackup
 				{
 					Slug = "3_keep",
 					BackupDate = now.AddDays(-2),
-					FileName = _addonOptions.BackupName
+					FileName = "3_keep"
 
 				},
 				new OnedriveBackup
 				{
-					Slug = "4_remove",
+					Slug = "4_keep",
 					BackupDate = now.AddDays(-3),
-					FileName = _addonOptions.BackupName
+					FileName = "4_keep"
 				},
 				new OnedriveBackup
 				{
-					Slug = "5_keep",
+					Slug = "5_remove",
 					BackupDate = now.AddDays(-20),
-					FileName = _addonOptions.BackupName
+					FileName = "5_remove"
 				}
 
 			});
 
 			await _backupManager.PerformBackupsAsync();
-			Assert.IsTrue(_onedriveBackups.Any(backup => backup.Slug.Equals("4_remove") == false));
+			Assert.IsTrue(_onedriveBackups.Any(backup => backup.Slug.Equals("5_remove") == false));
 			Assert.IsTrue(_onedriveBackups.Count() == 4);
 		}
 
@@ -322,32 +324,31 @@ namespace hassio_onedrive_backup.Tests
 				{
 					Slug = "1_keep",
 					BackupDate = now,
-					FileName = _addonOptions.BackupName
+					FileName = "1_keep"
 				},
 				new OnedriveBackup
 				{
 					Slug = "2_keep",
 					BackupDate = now.AddDays(-1),
-					FileName = _addonOptions.BackupName
+					FileName = "2_keep"
 				},
 				new OnedriveBackup
 				{
 					Slug = "3_keep",
 					BackupDate = now.AddDays(-2),
-					FileName = _addonOptions.BackupName
-
+					FileName = "3_keep"
 				},
 				new OnedriveBackup
 				{
-					Slug = "4_remove",
+					Slug = "4_keep",
 					BackupDate = now.AddDays(-3),
-					FileName = _addonOptions.BackupName
+					FileName = "4_keep"
 				},
 				new OnedriveBackup
 				{
 					Slug = "5_keep",
 					BackupDate = now.AddDays(-20),
-					FileName = _addonOptions.BackupName
+					FileName = "5_keep"
 				}
 
 			});
@@ -369,19 +370,19 @@ namespace hassio_onedrive_backup.Tests
 				{
 					Slug = "1_keep",
 					BackupDate = now,
-					FileName = _addonOptions.BackupName
+					FileName = "1_keep"
 				},
 				new OnedriveBackup
 				{
 					Slug = "2_keep",
 					BackupDate = now.AddDays(-1),
-					FileName = _addonOptions.BackupName
+					FileName = "2_keep"
 				},
 				new OnedriveBackup
 				{
 					Slug = "3_remove",
 					BackupDate = now.AddDays(-2),
-					FileName = _addonOptions.BackupName
+					FileName = "3_remove"
 
 				}
 			});
@@ -397,7 +398,7 @@ namespace hassio_onedrive_backup.Tests
 			_addonOptions.GenerationalDays = 3;
 			_addonOptions.GenerationalWeeks = 2;
 			_addonOptions.GenerationalMonths = 4;
-			_addonOptions.MaxLocalBackups = 5;
+			_addonOptions.MaxOnedriveBackups = 5;
 
 			var now = DateTime.Now;
 			_onedriveBackups.AddRange(new List<OnedriveBackup>
@@ -406,37 +407,37 @@ namespace hassio_onedrive_backup.Tests
 				{
 					Slug = "1_keep",
 					BackupDate = now,
-					FileName = _addonOptions.BackupName
+					FileName = "1_keep"
 				},
 				new OnedriveBackup
 				{
 					Slug = "2_keep",
 					BackupDate = now.AddDays(-7),
-					FileName = _addonOptions.BackupName
+					FileName = "2_keep",
 				},
 				new OnedriveBackup
 				{
 					Slug = "3_remove",
 					BackupDate = now.AddDays(-8),
-					FileName = _addonOptions.BackupName
+					FileName = "3_remove"
 				},
 				new OnedriveBackup
 				{
 					Slug = "4_keep",
-					BackupDate = now.AddMonths(-1),
-					FileName = _addonOptions.BackupName
+					BackupDate = now.AddMonths(-2),
+					FileName = "4_keep"
 				},
 				new OnedriveBackup
 				{
 					Slug = "5_keep",
-					BackupDate = now.AddMonths(-2),
-					FileName = _addonOptions.BackupName
+					BackupDate = now.AddMonths(-3),
+					FileName = "5_keep"
 				},
 				new OnedriveBackup
 				{
 					Slug = "6_keep",
-					BackupDate = now.AddMonths(-3),
-					FileName = _addonOptions.BackupName
+					BackupDate = now.AddMonths(-4),
+					FileName = "6_keep"
 				}
 			});
 
@@ -446,12 +447,13 @@ namespace hassio_onedrive_backup.Tests
 		}
 
 		#endregion
+		
 		private void SetupHassIoClient()
 		{
 			_hassIoClientMock = new Mock<IHassioClient>();
 			_hassIoClientMock
 				.Setup(hassIoClient => hassIoClient.CreateBackupAsync(It.IsAny<string>(), It.IsAny<bool>(), true, It.IsAny<string>(), It.IsAny<IEnumerable<string>>(), It.IsAny<IEnumerable<string>>()))
-				.Returns((string backupName, bool appendTS, bool compressed, string password, IEnumerable<string> folders, IEnumerable<string> addons) =>
+				.ReturnsAsync((string backupName, bool appendTS, bool compressed, string password, IEnumerable<string> folders, IEnumerable<string> addons) =>
 				{
 					_localBackups.Add(new Backup()
 					{
@@ -462,22 +464,22 @@ namespace hassio_onedrive_backup.Tests
 						Name = backupName
 					});
 
-					return Task.FromResult(true);
+					return true;
 				});
 			_hassIoClientMock.Setup(client => client.GetBackupsAsync(It.IsAny<Predicate<Backup>>()))
-				.Returns((Predicate<Backup> filter) =>
+				.ReturnsAsync((Predicate<Backup> filter) =>
 				{
-					var ret = Task.FromResult(_localBackups.Where(backup => filter(backup)).ToList());
+					var ret = _localBackups.Where(backup => filter(backup)).ToList();
 					return ret;
 				});
 
 			_hassIoClientMock.Setup(client => client.DownloadBackupAsync(It.IsAny<string>()))
-				.Returns((string slug) => Task.FromResult(slug));
+				.ReturnsAsync((string slug) => slug);
 
 			_hassIoClientMock.Setup(client => client.DeleteBackupAsync(It.IsAny<Backup>()))
-				.Returns((Backup backup) =>
+				.ReturnsAsync((Backup backup) =>
 				{
-					return Task.FromResult(_localBackups.Remove(backup));
+					return _localBackups.Remove(backup);
 				});
 			
 		}
@@ -486,7 +488,7 @@ namespace hassio_onedrive_backup.Tests
 		{
 			_graphHelperMock = new Mock<IGraphHelper>();
 			_graphHelperMock.Setup(gh => gh.GetItemsInAppFolderAsync(""))
-				.Returns(Task.FromResult(_onedriveBackups.Select(backup => new Microsoft.Graph.DriveItem()
+				.ReturnsAsync(() => _onedriveBackups.Select(backup => new Microsoft.Graph.DriveItem()
 				{
 					Name = backup.FileName,
 					Description = JsonConvert.SerializeObject(new OnedriveItemDescription
@@ -500,7 +502,8 @@ namespace hassio_onedrive_backup.Tests
 						Slug = backup.Slug,
 						Size = backup.Size
 					})
-				}).ToList()));
+				}).ToList());
+
 
 			_graphHelperMock.Setup(gh => gh.UploadFileAsync(
 				It.IsAny<string>(),
@@ -517,6 +520,14 @@ namespace hassio_onedrive_backup.Tests
 					Slug = slug,
 					BackupDate = date
 				}));
+
+			_graphHelperMock
+				.Setup(gh => gh.DeleteItemFromAppFolderAsync(It.IsAny<string>()))
+				.ReturnsAsync((string fileName) => 
+				{
+					int deleted = _onedriveBackups.RemoveAll(backup => backup.FileName.Equals(fileName));
+					return deleted == 1;
+				});
 		}
 
 		private AddonOptions CreateAddonOptions()
