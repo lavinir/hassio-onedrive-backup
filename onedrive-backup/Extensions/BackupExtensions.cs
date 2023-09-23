@@ -77,27 +77,23 @@ namespace onedrive_backup.Extensions
             };
         }
 
-		public static IEnumerable<IBackup> GetDailyGenerations(this IEnumerable<IBackup> backups, int dailyBackupNum)
+		public static IEnumerable<IBackup> GetDailyGenerations(this IEnumerable<IBackup> backups, int dailyBackupNum, DateTime now)
 		{
             if (dailyBackupNum < 0)
             {
-                ConsoleLogger.LogWarning($"Daily Backup Num configured to {dailyBackupNum}");
                 return Enumerable.Empty<IBackup>();
             }
 
-			var now = DateTimeHelper.Instance.Now.Date;
 			return backups.Where(backup => now - backup.BackupDate.Date < TimeSpan.FromDays(dailyBackupNum));
 		}
 
-		public static IEnumerable<IBackup> GetWeeklyGenerations(this IEnumerable<IBackup> backups, int weeklyBackupNum, DayOfWeek firstDayOfWeek)
+		public static IEnumerable<IBackup> GetWeeklyGenerations(this IEnumerable<IBackup> backups, int weeklyBackupNum, DayOfWeek firstDayOfWeek, DateTime now)
 		{
 			if (weeklyBackupNum < 0)
 			{
-				ConsoleLogger.LogWarning($"Weekly Backup Num configured to {weeklyBackupNum}");
                 yield break;
 			}
 
-			var now = DateTimeHelper.Instance.Now.Date;
             var currentWeek = CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(now, CalendarWeekRule.FirstDay, firstDayOfWeek);
             var currentYear = now.Year;
             var groupedBackups = backups.GroupBy(backup => CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(backup.BackupDate.Date, CalendarWeekRule.FirstDay, firstDayOfWeek))
@@ -132,15 +128,13 @@ namespace onedrive_backup.Extensions
 			}                   
 		}
 
-        public static IEnumerable<IBackup> GetMonthlyGenerations(this IEnumerable<IBackup> backups, int monthlyBackupNum)
+        public static IEnumerable<IBackup> GetMonthlyGenerations(this IEnumerable<IBackup> backups, int monthlyBackupNum, DateTime now)
         {
 			if (monthlyBackupNum < 0)
 			{
-				ConsoleLogger.LogWarning($"Monthly Backup Num configured to {monthlyBackupNum}");
                 yield break;
 			}
 
-			var now = DateTimeHelper.Instance.Now.Date;
             var currentMonth = now.Month;
             var currentYear = now.Year;
 			var groupedBackups = backups.GroupBy(backup => backup.BackupDate.Month)
@@ -176,15 +170,14 @@ namespace onedrive_backup.Extensions
 			}
 		}
 
-        public static IEnumerable<IBackup> GetYearlyGenerations(this IEnumerable<IBackup> backups, int yearlyBackups)
+        public static IEnumerable<IBackup> GetYearlyGenerations(this IEnumerable<IBackup> backups, int yearlyBackups , DateTime now)
         {
 			if (yearlyBackups < 0)
 			{
-				ConsoleLogger.LogWarning($"Yearly Backup Num configured to {yearlyBackups}");
                 yield break;
 			}
 
-			var currentYear = DateTimeHelper.Instance.Now.Year;
+			var currentYear = now.Year;
 
 			var groupedBackups = backups.GroupBy(backup => backup.BackupDate.Year)
 			  .Select(yearGrp => yearGrp.OrderByDescending(backup => backup.BackupDate).First())
@@ -213,7 +206,6 @@ namespace onedrive_backup.Extensions
 
 		private static string GetAddonNameFromSlug(IEnumerable<Addon> addons, string slug)
 		{
-            ConsoleLogger.LogVerbose($"Looking for Addon name matching slug: {slug}. Checking agaisnt {addons.Count()} Addons in cache ");
 			string name = addons.FirstOrDefault(addon => addon.Slug.Equals(slug, StringComparison.OrdinalIgnoreCase))?.Name;
 			return name ?? string.Empty;
 		}        

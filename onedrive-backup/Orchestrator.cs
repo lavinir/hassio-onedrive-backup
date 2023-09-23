@@ -2,6 +2,7 @@ using hassio_onedrive_backup.Contracts;
 using hassio_onedrive_backup.Graph;
 using hassio_onedrive_backup.Hass;
 using hassio_onedrive_backup.Sync;
+using onedrive_backup;
 using onedrive_backup.Graph;
 using onedrive_backup.Telemetry;
 using System.Collections;
@@ -11,8 +12,10 @@ namespace hassio_onedrive_backup
     public class Orchestrator
     {
         private readonly IHassioClient _hassIoClient;
-        private readonly HassOnedriveFreeSpaceEntityState? _hassOnedriveFreeSpaceEntityState;
+		private readonly IDateTimeProvider _dateTimeProvider;
+		private readonly HassOnedriveFreeSpaceEntityState? _hassOnedriveFreeSpaceEntityState;
 		private readonly TelemetryManager? _telemetryManager;
+		private readonly ConsoleLogger _logger;
 		private readonly IGraphHelper _graphHelper;
         private readonly IServiceProvider _serviceProvider;
         private readonly AddonOptions _addonOptions;
@@ -26,9 +29,10 @@ namespace hassio_onedrive_backup
             _addonOptions = serviceProvider.GetService<AddonOptions>();
             _graphHelper = serviceProvider.GetService<IGraphHelper>();
             _hassIoClient = serviceProvider.GetService<IHassioClient>();
+            _dateTimeProvider = serviceProvider.GetService<IDateTimeProvider>();
             _hassOnedriveFreeSpaceEntityState = serviceProvider.GetService<HassOnedriveFreeSpaceEntityState>();
             _telemetryManager = serviceProvider.GetService<TelemetryManager>();
-
+            _logger = serviceProvider.GetService<ConsoleLogger>();
             _allowedBackupHours = TimeRangeHelper.GetAllowedHours(_addonOptions.BackupAllowedHours);
             BackupManager = new BackupManager(_serviceProvider, new TransferSpeedHelper(null));
 			_addonOptions.OnOptionsChanged += OnOptionsChanged;
@@ -39,36 +43,34 @@ namespace hassio_onedrive_backup
         public async Task Start()
         {
             _enabled = true;
-            string timeZoneId = await _hassIoClient.GetTimeZoneAsync();
-            DateTimeHelper.Initialize(timeZoneId);
             TimeSpan intervalDelay = TimeSpan.FromMinutes(5);
             var lastTelemetrySend = DateTime.MinValue;
 
-			ConsoleLogger.LogInfo($"Anonymous Telemetry {(_addonOptions.EnableAnonymousTelemetry ? "Enabled" : "Disabled")}");            
-            ConsoleLogger.LogInfo($"Backup interval configured to every {_addonOptions.BackupIntervalHours} hours");
+			_logger.LogInfo($"Anonymous Telemetry {(_addonOptions.EnableAnonymousTelemetry ? "Enabled" : "Disabled")}");            
+            _logger.LogInfo($"Backup interval configured to every {_addonOptions.BackupIntervalHours} hours");
             if (_addonOptions.GenerationalBackups)
             {
-                ConsoleLogger.LogInfo($"Generational backups enabled");
+                _logger.LogInfo($"Generational backups enabled");
             }
 
             if (string.IsNullOrWhiteSpace(_addonOptions.BackupAllowedHours) == false)
             {
-                ConsoleLogger.LogInfo($"Backups / Syncs will only run during these hours: {_allowedBackupHours.ToAllowedHoursText()}");
+                _logger.LogInfo($"Backups / Syncs will only run during these hours: {_allowedBackupHours.ToAllowedHoursText()}");
             }
 
             // Initialize File Sync Manager
             if (_addonOptions.FileSyncEnabled)
             {
-				ConsoleLogger.LogInfo($"File Sync Enabled");
+				_logger.LogInfo($"File Sync Enabled");
                 var transferSpeedHelper = new TransferSpeedHelper(null);
-                _syncManager = new SyncManager(_serviceProvider, _allowedBackupHours, transferSpeedHelper);
+                _syncManager = new SyncManager(_serviceProvider, _allowedBackupHours, transferSpeedHelper, _logger, _dateTimeProvider);
                 var tokenSource = new CancellationTokenSource();
                 await _graphHelper.GetAndCacheUserTokenAsync();
                 var fileSyncTask = Task.Run(() => _syncManager.SyncLoop(tokenSource.Token), tokenSource.Token);
             }
             else
             {
-                ConsoleLogger.LogInfo($"File Sync Disabled");
+                _logger.LogInfo($"File Sync Disabled");
             }
 
 			while (_enabled)
@@ -78,7 +80,7 @@ namespace hassio_onedrive_backup
                     // Telemetry
                     if (_addonOptions.EnableAnonymousTelemetry && DateTime.UtcNow - lastTelemetrySend > TimeSpan.FromHours(24))
                     {
-                        ConsoleLogger.LogVerbose($"Sending Telemetry");
+                        _logger.LogVerbose($"Sending Telemetry");
                         await _telemetryManager.SendConfig(_addonOptions);
                         lastTelemetrySend = DateTime.UtcNow;
                     }
@@ -93,16 +95,16 @@ namespace hassio_onedrive_backup
 						await _hassOnedriveFreeSpaceEntityState.UpdateOneDriveFreespaceSensorInHass(oneDriveSpace);
 					}
 
-					ConsoleLogger.LogVerbose("Checking backups");
+					_logger.LogVerbose("Checking backups");
 
                     BackupManager.PerformBackupsAsync();
                 }
                 catch (Exception ex)
                 {
-                    ConsoleLogger.LogError($"Unexpected error. {ex}");
+                    _logger.LogError($"Unexpected error. {ex}");
                 }
 
-                ConsoleLogger.LogVerbose("Backup Interval Completed.");
+                _logger.LogVerbose("Backup Interval Completed.");
                 await Task.Delay(intervalDelay);
             }
         }
@@ -115,7 +117,7 @@ namespace hassio_onedrive_backup
 		private void OnOptionsChanged()
 		{
 			_hassIoClient.UpdateTimeoutValue(_addonOptions.HassAPITimeoutMinutes);
-			ConsoleLogger.SetLogLevel(_addonOptions.LogLevel);
+			_logger.SetLogLevel(_addonOptions.LogLevel);
             _syncManager?.UpdateFileMatcherPaths();
             _addonOptions.SyncPaths.RemoveAll(path => string.IsNullOrWhiteSpace(path));
             _addonOptions.ExcludedAddons.RemoveAll(addon => string.IsNullOrWhiteSpace(addon));

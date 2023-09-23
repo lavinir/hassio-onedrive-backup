@@ -1,6 +1,7 @@
 ﻿using hassio_onedrive_backup.Contracts;
 using hassio_onedrive_backup.Hass.Events;
 using Newtonsoft.Json;
+using onedrive_backup;
 using onedrive_backup.Contracts;
 using System.Diagnostics;
 using System.Net.Http;
@@ -52,10 +53,12 @@ namespace hassio_onedrive_backup.Hass
                 }
             }
         };
+		
+        private IDateTimeProvider _dateTimeProvider;
 
-        public Task<bool> CreateBackupAsync(string backupName, bool appendTimestamp = true, bool compressed = true, string? password = null, IEnumerable<string>? folders = null, IEnumerable<string>? addons = null)
+
+		public Task<bool> CreateBackupAsync(string backupName, DateTime timeStamp, bool appendTimestamp = true, bool compressed = true, string? password = null, IEnumerable<string>? folders = null, IEnumerable<string>? addons = null)
         {
-            DateTime timeStamp = DateTimeHelper.Instance!.Now;
             string finalBackupName = appendTimestamp ? $"{backupName}_{timeStamp.ToString("yyyy-MM-dd-HH-mm")}" : backupName;
             var backup = new Backup
             {

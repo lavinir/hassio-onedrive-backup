@@ -1,4 +1,5 @@
-﻿using System;
+﻿using onedrive_backup;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,43 +7,49 @@ using System.Threading.Tasks;
 
 namespace hassio_onedrive_backup
 {
-    public static class ConsoleLogger
+    public class ConsoleLogger
     {
-		private static LogLevel _logLevel;
+		private IDateTimeProvider _dateTimeProvider = null;
+		private LogLevel _logLevel;
 
-		public static void LogError(string msg)
+		public void LogError(string msg)
         {
             WriteLog(LogLevel.Error, msg);
         }
 
-        public static void LogWarning(string msg)
+        public void LogWarning(string msg)
         {
             WriteLog(LogLevel.Warning, msg);
         }
 
-        public static void LogInfo(string msg)
+        public void LogInfo(string msg)
         {
             WriteLog(LogLevel.Info, msg);
         }
 
-        public static void LogVerbose(string msg)
+        public void LogVerbose(string msg)
         {
             WriteLog(LogLevel.Verbose, msg);
         }
 
-        public static void SetLogLevel(LogLevel level)
+        public void SetLogLevel(LogLevel level)
         {
 			_logLevel = level;
 		}
 
-        private static void WriteLog(LogLevel level, string msg)
+        public void SetDateTimeProvider(IDateTimeProvider dateTimeProvider)
+        {
+            _dateTimeProvider = dateTimeProvider;
+        }
+
+        private void WriteLog(LogLevel level, string msg)
         {
             if (level < _logLevel)
             {
 				return;
 			}
 
-            var timestamp = DateTimeHelper.Instance?.Now;
+            var timestamp = _dateTimeProvider?.Now;
             string logMsg = $"{timestamp} [{Thread.CurrentThread.ManagedThreadId}] {level}: {msg}";
 
             if (level == LogLevel.Error)

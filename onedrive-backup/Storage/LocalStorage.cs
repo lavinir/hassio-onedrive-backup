@@ -6,12 +6,12 @@
         private const string oldTempFolder = "./tmp";
         private static HashSet<Flag> setFlags = new();
 
-        public static void InitializeTempStorage()
+        public static void InitializeTempStorage(ConsoleLogger logger)
         {
             // Legacy cleanup
             if (Directory.Exists(oldTempFolder))
             {
-                ConsoleLogger.LogVerbose($"Deleting deprecated temp storage folder");
+                logger.LogVerbose($"Deleting deprecated temp storage folder");
                 Directory.Delete(oldTempFolder, true);
             }
 
@@ -20,7 +20,7 @@
             {
                 if (Directory.EnumerateFiles($"{TempFolder}").Any())
                 {
-                    ConsoleLogger.LogVerbose("Cleaning up temporary artifcats");
+                    logger.LogVerbose("Cleaning up temporary artifcats");
                 }
 
                 Directory.Delete(TempFolder, true); 

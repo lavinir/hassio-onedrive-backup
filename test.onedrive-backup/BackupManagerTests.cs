@@ -4,6 +4,7 @@ using hassio_onedrive_backup.Hass;
 using Microsoft.Graph;
 using Moq;
 using Newtonsoft.Json;
+using onedrive_backup;
 using onedrive_backup.Graph;
 using onedrive_backup.Hass;
 using test.onedrive_backup.Mocks;
@@ -24,11 +25,11 @@ namespace hassio_onedrive_backup.Tests
 		private BackupManagerMock _backupManager;
 		private List<Backup> _localBackups = new();
 		private List<OnedriveBackup> _onedriveBackups = new();
+		private IDateTimeProvider _dateTimeProvider = new MockDateTimeProvider();
 
 		[TestInitialize]
 		public void Setup()
 		{
-			DateTimeHelper.Initialize("Local");
 			_serviceProviderMock = new Mock<IServiceProvider>();
 
 			SetupIGraphHelper();
@@ -452,12 +453,12 @@ namespace hassio_onedrive_backup.Tests
 		{
 			_hassIoClientMock = new Mock<IHassioClient>();
 			_hassIoClientMock
-				.Setup(hassIoClient => hassIoClient.CreateBackupAsync(It.IsAny<string>(), It.IsAny<bool>(), true, It.IsAny<string>(), It.IsAny<IEnumerable<string>>(), It.IsAny<IEnumerable<string>>()))
-				.ReturnsAsync((string backupName, bool appendTS, bool compressed, string password, IEnumerable<string> folders, IEnumerable<string> addons) =>
+				.Setup(hassIoClient => hassIoClient.CreateBackupAsync(It.IsAny<string>(), It.IsAny<DateTime>(), It.IsAny<bool>(), true, It.IsAny<string>(), It.IsAny<IEnumerable<string>>(), It.IsAny<IEnumerable<string>>()))
+				.ReturnsAsync((string backupName, DateTime timeStamp, bool appendTS, bool compressed, string password, IEnumerable<string> folders, IEnumerable<string> addons) =>
 				{
 					_localBackups.Add(new Backup()
 					{
-						Date = DateTimeHelper.Instance.Now,
+						Date = _dateTimeProvider.Now,
 						Slug = Guid.NewGuid().ToString(),
 						Protected = string.IsNullOrEmpty(password) ? false : true,
 						Compressed = compressed,

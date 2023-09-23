@@ -6,6 +6,7 @@
 @inject Orchestrator Orchestrator;
 @inject AddonOptions AddonOptions;
 @inject IJSRuntime JS
+@inject IDateTimeProvider DateTimeProvider;
 
 <div class="card text-white bg-light mb-3 w-100 h-100" style="min-width: 16rem">
     <div class="card-header text-dark">
@@ -116,7 +117,7 @@
 
     private string CalculateTimeAgoText()
     {
-        TimeSpan timeAgo = DateTimeHelper.Instance.Now - Backup.Date;
+        TimeSpan timeAgo = DateTimeProvider.Now - Backup.Date;
         if (timeAgo.TotalDays > 1)
         {
             return $"{timeAgo.Days} days ago";

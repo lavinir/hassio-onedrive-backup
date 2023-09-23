@@ -18,8 +18,9 @@ namespace onedrive_backup.Telemetry
 
 		private KustoConnectionStringBuilder _kcsb;
 		private Guid _clientId;
+		private readonly ConsoleLogger _logger;
 
-		public TelemetryManager()
+		public TelemetryManager(ConsoleLogger logger)
 		{
 			_kcsb = new KustoConnectionStringBuilder($"https://kvc-j6ah0s938pt6z0nead.northeurope.kusto.windows.net")
 				.WithAadApplicationKeyAuthentication(
@@ -28,6 +29,7 @@ namespace onedrive_backup.Telemetry
 					TenantId);
 
 			_clientId = CheckClientId();
+			_logger = logger;
 		}
 
 		private Guid CheckClientId()
@@ -72,7 +74,7 @@ namespace onedrive_backup.Telemetry
 					_kcsb,
 					new QueueOptions { MaxRetries = 2 });
 
-				var ingestionProperties = new KustoIngestionProperties("telemetry", "configs")
+				var ingestionProperties = new KustoIngestionProperties("HassOneDriveTelemetry", "configs")
 				{
 					Format = Kusto.Data.Common.DataSourceFormat.json,
 					IngestionMapping = new IngestionMapping
@@ -92,7 +94,7 @@ namespace onedrive_backup.Telemetry
 			}
 			catch (Exception e)
 			{
-				ConsoleLogger.LogError(e.ToString());
+				_logger.LogError(e.ToString());
 			}		
 		}
 
@@ -123,7 +125,7 @@ namespace onedrive_backup.Telemetry
 			}
 			catch (Exception e)
 			{
-				ConsoleLogger.LogError(e.ToString());
+				_logger.LogError(e.ToString());
 			}
 		}
 

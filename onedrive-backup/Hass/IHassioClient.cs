@@ -12,7 +12,7 @@ namespace hassio_onedrive_backup.Hass
 
         Task SendPersistentNotificationAsync(string message);
 
-        Task<bool> CreateBackupAsync(string backupName, bool appendTimestamp = true, bool compressed = true, string? password = null, IEnumerable<string>? folders = null, IEnumerable<string>? addons = null);
+        Task<bool> CreateBackupAsync(string backupName, DateTime timeStamp, bool appendTimestamp = true, bool compressed = true, string? password = null, IEnumerable<string>? folders = null, IEnumerable<string>? addons = null);
 
         Task<bool> DeleteBackupAsync(Backup backup);
 

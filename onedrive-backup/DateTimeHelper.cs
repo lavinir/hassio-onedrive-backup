@@ -1,11 +1,13 @@
-﻿namespace hassio_onedrive_backup
+﻿using onedrive_backup;
+
+namespace hassio_onedrive_backup
 {
-    public class DateTimeHelper
+    public class DateTimeHelper : IDateTimeProvider
     {
         public const string DateTimeFormat = "yyyy-MM-dd HH:mm:ss";
         private readonly TimeZoneInfo? _timeZoneInfo = null;
 
-        private DateTimeHelper(string timeZoneId)
+        public DateTimeHelper(string timeZoneId)
         {
             try
             {
@@ -13,17 +15,17 @@
             }
             catch (Exception ex)
             {
-                ConsoleLogger.LogError($"Error finding timezone: {ex}. Falling back to UTC");                
+                Console.Error.WriteLine($"Error finding timezone: {ex}. Falling back to UTC");                
             }
         }
 
-        public static DateTimeHelper? Instance { get; private set; }
+        //public static DateTimeHelper? Instance { get; private set; }
 
-        public static DateTimeHelper Initialize(string timeZoneId)
-        {
-            Instance = new DateTimeHelper(timeZoneId);
-            return Instance;
-        }
+        //public static DateTimeHelper Initialize(string timeZoneId)
+        //{
+        //    Instance = new DateTimeHelper(timeZoneId);
+        //    return Instance;
+        //}
 
         public DateTime Now
         {
