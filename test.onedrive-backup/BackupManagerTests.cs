@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using onedrive_backup;
 using onedrive_backup.Graph;
 using onedrive_backup.Hass;
+using System.Globalization;
 using test.onedrive_backup.Mocks;
 using static hassio_onedrive_backup.Contracts.HassBackupsResponse;
 
@@ -25,7 +26,7 @@ namespace hassio_onedrive_backup.Tests
 		private BackupManagerMock _backupManager;
 		private List<Backup> _localBackups = new();
 		private List<OnedriveBackup> _onedriveBackups = new();
-		private IDateTimeProvider _dateTimeProvider = new MockDateTimeProvider();
+		private MockDateTimeProvider _dateTimeProvider = new MockDateTimeProvider();
 
 		[TestInitialize]
 		public void Setup()
@@ -47,6 +48,8 @@ namespace hassio_onedrive_backup.Tests
 			_serviceProviderMock.Setup(provider => provider.GetService(typeof(HassOnedriveEntityState))).Returns(_hassEntityStateMock.Object);
 			_serviceProviderMock.Setup(provider => provider.GetService(typeof(HassContext))).Returns(_hassContextMock.Object);
 			_serviceProviderMock.Setup(provider => provider.GetService(typeof(AddonOptions))).Returns(_addonOptions);
+			_serviceProviderMock.Setup(provider => provider.GetService(typeof(IDateTimeProvider))).Returns(_dateTimeProvider);
+			_serviceProviderMock.Setup(provider => provider.GetService(typeof(ConsoleLogger))).Returns(new ConsoleLogger());
 
 			_backupManager = new BackupManagerMock(
 				_serviceProviderMock.Object,
@@ -76,134 +79,73 @@ namespace hassio_onedrive_backup.Tests
 		#region LocalBackupTests
 
 		[TestMethod]
-		public async Task Test_Generational_Retention_Days_Local()
+		public async Task Test_Generational_Retention_3_Days_Max4_Local()
 		{
 			_addonOptions.GenerationalDays = 3;
 			_addonOptions.MaxLocalBackups = 4;
+			var testStartDate = _dateTimeProvider.Now;
 
-			var now = DateTime.Now;
-			_localBackups.AddRange(new List<Backup>
+			for (int day = 0; day < _addonOptions.MaxLocalBackups; day++)
 			{
-				new Backup
-				{
-					Slug = "1_keep",
-					Date = now,
-					Name = _addonOptions.BackupName
-				},
-				new Backup
-				{
-					Slug = "2_keep",
-					Date = now.AddDays(-1),
-					Name = _addonOptions.BackupName
-				},
-				new Backup
-				{
-					Slug = "3_keep",
-					Date = now.AddDays(-2),
-					Name = _addonOptions.BackupName
+				await _backupManager.PerformBackupsAsync();
+				_dateTimeProvider.NextDay();
+			}
 
-				},
-				new Backup
-				{
-					Slug = "4_remove",
-					Date = now.AddDays(-3),
-					Name = _addonOptions.BackupName
-				},
-				new Backup
-				{
-					Slug = "5_keep",
-					Date = now.AddDays(-20),
-					Name = _addonOptions.BackupName
-				}
-
-			});
-
-			await _backupManager.PerformBackupsAsync();
-			Assert.IsTrue(_localBackups.Any(backup => backup.Slug.Equals("4_remove") == false));
-			Assert.IsTrue(_localBackups.Count() == 4);
+			Assert.IsTrue(_localBackups.Count == _addonOptions.MaxLocalBackups);
+			for (int day = 0; day < _addonOptions.MaxLocalBackups; day++)
+			{
+				Assert.IsTrue(_localBackups.Single(backup => backup.BackupDate.Date.Equals(testStartDate.Date.AddDays(day))) != null);
+			}
 		}
 
 		[TestMethod]
-		public async Task Test_Generational_Retention_Days_Local_NoDelete()
-		{
-			_addonOptions.GenerationalDays = 3;
-			_addonOptions.MaxLocalBackups = 5;
-
-			var now = DateTime.Now;
-			_localBackups.AddRange(new List<Backup>
-			{
-				new Backup
-				{
-					Slug = "1_keep",
-					Date = now,
-					Name = _addonOptions.BackupName
-				},
-				new Backup
-				{
-					Slug = "2_keep",
-					Date = now.AddDays(-1),
-					Name = _addonOptions.BackupName
-				},
-				new Backup
-				{
-					Slug = "3_keep",
-					Date = now.AddDays(-2),
-					Name = _addonOptions.BackupName
-
-				},
-				new Backup
-				{
-					Slug = "4_remove",
-					Date = now.AddDays(-3),
-					Name = _addonOptions.BackupName
-				},
-				new Backup
-				{
-					Slug = "5_keep",
-					Date = now.AddDays(-20),
-					Name = _addonOptions.BackupName
-				}
-
-			});
-
-			await _backupManager.PerformBackupsAsync();
-			Assert.IsTrue(_localBackups.Count() == 5);
-		}
-
-		[TestMethod]
-		public async Task Test_Generational_Retention_Days_Local_MaxLocalOverride()
+		public async Task Test_Generational_Retention_3_Days_Max2_Local()
 		{
 			_addonOptions.GenerationalDays = 3;
 			_addonOptions.MaxLocalBackups = 2;
+			var testStartDate = _dateTimeProvider.Now;
 
-			var now = DateTime.Now;
-			_localBackups.AddRange(new List<Backup>
+			for (int day = 0; day < _addonOptions.MaxLocalBackups + 1; day++)
 			{
-				new Backup
-				{
-					Slug = "1_keep",
-					Date = now,
-					Name = _addonOptions.BackupName
-				},
-				new Backup
-				{
-					Slug = "2_keep",
-					Date = now.AddDays(-1),
-					Name = _addonOptions.BackupName
-				},
-				new Backup
-				{
-					Slug = "3_remove",
-					Date = now.AddDays(-2),
-					Name = _addonOptions.BackupName
+				await _backupManager.PerformBackupsAsync();
+				_dateTimeProvider.NextDay();
+			}
 
-				}
-			});
-
-			await _backupManager.PerformBackupsAsync();
-			Assert.IsTrue(_localBackups.Any(backup => backup.Slug.Equals("3_remove") == false));
-			Assert.IsTrue(_localBackups.Count() == 2);
+			Assert.IsTrue(_localBackups.Count == _addonOptions.MaxLocalBackups);
+			for (int day = 1; day <= _addonOptions.MaxLocalBackups; day++)
+			{
+				Assert.IsTrue(_localBackups.Single(backup => backup.BackupDate.Date.Equals(testStartDate.Date.AddDays(day))) != null);
+			}
 		}
+
+		[TestMethod]
+		public async Task Test_Generational_Retention_3_Days_2_Weeks_4_Months_Max7_Local()
+		{
+			_addonOptions.GenerationalDays = 3;
+			_addonOptions.GenerationalWeeks = 2;
+			_addonOptions.GenerationalMonths = 4;
+			_addonOptions.MaxLocalBackups = 7;
+
+			var testStartDate = _dateTimeProvider.Now;
+			int testDays = 120;
+
+			for (int day = 0; day < testDays; day++)
+			{
+				await _backupManager.PerformBackupsAsync();
+				_dateTimeProvider.NextDay();
+			}
+
+			Assert.IsTrue(_localBackups.Count == _addonOptions.MaxLocalBackups);
+			int monthlyBackups = _localBackups.GroupBy(backup => backup.BackupDate.Date.Month).Count();
+			int weeklyBackups = _localBackups.GroupBy(backup => CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(backup.BackupDate.Date, CalendarWeekRule.FirstDay, System.DayOfWeek.Sunday)).Count();
+
+			for (int day = 0; day <= _addonOptions.GenerationalDays; day++)
+			{
+				Assert.IsTrue(_localBackups.Single(backup => backup.BackupDate.Date.Equals(_dateTimeProvider.Now.Date.AddDays(-day))) != null);
+			}
+		}
+
+
 
 		[TestMethod]
 		public async Task Test_Generational_Retention_Mixed1_Local()

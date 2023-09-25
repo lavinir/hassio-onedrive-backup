@@ -102,12 +102,13 @@ namespace onedrive_backup.Extensions
                    .Take(weeklyBackupNum)
                    .ToList();
 
+            int year = currentYear;
             for (int i=0; i < weeklyBackupNum; i++)
             {
 				var week = currentWeek - i;
                 if (week < 1)
                 {
-                    currentYear -= 1;
+                    year -= 1;
                     week = CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(now.AddYears(-1), CalendarWeekRule.FirstDay, firstDayOfWeek) - week;
                 }
 
@@ -118,7 +119,7 @@ namespace onedrive_backup.Extensions
 				}
                 else
                 {
-                    var weekCutoffDate = DateTimeHelper.GetStartDateByWeekAndYear(currentYear, currentWeek, firstDayOfWeek);
+                    var weekCutoffDate = DateTimeHelper.GetStartDateByWeekAndYear(year, week, firstDayOfWeek);
                     var nextCandidateBackup = backups.OrderByDescending(b => b.BackupDate).FirstOrDefault(b => b.BackupDate <= weekCutoffDate);
                     if (nextCandidateBackup != null)
                     {
@@ -149,7 +150,7 @@ namespace onedrive_backup.Extensions
 				var month = currentMonth - i;
 				if (month < 1)
 				{
-                    month = 12 - month;
+                    month = 12 - Math.Abs(month);
                     year--;
 				}
 
@@ -160,8 +161,8 @@ namespace onedrive_backup.Extensions
 				}
                 else
                 {
-                    var cutoffDate = new DateTime(currentYear, currentMonth, 1);
-					var nextCandidateBackup = backups.OrderByDescending(b => b.BackupDate).FirstOrDefault(b => b.BackupDate <= cutoffDate);
+                    var cutoffDate = new DateTime(year, month, 1);
+					var nextCandidateBackup = backups.OrderBy(b => b.BackupDate).FirstOrDefault(b => b.BackupDate >= cutoffDate);
 					if (nextCandidateBackup != null)
 					{
 						yield return nextCandidateBackup;
@@ -195,7 +196,7 @@ namespace onedrive_backup.Extensions
 				else
 				{
 					var cutoffDate = new DateTime(currentYear, 1, 1);
-					var nextCandidateBackup = backups.OrderByDescending(b => b.BackupDate).FirstOrDefault(b => b.BackupDate <= cutoffDate);
+					var nextCandidateBackup = backups.OrderBy(b => b.BackupDate).FirstOrDefault(b => b.BackupDate >= cutoffDate);
 					if (nextCandidateBackup != null)
 					{
 						yield return nextCandidateBackup;

@@ -139,6 +139,7 @@ namespace hassio_onedrive_backup.Hass
                 IEnumerable<IBackup> generationalBackupsToDelete = Enumerable.Empty<IBackup>();
                 if (_addonOptions.GenerationalBackups)
                 {
+                    _logger.LogVerbose("Evaluating Online Generational Backups");
                     generationalBackupsToDelete = GetGenerationalBackupsForRemoval(onlineBackups.Cast<IBackup>());
 				}
 
@@ -176,13 +177,14 @@ namespace hassio_onedrive_backup.Hass
 				generationalBackupsToDelete = Enumerable.Empty<Backup>();
 				if (_addonOptions.GenerationalBackups)
 				{
+					_logger.LogVerbose("Evaluating Local Generational Backups");
 					generationalBackupsToDelete = GetGenerationalBackupsForRemoval(LocalBackups.Cast<IBackup>());
 				}
 
                 int numOfLocalBackupsToRemove = LocalBackups.Count - _addonOptions.MaxLocalBackups;
                 if (numOfLocalBackupsToRemove > 0)
                 {
-					_logger.LogInfo($"Reached Max Local Backups ({_addonOptions.MaxOnedriveBackups})");
+					_logger.LogInfo($"Reached Max Local Backups ({_addonOptions.MaxLocalBackups})");
 				}
 
 
@@ -258,7 +260,7 @@ namespace hassio_onedrive_backup.Hass
                 var requiredGenerationBackups = getGenerationalBackups();
 				foreach (var backup in requiredGenerationBackups)
 				{
-					_logger.LogVerbose($"Backup ({backup.Slug} retained for Generational {generationName} policy");
+					_logger.LogVerbose($"Backup ({backup.Slug} ({backup.BackupDate}) retained for Generational {generationName} policy");
 					requiredBackups.Add(backup);
 				}
 			}
