@@ -77,23 +77,24 @@ namespace onedrive_backup.Extensions
             };
         }
 
-		public static IEnumerable<IBackup> GetDailyGenerations(this IEnumerable<IBackup> backups, int dailyBackupNum, DateTime now)
+		public static IList<IBackup> GetDailyGenerations(this IEnumerable<IBackup> backups, int dailyBackupNum, DateTime now)
 		{
             if (dailyBackupNum < 0)
             {
-                return Enumerable.Empty<IBackup>();
+                return Enumerable.Empty<IBackup>().ToList();
             }
 
-			return backups.Where(backup => now - backup.BackupDate.Date < TimeSpan.FromDays(dailyBackupNum));
+			return backups.Where(backup => now - backup.BackupDate.Date < TimeSpan.FromDays(dailyBackupNum)).ToList();
 		}
 
-		public static IEnumerable<IBackup> GetWeeklyGenerations(this IEnumerable<IBackup> backups, int weeklyBackupNum, DayOfWeek firstDayOfWeek, DateTime now)
+		public static IList<IBackup> GetWeeklyGenerations(this IEnumerable<IBackup> backups, int weeklyBackupNum, DayOfWeek firstDayOfWeek, DateTime now)
 		{
 			if (weeklyBackupNum < 0)
 			{
-                yield break;
+                return Enumerable.Empty<IBackup>().ToList();
 			}
 
+            List<IBackup> ret = new();
             var currentWeek = CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(now, CalendarWeekRule.FirstDay, firstDayOfWeek);
             var currentYear = now.Year;
             var groupedBackups = backups.GroupBy(backup => CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(backup.BackupDate.Date, CalendarWeekRule.FirstDay, firstDayOfWeek))
@@ -102,41 +103,44 @@ namespace onedrive_backup.Extensions
                    .Take(weeklyBackupNum)
                    .ToList();
 
-            int year = currentYear;
             for (int i=0; i < weeklyBackupNum; i++)
             {
+				int backupYear = currentYear;
 				var week = currentWeek - i;
-                if (week < 1)
+                while (week < 1)
                 {
-                    year -= 1;
-                    week = CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(now.AddYears(-1), CalendarWeekRule.FirstDay, firstDayOfWeek) - week;
-                }
+                    backupYear--;
+                    week = CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(new DateTime(backupYear, 12, 31), CalendarWeekRule.FirstDay, firstDayOfWeek);
+				}
 
-				var weeklyBackup = groupedBackups.FirstOrDefault(backup => CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(backup.BackupDate.Date, CalendarWeekRule.FirstDay, firstDayOfWeek) == week);
+				var weeklyBackup = groupedBackups.FirstOrDefault(backup => backup.BackupDate.Year == backupYear && CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(backup.BackupDate.Date, CalendarWeekRule.FirstDay, firstDayOfWeek) == week);
 				if (weeklyBackup != null)
                 {
-					yield return weeklyBackup;
+                    ret.Add(weeklyBackup);
 				}
-                else
-                {
-                    var weekCutoffDate = DateTimeHelper.GetStartDateByWeekAndYear(year, week, firstDayOfWeek);
-                    var nextCandidateBackup = backups.OrderByDescending(b => b.BackupDate).FirstOrDefault(b => b.BackupDate <= weekCutoffDate);
-                    if (nextCandidateBackup != null)
-                    {
-                        yield return nextCandidateBackup;
-                    }
-                }
-			}                   
+                //else
+                //{
+                //    var weekCutoffDate = DateTimeHelper.GetStartDateByWeekAndYear(year, week, firstDayOfWeek);
+                //    var nextCandidateBackup = backups.OrderByDescending(b => b.BackupDate).FirstOrDefault(b => b.BackupDate <= weekCutoffDate);
+                //    if (nextCandidateBackup != null)
+                //    {
+                //        ret.Add(nextCandidateBackup);
+                //    }
+                //}
+			}
+
+            return ret.Distinct().ToList();
 		}
 
-        public static IEnumerable<IBackup> GetMonthlyGenerations(this IEnumerable<IBackup> backups, int monthlyBackupNum, DateTime now)
+        public static IList<IBackup> GetMonthlyGenerations(this IEnumerable<IBackup> backups, int monthlyBackupNum, DateTime now)
         {
 			if (monthlyBackupNum < 0)
 			{
-                yield break;
+                return Enumerable.Empty<IBackup>().ToList();
 			}
 
-            var currentMonth = now.Month;
+			List<IBackup> ret = new();
+			var currentMonth = now.Month;
             var currentYear = now.Year;
 			var groupedBackups = backups.GroupBy(backup => backup.BackupDate.Month)
 				  .Select(monthGrp => monthGrp.OrderByDescending(backup => backup.BackupDate).First())
@@ -144,40 +148,43 @@ namespace onedrive_backup.Extensions
 				  .Take(monthlyBackupNum)
 				  .ToList();
 
-            var year = currentYear;
 			for (int i = 0; i < monthlyBackupNum; i++)
 			{
+				var year = currentYear;
 				var month = currentMonth - i;
-				if (month < 1)
-				{
-                    month = 12 - Math.Abs(month);
-                    year--;
+                while (month < 1)
+                {
+					month = 12 - Math.Abs(month);
+					year--;
 				}
 
 				var monthlyBackup = groupedBackups.FirstOrDefault(backup => backup.BackupDate.Month == month && backup.BackupDate.Year == year);
 				if (monthlyBackup != null)
 				{
-					yield return monthlyBackup;
+                    ret.Add(monthlyBackup);
 				}
-                else
-                {
-                    var cutoffDate = new DateTime(year, month, 1);
-					var nextCandidateBackup = backups.OrderBy(b => b.BackupDate).FirstOrDefault(b => b.BackupDate >= cutoffDate);
-					if (nextCandidateBackup != null)
-					{
-						yield return nextCandidateBackup;
-					}
-				}
+    //            else
+    //            {
+    //                var cutoffDate = new DateTime(year, month, 1);
+				//	var nextCandidateBackup = backups.OrderByDescending(b => b.BackupDate).FirstOrDefault(b => b.BackupDate >= cutoffDate);
+				//	if (nextCandidateBackup != null)
+				//	{
+    //                    ret.Add(nextCandidateBackup);
+				//	}
+				//}
 			}
+
+            return ret.Distinct().ToList();
 		}
 
-        public static IEnumerable<IBackup> GetYearlyGenerations(this IEnumerable<IBackup> backups, int yearlyBackups , DateTime now)
+        public static IList<IBackup> GetYearlyGenerations(this IEnumerable<IBackup> backups, int yearlyBackups , DateTime now)
         {
 			if (yearlyBackups < 0)
 			{
-                yield break;
+                return Enumerable.Empty<IBackup>().ToList();
 			}
 
+			List<IBackup> ret = new();
 			var currentYear = now.Year;
 
 			var groupedBackups = backups.GroupBy(backup => backup.BackupDate.Year)
@@ -191,18 +198,20 @@ namespace onedrive_backup.Extensions
                 var yearlyBackup = groupedBackups.FirstOrDefault(b => b.BackupDate.Year == currentYear - i);
 				if (yearlyBackup != null)
 				{
-					yield return yearlyBackup;
+                    ret.Add(yearlyBackup);
 				}
-				else
-				{
-					var cutoffDate = new DateTime(currentYear, 1, 1);
-					var nextCandidateBackup = backups.OrderBy(b => b.BackupDate).FirstOrDefault(b => b.BackupDate >= cutoffDate);
-					if (nextCandidateBackup != null)
-					{
-						yield return nextCandidateBackup;
-					}
-				}
+				//else
+				//{
+				//	var cutoffDate = new DateTime(currentYear, 1, 1);
+				//	var nextCandidateBackup = backups.OrderByDescending(b => b.BackupDate).FirstOrDefault(b => b.BackupDate >= cutoffDate);
+				//	if (nextCandidateBackup != null)
+				//	{
+    //                    ret.Add(nextCandidateBackup);
+				//	}
+				//}
 			}
+
+            return ret.Distinct().ToList();
 		}
 
 		private static string GetAddonNameFromSlug(IEnumerable<Addon> addons, string slug)

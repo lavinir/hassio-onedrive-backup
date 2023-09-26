@@ -23,12 +23,12 @@ namespace test.onedrive_backup.Mocks
             _now = _now.AddDays(days).AddMonths(months).AddYears(years);
         }
 
-        public void NextDay()
-        {
-            TimeSeek(1);
-        }
+		public void NextDay()
+		{
+			TimeSeek(1);
+		}
 
-        public void NextMonth()
+		public void NextMonth()
         {
             TimeSeek(0, 1);
         }

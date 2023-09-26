@@ -251,7 +251,8 @@ namespace hassio_onedrive_backup.Hass
 			}
 
             var backupsToRemove = backups.Where(backup => requiredBackups.Contains(backup) == false).ToList();
-            _logger.LogInfo($"Found {backupsToRemove.Count} backups that can be removed");
+            _logger.LogInfo($"Found {backupsToRemove.Count} backups that can be removed (Generational Rules)");
+            _logger.LogVerbose($"Potential backups for removal: {string.Join(",", backupsToRemove.Select(backup => $"{backup.Slug} ({backup.BackupDate})"))}");
             return backupsToRemove;
 
             // Add Generation Backups to Retention List
