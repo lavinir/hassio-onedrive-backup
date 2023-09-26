@@ -168,252 +168,209 @@ namespace hassio_onedrive_backup.Tests
 			}
 		}
 
-
-
 		[TestMethod]
-		public async Task Test_Generational_Retention_Mixed1_Local()
+		public async Task Test_Generational_Retention_3_Days_2_Weeks_4_Months_2_years_Max10_Local()
 		{
 			_addonOptions.GenerationalDays = 3;
 			_addonOptions.GenerationalWeeks = 2;
-			_addonOptions.GenerationalMonths = 4;			
-			_addonOptions.MaxLocalBackups = 5;
+			_addonOptions.GenerationalMonths = 4;
+			_addonOptions.GenerationalYears = 2;
+			_addonOptions.MaxLocalBackups = 10;
 
-			var now = DateTime.Now;
-			_localBackups.AddRange(new List<Backup>
+			var testStartDate = _dateTimeProvider.Now;
+			int testDays = 1000;
+
+			for (int day = 0; day < testDays; day++)
 			{
-				new Backup
-				{
-					Slug = "1_keep",           // Day, Week, Month
-					Date = now,
-					Name = _addonOptions.BackupName
-				},
-				new Backup
-				{
-					Slug = "2_keep",           // Week
-					Date = now.AddDays(-7),
-					Name = _addonOptions.BackupName
-				},
-				new Backup
-				{
-					Slug = "3_remove",
-					Date = now.AddDays(-8),    
-					Name = _addonOptions.BackupName
-				},
-				new Backup
-				{
-					Slug = "4_keep",
-					Date = now.AddMonths(-2),  //Month 
-					Name = _addonOptions.BackupName
-				},
-				new Backup
-				{
-					Slug = "5_keep",
-					Date = now.AddMonths(-3),  //Month
-					Name = _addonOptions.BackupName
-				},
-				new Backup
-				{
-					Slug = "6_keep",
-					Date = now.AddMonths(-4), //Month
-					Name = _addonOptions.BackupName
-				}
-			});
+				await _backupManager.PerformBackupsAsync();
+				_dateTimeProvider.NextDay();
+			}
 
-			await _backupManager.PerformBackupsAsync();
-			Assert.IsTrue(_localBackups.Any(backup => backup.Slug.Equals("3_remove") == false));
-			Assert.IsTrue(_localBackups.Count() == 5);
+			_dateTimeProvider.TimeSeek(-1);
+			Assert.IsTrue(_localBackups.Count == _addonOptions.MaxLocalBackups);
+
+			// Verify Years
+			int currentYear = _dateTimeProvider.Now.Year;
+			for (int i =0; i< _addonOptions.GenerationalYears; i++)
+			{
+				Assert.IsTrue(_localBackups.Any(backup => backup.Date.Year == currentYear - i));
+			}
+
+			// Verify Months
+			for (int i = 0; i < _addonOptions.GenerationalMonths; i++)
+			{
+				var month = _dateTimeProvider.Now.Month;
+				month -= i;
+				if (month < 1)
+				{
+					month = 12 - Math.Abs(month);
+				}
+
+				Assert.IsTrue(_localBackups.Any(backup => backup.Date.Month == month));
+			}
+
+			// Verify Weeks
+			var currentWeek = CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(_dateTimeProvider.Now, CalendarWeekRule.FirstDay, System.DayOfWeek.Sunday);
+			for (int week = currentWeek; week > currentWeek - _addonOptions.GenerationalWeeks; week--)
+			{
+				Assert.IsTrue(_localBackups.Any(backup => CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(backup.BackupDate, CalendarWeekRule.FirstDay, System.DayOfWeek.Sunday) == week));
+			}
+
+			// Verify Days
+			for (int day = 0; day <= _addonOptions.GenerationalDays; day++)
+			{
+				Assert.IsTrue(_localBackups.Single(backup => backup.BackupDate.Date.Equals(_dateTimeProvider.Now.Date.AddDays(-day))) != null);
+			}
 		}
+
 
 		#endregion
 
 		#region OnlineBackupTests
 
-		[TestMethod]
-		public async Task Test_Generational_Retention_Days_Online()
+		public async Task Test_Generational_Retention_3_Days_Max4_Online()
 		{
 			_addonOptions.GenerationalDays = 3;
 			_addonOptions.MaxOnedriveBackups = 4;
-			_addonOptions.MaxLocalBackups = 0;
+			var testStartDate = _dateTimeProvider.Now;
 
-			var now = DateTime.Now;
-			_onedriveBackups.AddRange(new List<OnedriveBackup>
+			for (int day = 0; day < _addonOptions.MaxOnedriveBackups; day++)
 			{
-				new OnedriveBackup
-				{
-					Slug = "1_keep",
-					BackupDate = now,
-					FileName = "1_keep"
-				},
-				new OnedriveBackup
-				{
-					Slug = "2_keep",
-					BackupDate = now.AddDays(-1),
-					FileName = "2_keep"
-				},
-				new OnedriveBackup
-				{
-					Slug = "3_keep",
-					BackupDate = now.AddDays(-2),
-					FileName = "3_keep"
+				await _backupManager.PerformBackupsAsync();
+				_dateTimeProvider.NextDay();
+			}
 
-				},
-				new OnedriveBackup
-				{
-					Slug = "4_keep",
-					BackupDate = now.AddDays(-3),
-					FileName = "4_keep"
-				},
-				new OnedriveBackup
-				{
-					Slug = "5_remove",
-					BackupDate = now.AddDays(-20),
-					FileName = "5_remove"
-				}
-
-			});
-
-			await _backupManager.PerformBackupsAsync();
-			Assert.IsTrue(_onedriveBackups.Any(backup => backup.Slug.Equals("5_remove") == false));
-			Assert.IsTrue(_onedriveBackups.Count() == 4);
+			Assert.IsTrue(_onedriveBackups.Count == _addonOptions.MaxOnedriveBackups);
+			for (int day = 0; day < _addonOptions.MaxOnedriveBackups; day++)
+			{
+				Assert.IsTrue(_onedriveBackups.Single(backup => backup.BackupDate.Date.Equals(testStartDate.Date.AddDays(day))) != null);
+			}
 		}
 
 		[TestMethod]
-		public async Task Test_Generational_Retention_Days_Online_NoDelete()
-		{
-			_addonOptions.GenerationalDays = 3;
-			_addonOptions.MaxOnedriveBackups = 5;
-
-			var now = DateTime.Now;
-			_onedriveBackups.AddRange(new List<OnedriveBackup>
-			{
-				new OnedriveBackup
-				{
-					Slug = "1_keep",
-					BackupDate = now,
-					FileName = "1_keep"
-				},
-				new OnedriveBackup
-				{
-					Slug = "2_keep",
-					BackupDate = now.AddDays(-1),
-					FileName = "2_keep"
-				},
-				new OnedriveBackup
-				{
-					Slug = "3_keep",
-					BackupDate = now.AddDays(-2),
-					FileName = "3_keep"
-				},
-				new OnedriveBackup
-				{
-					Slug = "4_keep",
-					BackupDate = now.AddDays(-3),
-					FileName = "4_keep"
-				},
-				new OnedriveBackup
-				{
-					Slug = "5_keep",
-					BackupDate = now.AddDays(-20),
-					FileName = "5_keep"
-				}
-
-			});
-
-			await _backupManager.PerformBackupsAsync();
-			Assert.IsTrue(_onedriveBackups.Count() == 5);
-		}
-
-		[TestMethod]
-		public async Task Test_Generational_Retention_Days_Online_MaxOnlineOverride()
+		public async Task Test_Generational_Retention_3_Days_Max2_Online()
 		{
 			_addonOptions.GenerationalDays = 3;
 			_addonOptions.MaxOnedriveBackups = 2;
+			var testStartDate = _dateTimeProvider.Now;
 
-			var now = DateTime.Now;
-			_onedriveBackups.AddRange(new List<OnedriveBackup>
+			for (int day = 0; day < _addonOptions.MaxOnedriveBackups + 1; day++)
 			{
-				new OnedriveBackup
-				{
-					Slug = "1_keep",
-					BackupDate = now,
-					FileName = "1_keep"
-				},
-				new OnedriveBackup
-				{
-					Slug = "2_keep",
-					BackupDate = now.AddDays(-1),
-					FileName = "2_keep"
-				},
-				new OnedriveBackup
-				{
-					Slug = "3_remove",
-					BackupDate = now.AddDays(-2),
-					FileName = "3_remove"
+				await _backupManager.PerformBackupsAsync();
+				_dateTimeProvider.NextDay();
+			}
 
-				}
-			});
-
-			await _backupManager.PerformBackupsAsync();
-			Assert.IsTrue(_onedriveBackups.Any(backup => backup.Slug.Equals("3_remove") == false));
-			Assert.IsTrue(_onedriveBackups.Count() == 2);
+			Assert.IsTrue(_onedriveBackups.Count == _addonOptions.MaxOnedriveBackups);
+			for (int day = 1; day <= _addonOptions.MaxOnedriveBackups; day++)
+			{
+				Assert.IsTrue(_onedriveBackups.Single(backup => backup.BackupDate.Date.Equals(testStartDate.Date.AddDays(day))) != null);
+			}
 		}
 
 		[TestMethod]
-		public async Task Test_Generational_Retention_Mixed1_Online()
+		public async Task Test_Generational_Retention_3_Days_2_Weeks_4_Months_Max10_Online()
 		{
 			_addonOptions.GenerationalDays = 3;
 			_addonOptions.GenerationalWeeks = 2;
 			_addonOptions.GenerationalMonths = 4;
-			_addonOptions.MaxOnedriveBackups = 5;
+			_addonOptions.MaxOnedriveBackups = 10;
 
-			var now = DateTime.Now;
-			_onedriveBackups.AddRange(new List<OnedriveBackup>
+			var testStartDate = _dateTimeProvider.Now;
+			int testDays = 120;
+
+			for (int day = 0; day < testDays; day++)
 			{
-				new OnedriveBackup
-				{
-					Slug = "1_keep",
-					BackupDate = now,
-					FileName = "1_keep"
-				},
-				new OnedriveBackup
-				{
-					Slug = "2_keep",
-					BackupDate = now.AddDays(-7),
-					FileName = "2_keep",
-				},
-				new OnedriveBackup
-				{
-					Slug = "3_remove",
-					BackupDate = now.AddDays(-8),
-					FileName = "3_remove"
-				},
-				new OnedriveBackup
-				{
-					Slug = "4_keep",
-					BackupDate = now.AddMonths(-2),
-					FileName = "4_keep"
-				},
-				new OnedriveBackup
-				{
-					Slug = "5_keep",
-					BackupDate = now.AddMonths(-3),
-					FileName = "5_keep"
-				},
-				new OnedriveBackup
-				{
-					Slug = "6_keep",
-					BackupDate = now.AddMonths(-4),
-					FileName = "6_keep"
-				}
-			});
+				await _backupManager.PerformBackupsAsync();
+				_dateTimeProvider.NextDay();
+			}
 
-			await _backupManager.PerformBackupsAsync();
-			Assert.IsTrue(_onedriveBackups.Any(backup => backup.Slug.Equals("3_remove") == false));
-			Assert.IsTrue(_onedriveBackups.Count() == 5);
+			_dateTimeProvider.TimeSeek(-1);
+			Assert.IsTrue(_onedriveBackups.Count == _addonOptions.MaxOnedriveBackups);
+
+			// Verify Months
+			for (int i = 0; i < _addonOptions.GenerationalMonths; i++)
+			{
+				var month = _dateTimeProvider.Now.Month;
+				month -= i;
+				if (month < 1)
+				{
+					month = 12 - Math.Abs(month);
+				}
+
+				Assert.IsTrue(_onedriveBackups.Any(backup => backup.BackupDate.Month == month));
+			}
+
+			// Verify Weeks
+			var currentWeek = CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(_dateTimeProvider.Now, CalendarWeekRule.FirstDay, System.DayOfWeek.Sunday);
+			for (int week = currentWeek; week > currentWeek - _addonOptions.GenerationalWeeks; week--)
+			{
+				Assert.IsTrue(_onedriveBackups.Any(backup => CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(backup.BackupDate, CalendarWeekRule.FirstDay, System.DayOfWeek.Sunday) == week));
+			}
+
+			for (int day = 0; day <= _addonOptions.GenerationalDays; day++)
+			{
+				Assert.IsTrue(_onedriveBackups.Single(backup => backup.BackupDate.Date.Equals(_dateTimeProvider.Now.Date.AddDays(-day))) != null);
+			}
 		}
 
+		[TestMethod]
+		public async Task Test_Generational_Retention_3_Days_2_Weeks_4_Months_2_years_Max10_Online()
+		{
+			_addonOptions.GenerationalDays = 3;
+			_addonOptions.GenerationalWeeks = 2;
+			_addonOptions.GenerationalMonths = 4;
+			_addonOptions.GenerationalYears = 2;
+			_addonOptions.MaxOnedriveBackups = 10;
+
+			var testStartDate = _dateTimeProvider.Now;
+			int testDays = 1000;
+
+			for (int day = 0; day < testDays; day++)
+			{
+				await _backupManager.PerformBackupsAsync();
+				_dateTimeProvider.NextDay();
+			}
+
+			_dateTimeProvider.TimeSeek(-1);
+			Assert.IsTrue(_onedriveBackups.Count == _addonOptions.MaxOnedriveBackups);
+
+			// Verify Years
+			int currentYear = _dateTimeProvider.Now.Year;
+			for (int i = 0; i < _addonOptions.GenerationalYears; i++)
+			{
+				Assert.IsTrue(_onedriveBackups.Any(backup => backup.BackupDate.Year == currentYear - i));
+			}
+
+			// Verify Months
+			for (int i = 0; i < _addonOptions.GenerationalMonths; i++)
+			{
+				var month = _dateTimeProvider.Now.Month;
+				month -= i;
+				if (month < 1)
+				{
+					month = 12 - Math.Abs(month);
+				}
+
+				Assert.IsTrue(_onedriveBackups.Any(backup => backup.BackupDate.Month == month));
+			}
+
+			// Verify Weeks
+			var currentWeek = CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(_dateTimeProvider.Now, CalendarWeekRule.FirstDay, System.DayOfWeek.Sunday);
+			for (int week = currentWeek; week > currentWeek - _addonOptions.GenerationalWeeks; week--)
+			{
+				Assert.IsTrue(_onedriveBackups.Any(backup => CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(backup.BackupDate, CalendarWeekRule.FirstDay, System.DayOfWeek.Sunday) == week));
+			}
+
+			// Verify Days
+			for (int day = 0; day <= _addonOptions.GenerationalDays; day++)
+			{
+				Assert.IsTrue(_onedriveBackups.Single(backup => backup.BackupDate.Date.Equals(_dateTimeProvider.Now.Date.AddDays(-day))) != null);
+			}
+		}
+
+
 		#endregion
-		
+
 		private void SetupHassIoClient()
 		{
 			_hassIoClientMock = new Mock<IHassioClient>();
