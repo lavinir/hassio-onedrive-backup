@@ -1,7 +1,4 @@
 configuration:
-  recovery_mode:
-    name: Recovery mode
-    description: When this settings is toggled on, the add-on will not perform any backups and sync mode will reverse from OneDrive back to Home Assistant. This will still respect the maximum local backups set and will try to sync back the latest backups that exist in OneDrive while remaining under the set limit.
   local_backup_num_to_keep:
     name: Number of local backups
     description: The maximum amount of backups to keep locally in Home Assistant
