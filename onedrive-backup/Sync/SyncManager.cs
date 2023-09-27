@@ -12,7 +12,7 @@ using System.Security.Cryptography;
 
 namespace hassio_onedrive_backup.Sync
 {
-    internal class SyncManager
+    public class SyncManager
     {
         private const string HashAlgo = "SHA256";
         private const string OneDriveFileSyncRootDir = "FileSync";
