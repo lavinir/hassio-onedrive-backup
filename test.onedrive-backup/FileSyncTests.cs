@@ -27,6 +27,7 @@ namespace test.onedrive_backup
 		private Mock<TransferSpeedHelper> _transferSpeedHelperMock;
 		private AddonOptions _addonOptions;
 		private MockDateTimeProvider _mockDateTimeProvider;
+		private object _syncManagerMock;
 
 		[TestInitialize]
 		public void Setup()
@@ -48,10 +49,12 @@ namespace test.onedrive_backup
 			consoleLogger.SetDateTimeProvider(_mockDateTimeProvider);
 			_serviceProviderMock.Setup(provider => provider.GetService(typeof(ConsoleLogger))).Returns(consoleLogger);
 
-			_syncManager = new Mock<SyncManager>()(
+			_syncManagerMock = new Mock<SyncManager>(
 				_serviceProviderMock.Object,
-				_addonOptions.BackupAllowedHours,
-				_transferSpeedHelperMock.Object);
+				TimeRangeHelper.GetAllowedHours(_addonOptions.BackupAllowedHours),
+				_transferSpeedHelperMock.Object,
+				consoleLogger,
+				_mockDateTimeProvider);
 		}
 
 		private void SetupIGraphHelper()
