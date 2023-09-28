@@ -14,6 +14,11 @@ using hassio_onedrive_backup.Graph;
 using Newtonsoft.Json;
 using hassio_onedrive_backup;
 using hassio_onedrive_backup.Sync;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Graph;
+using onedrive_backup.Sync;
+using System.IO;
 
 namespace test.onedrive_backup
 {
@@ -26,12 +31,15 @@ namespace test.onedrive_backup
 		private Mock<HassOnedriveFileSyncEntityState> _hassEntityStateMock;
 		private Mock<TransferSpeedHelper> _transferSpeedHelperMock;
 		private AddonOptions _addonOptions;
+		private Mock<IWebHostEnvironment> _iWebHostEnvironmentMock;
 		private MockDateTimeProvider _mockDateTimeProvider;
 		private object _syncManagerMock;
+		private List<DriveItem> _syncedFiles = new();
 
 		[TestInitialize]
 		public void Setup()
 		{
+			_syncedFiles = new();
 			_serviceProviderMock = new Mock<IServiceProvider>();
 
 			SetupIGraphHelper();
@@ -40,10 +48,13 @@ namespace test.onedrive_backup
 			_hassEntityStateMock = new Mock<HassOnedriveFileSyncEntityState>(_hassIoClientMock.Object);
 			_transferSpeedHelperMock = new Mock<TransferSpeedHelper>(null);
 			_addonOptions = CreateAddonOptions();
+			_iWebHostEnvironmentMock = new Mock<IWebHostEnvironment>();
+			_iWebHostEnvironmentMock.Setup(env => env.EnvironmentName).Returns(Environments.Development);
 			_serviceProviderMock.Setup(provider => provider.GetService(typeof(IGraphHelper))).Returns(_graphHelperMock.Object);
 			_serviceProviderMock.Setup(provider => provider.GetService(typeof(IHassioClient))).Returns(_hassIoClientMock.Object);
 			_serviceProviderMock.Setup(provider => provider.GetService(typeof(HassOnedriveEntityState))).Returns(_hassEntityStateMock.Object);
 			_serviceProviderMock.Setup(provider => provider.GetService(typeof(AddonOptions))).Returns(_addonOptions);
+			_serviceProviderMock.Setup(provider => provider.GetService(typeof(IWebHostEnvironment))).Returns(_iWebHostEnvironmentMock.Object);
 			_mockDateTimeProvider = new MockDateTimeProvider();
 			var consoleLogger = new ConsoleLogger();
 			consoleLogger.SetDateTimeProvider(_mockDateTimeProvider);
@@ -60,22 +71,22 @@ namespace test.onedrive_backup
 		private void SetupIGraphHelper()
 		{
 			_graphHelperMock = new Mock<IGraphHelper>();
-			_graphHelperMock.Setup(gh => gh.GetItemsInAppFolderAsync(""))
-				.ReturnsAsync(() => _onedriveBackups.Select(backup => new Microsoft.Graph.DriveItem()
-				{
-					Name = backup.FileName,
-					Description = JsonConvert.SerializeObject(new OnedriveItemDescription
-					{
-						Addons = backup.Addons,
-						BackupDate = backup.BackupDate,
-						BackupType = backup.Type,
-						Folders = backup.Folders,
-						InstanceName = backup.InstanceName,
-						IsProtected = backup.IsProtected,
-						Slug = backup.Slug,
-						Size = backup.Size
-					})
-				}).ToList());
+			//_graphHelperMock.Setup(gh => gh.GetItemsInAppFolderAsync(""))
+			//	.ReturnsAsync(() => _onedriveBackups.Select(backup => new Microsoft.Graph.DriveItem()
+			//	{
+			//		Name = backup.FileName,
+			//		Description = JsonConvert.SerializeObject(new OnedriveItemDescription
+			//		{
+			//			Addons = backup.Addons,
+			//			BackupDate = backup.BackupDate,
+			//			BackupType = backup.Type,
+			//			Folders = backup.Folders,
+			//			InstanceName = backup.InstanceName,
+			//			IsProtected = backup.IsProtected,
+			//			Slug = backup.Slug,
+			//			Size = backup.Size
+			//		})
+			//	}).ToList());
 
 
 			_graphHelperMock.Setup(gh => gh.UploadFileAsync(
@@ -86,21 +97,44 @@ namespace test.onedrive_backup
 				It.IsAny<string>(),
 				It.IsAny<Action<int, int>?>(),
 				It.IsAny<bool>(),
-				It.IsAny<string>())).Callback((string slug, DateTime date, string instanceName, TransferSpeedHelper _, string _, Action<int, int>? _, bool _, string _) => _onedriveBackups.Add(new OnedriveBackup
+				It.IsAny<string>())).Callback((string filePath, DateTime date, string instanceName, TransferSpeedHelper _, string remotePath, Action<int, int>? _, bool _, string _) => 
 				{
-					FileName = slug,
-					InstanceName = instanceName,
-					Slug = slug,
-					BackupDate = date
-				}));
+					var fileHash = FileOperationHelper.CalculateFileHash(filePath);
+					var fileInfo = new FileInfo(filePath);
+					string[] pathComponents = filePath.Split(Path.DirectorySeparatorChar);
+
+					_syncedFiles.Add(new DriveItem
+					{
+						Name = fileInfo.Name,
+						AdditionalData = new Dictionary<string, object>()
+						{
+							{"remotePath",  GetRemotePath(filePath)}
+						},
+						Size = fileInfo.Length,
+						File = new Microsoft.Graph.File()
+						{
+							Hashes = new Microsoft.Graph.Hashes
+							{
+								Sha256Hash = fileHash
+							},
+						}
+					});
+				}
+				);
 
 			_graphHelperMock
 				.Setup(gh => gh.DeleteItemFromAppFolderAsync(It.IsAny<string>()))
-				.ReturnsAsync((string fileName) =>
+				.ReturnsAsync((string remotePath) =>
 				{
-					int deleted = _onedriveBackups.RemoveAll(backup => backup.FileName.Equals(fileName));
+					int deleted = _syncedFiles.RemoveAll(item => item.AdditionalData["remotePath"].ToString().Equals(remotePath));
 					return deleted == 1;
 				});
+		}
+
+		private string GetRemotePath(string filePath)
+		{
+			string remotePath = $"/{SyncManager.OneDriveFileSyncRootDir}{filePath}".Replace("//", "/").Replace(@"\\", @"\");
+			return remotePath;
 		}
 
 		private AddonOptions CreateAddonOptions()

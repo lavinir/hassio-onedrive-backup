@@ -6,6 +6,7 @@ using Microsoft.Graph;
 using onedrive_backup;
 using onedrive_backup.Extensions;
 using onedrive_backup.Graph;
+using onedrive_backup.Sync;
 using System.Collections;
 using System.Diagnostics;
 using System.Security.Cryptography;
@@ -14,8 +15,7 @@ namespace hassio_onedrive_backup.Sync
 {
     public class SyncManager
     {
-        private const string HashAlgo = "SHA256";
-        private const string OneDriveFileSyncRootDir = "FileSync";
+        public const string OneDriveFileSyncRootDir = "FileSync";
 		private readonly ConsoleLogger _logger;
 		private readonly IDateTimeProvider _dateTimeProvider;
 		private AddonOptions _addonOptions;
@@ -104,7 +104,7 @@ namespace hassio_onedrive_backup.Sync
             }
 
             var now = _dateTimeProvider.Now;
-            string fileHash = CalculateFileHash(path);
+            string fileHash = FileOperationHelper.CalculateFileHash(path);
             var localFileSyncData = new SyncFileData(path, fileHash, fileInfo.Length);
 
             string remotePath = $"/{OneDriveFileSyncRootDir}{path}".Replace("//", "/").Replace(@"\\", @"\");
@@ -141,18 +141,6 @@ namespace hassio_onedrive_backup.Sync
                 },
                 flatten: false                
             );
-        }
-
-        private string CalculateFileHash(string path)
-        {
-            using (var hasher = HashAlgorithm.Create(HashAlgo))
-            {
-                using (var fileStream = System.IO.File.OpenRead(path))
-                {
-                    byte[] hash = hasher!.ComputeHash(fileStream);
-                    return BitConverter.ToString(hash).Replace("-", "");
-                }
-            }
         }
 
         private async Task DeleteRemovedFilesFromOneDrive(string remotePath, string localPath)

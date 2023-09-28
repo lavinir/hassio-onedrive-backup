@@ -40,7 +40,7 @@ namespace hassio_onedrive_backup
 #else
 
             Directory.SetCurrentDirectory(addonDirectory);
-            var addonOptions = AddonOptionsManager.ReadOptions();
+            var addonOptions = AddonOptionsManager.ReadOptions(logger);
             string supervisorToken = Environment.GetEnvironmentVariable("SUPERVISOR_TOKEN")!;
             IHassioClient hassIoClient = new HassioClient(supervisorToken, addonOptions.HassAPITimeoutMinutes, logger);
 #endif
