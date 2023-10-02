@@ -14,7 +14,7 @@ map:
   - ssl:rw
   - addons:rw
   - media:rw
-  - share:rw	
+  - share:rw
   - backup:rw
 
 ingress: true
