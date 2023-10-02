@@ -2,10 +2,12 @@
 using hassio_onedrive_backup.Hass.Events;
 using hassio_onedrive_backup.Storage;
 using Newtonsoft.Json;
+using onedrive_backup;
 using onedrive_backup.Contracts;
 using System.Globalization;
 using System.Net.Http.Headers;
 using System.Text;
+using YamlDotNet.Core.Tokens;
 using static hassio_onedrive_backup.Contracts.HassAddonsResponse;
 using static hassio_onedrive_backup.Contracts.HassBackupsResponse;
 
@@ -15,16 +17,31 @@ namespace hassio_onedrive_backup.Hass
     {
         private const string Supervisor_Base_Uri_Str = "http://supervisor";
         private const string Hass_Base_Uri_Str = "http://supervisor/core/api";
-        private readonly HttpClient _httpClient;
+		private readonly string _token;
+		private readonly ConsoleLogger _logger;
+		private HttpClient _httpClient;
 
-		public HassioClient(string token, int hassioTimeout) 
+		public HassioClient(string token, int hassioTimeout, ConsoleLogger logger) 
         {
+            _token = token;
             _httpClient = new HttpClient();
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             _httpClient.Timeout = TimeSpan.FromMinutes(hassioTimeout);
+            _logger = logger; 
         }
 
-        public async Task<bool> DeleteBackupAsync(Backup backup)
+        public void UpdateTimeoutValue(int timeoutMinutes)
+        {
+            if (_httpClient.Timeout.TotalMinutes != timeoutMinutes)
+            {
+                _logger.LogVerbose($"HassIoClient timeout value changed. Creating new httpclient");
+				_httpClient = new HttpClient();
+				_httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _token);
+				_httpClient.Timeout = TimeSpan.FromMinutes(timeoutMinutes);
+			}
+		}
+
+		public async Task<bool> DeleteBackupAsync(Backup backup)
         {
             try
             {
@@ -34,7 +51,7 @@ namespace hassio_onedrive_backup.Hass
             }
             catch (Exception ex)
             {
-                ConsoleLogger.LogError($"Error deleting backup {backup.Slug}. {ex}");
+                _logger.LogError($"Error deleting backup {backup.Slug}. {ex}");
                 return false;
             }
 
@@ -55,9 +72,8 @@ namespace hassio_onedrive_backup.Hass
             return filter != null ? backups.Where(backup => filter(backup)).ToList() : backups.ToList();
         }
 
-        public async Task<bool> CreateBackupAsync(string backupName, bool appendTimestamp = true, bool compressed = true, string? password = null, IEnumerable<string>? folders = null, IEnumerable<string>? addons = null)
+        public async Task<bool> CreateBackupAsync(string backupName, DateTime timeStamp, bool appendTimestamp = true, bool compressed = true, string? password = null, IEnumerable<string>? folders = null, IEnumerable<string>? addons = null)
         {
-            DateTime timeStamp = DateTimeHelper.Instance!.Now;
             const string dt_format = "yyyy-MM-dd-HH-mm";
 
             string? payloadStr;
@@ -81,7 +97,7 @@ namespace hassio_onedrive_backup.Hass
                     NullValueHandling = NullValueHandling.Ignore
                 });
 
-                ConsoleLogger.LogInfo("Starting full local backup");
+                _logger.LogInfo("Starting full local backup");
             }
             // Partial Backup
             else
@@ -102,26 +118,26 @@ namespace hassio_onedrive_backup.Hass
                     NullValueHandling = NullValueHandling.Ignore
                 });
 
-                ConsoleLogger.LogInfo("Starting partial local backup");
+                _logger.LogInfo("Starting partial local backup");
             }
 
             try
             {
                 await _httpClient.PostAsync(uri, new StringContent(payloadStr, Encoding.UTF8, "application/json"));
-                ConsoleLogger.LogInfo("Backup complete");
+                _logger.LogInfo("Backup complete");
             }
             catch (TaskCanceledException tce)
             {
                 if (tce.InnerException is TimeoutException)
                 {
-                    ConsoleLogger.LogError($"Backup request timed out. {tce}");
-                    ConsoleLogger.LogError($"Increase the timeout value in configuration");
+                    _logger.LogError($"Backup request timed out. {tce}");
+                    _logger.LogError($"Increase the timeout value in configuration");
                     return false;
                 }
             }
             catch (Exception ex)
             {
-                ConsoleLogger.LogError($"Failed creating new backup. {ex}");
+                _logger.LogError($"Failed creating new backup. {ex}");
                 return false;
             }
                      
@@ -141,7 +157,7 @@ namespace hassio_onedrive_backup.Hass
             }
             catch (Exception ex)
             {
-                ConsoleLogger.LogError($"Error uploading backup to Home Assistant. {ex}");
+                _logger.LogError($"Error uploading backup to Home Assistant. {ex}");
                 return false;
             }
 
@@ -164,7 +180,7 @@ namespace hassio_onedrive_backup.Hass
             }
             catch (Exception ex)
             {
-                ConsoleLogger.LogError($"Failed sending persistent notification. {ex}");
+                _logger.LogError($"Failed sending persistent notification. {ex}");
             }
         }
 
@@ -190,13 +206,13 @@ namespace hassio_onedrive_backup.Hass
 
         public async Task<string> DownloadBackupAsync(string backupSlug)
         {            
-            ConsoleLogger.LogInfo($"Fetching Local Backup (Slug:{backupSlug})");
+            _logger.LogInfo($"Fetching Local Backup (Slug:{backupSlug})");
             Uri uri = new Uri(Supervisor_Base_Uri_Str + $"/backups/{backupSlug}/download");
             var fileInfo = new FileInfo($"{LocalStorage.TempFolder}/{backupSlug}.tar");
             await using var memStream =  await _httpClient.GetStreamAsync(uri);
             using var fileStream = System.IO.File.Create(fileInfo.FullName);
             await memStream.CopyToAsync(fileStream);
-            ConsoleLogger.LogInfo($"Backup ({backupSlug}) fetched successfully");
+            _logger.LogInfo($"Backup ({backupSlug}) fetched successfully");
             return fileInfo.FullName;
         }
 
@@ -221,5 +237,11 @@ namespace hassio_onedrive_backup.Hass
             var response = await GetJsonResponseAsync<HassAddonInfoResponse>(uri);
             return response;
         }
-    }
+
+        public async Task RestartSelf()
+        {
+			Uri uri = new Uri(Supervisor_Base_Uri_Str + $"/addons/self/restart");
+            _ = await _httpClient.PostAsync(uri, null);
+		}
+	}
 }

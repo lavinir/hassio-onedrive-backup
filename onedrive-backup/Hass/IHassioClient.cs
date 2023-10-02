@@ -1,5 +1,6 @@
 ﻿using hassio_onedrive_backup.Hass.Events;
 using onedrive_backup.Contracts;
+using System.Security.Cryptography;
 using static hassio_onedrive_backup.Contracts.HassAddonsResponse;
 using static hassio_onedrive_backup.Contracts.HassBackupsResponse;
 
@@ -11,7 +12,7 @@ namespace hassio_onedrive_backup.Hass
 
         Task SendPersistentNotificationAsync(string message);
 
-        Task<bool> CreateBackupAsync(string backupName, bool appendTimestamp = true, bool compressed = true, string? password = null, IEnumerable<string>? folders = null, IEnumerable<string>? addons = null);
+        Task<bool> CreateBackupAsync(string backupName, DateTime timeStamp, bool appendTimestamp = true, bool compressed = true, string? password = null, IEnumerable<string>? folders = null, IEnumerable<string>? addons = null);
 
         Task<bool> DeleteBackupAsync(Backup backup);
 
@@ -28,5 +29,9 @@ namespace hassio_onedrive_backup.Hass
         Task<string> GetTimeZoneAsync();
 
         Task PublishEventAsync(OneDriveEvents eventType, string payload = "");
-    }
+		
+        Task RestartSelf();
+
+        void UpdateTimeoutValue(int timeoutMinutes);
+	}
 }

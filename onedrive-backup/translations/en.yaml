@@ -1,7 +1,4 @@
 configuration:
-  recovery_mode:
-    name: Recovery mode
-    description: When this settings is toggled on, the add-on will not perform any backups and sync mode will reverse from OneDrive back to Home Assistant. This will still respect the maximum local backups set and will try to sync back the latest backups that exist in OneDrive while remaining under the set limit.
   local_backup_num_to_keep:
     name: Number of local backups
     description: The maximum amount of backups to keep locally in Home Assistant
@@ -11,6 +8,18 @@ configuration:
   backup_interval_days:
     name: Backup interval (days)
     description: The backup creation frequency in days. For setting a sub-day frequency you can use a number between 0 and 1, so for example if the value here is set to 0.5, the backup frequency will occur every 12 hours.
+  generational_days: 
+    name: Generational backups - Days
+    description: The number of daily backups to keep. This is used to create a daily backup for the specified number of days. 
+  generational_weeks:  
+    name: Generational backups - Weeks
+    description: The number of weekly backups to keep. This is used to create a weekly backup for the specified number of weeks.
+  generational_months:
+    name: Generational backups - Months
+    description: The number of monthly backups to keep. This is used to create a monthly backup for the specified number of months.
+  generational_years:
+    name: Generational backups - Years
+    description: The number of years backups to keep. This is used to create a yearly backup for the specified number of years.
   backup_name:
     name: Backup name
     description: Name to use for the backups created by the add-on.
@@ -63,3 +72,9 @@ configuration:
   log_level:
     name: Log Level
     description: You can opt to see more / less logs by adjusting the verbosity of the addon logs. 
+  enable_anonymous_telemetry:
+    name: Enable Anonymous Telemetry
+    description: Sends anonymous telemetry once a day containing data about which features are enabled in the addon. This helps focus development on relevant features and improve the addon.
+  ignore_allowed_hours_for_file_sync:
+    name: Ignore allowed hours for File Sync
+    description: File syncing is always enabled regardless of the "Allowed Hours" time window for backups

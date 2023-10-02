@@ -2,6 +2,7 @@
 using Azure.Identity;
 using hassio_onedrive_backup.Storage;
 using Microsoft.Graph;
+using onedrive_backup;
 using onedrive_backup.Contracts;
 using onedrive_backup.Graph;
 using System.Reflection;
@@ -18,11 +19,13 @@ namespace hassio_onedrive_backup.Graph
 		private const int DownloadRetryCount = 3;
 		private const int GraphRequestTimeoutMinutes = 2;
 		private const int ChunkSize = (320 * 1024) * 10;
+		private readonly IDateTimeProvider _dateTimeProvider;
+		private readonly ConsoleLogger _logger;
 		private DeviceCodeCredential? _deviceCodeCredential;
 		protected GraphServiceClient? _userClient;
 		private IEnumerable<string> _scopes;
 		private string _clientId;
-        private string _persistentDataPath;
+		private string _persistentDataPath;
 		private HttpClient _downloadHttpClient;
 		private bool? _isAuthenticated = null;
 
@@ -31,10 +34,14 @@ namespace hassio_onedrive_backup.Graph
 		public GraphHelper(
 			IEnumerable<string> scopes,
 			string clientId,
+			IDateTimeProvider dateTimeProvider,
+			ConsoleLogger logger,
 			string persistentDataPath = "")
 		{
 			_scopes = scopes;
 			_clientId = clientId;
+			_dateTimeProvider = dateTimeProvider;
+			_logger = logger;
 			_persistentDataPath = persistentDataPath;
 		}
 
@@ -102,12 +109,12 @@ namespace hassio_onedrive_backup.Graph
 		{
 			try
 			{
-				ConsoleLogger.LogInfo($"Deleting item: {itemPath}");
+				_logger.LogInfo($"Deleting item: {itemPath}");
 				await _userClient.Drive.Special.AppRoot.ItemWithPath(itemPath).Request().DeleteAsync();
 			}
 			catch (Exception ex)
 			{
-				ConsoleLogger.LogError($"Error deleting {itemPath}. {ex}");
+				_logger.LogError($"Error deleting {itemPath}. {ex}");
 				return false;
 			}
 
@@ -133,7 +140,7 @@ namespace hassio_onedrive_backup.Graph
 		{
 			if (File.Exists(filePath) == false)
 			{
-				ConsoleLogger.LogError($"File {filePath} not found");
+				_logger.LogError($"File {filePath} not found");
 				return false;
 			}
 
@@ -158,7 +165,7 @@ namespace hassio_onedrive_backup.Graph
 				double percentage = Math.Round((prog / (double)totalFileLength), 2) * 100;
 				if (percentage - lastShownPercentageHolder.Percentage >= 10 || percentage == 100)
 				{
-					ConsoleLogger.LogVerbose($"Uploaded {percentage}%");
+					_logger.LogVerbose($"Uploaded {percentage}%");
 					lastShownPercentageHolder.Percentage = percentage;
 				}
 				
@@ -174,7 +181,7 @@ namespace hassio_onedrive_backup.Graph
 			{
 				try
 				{
-					ConsoleLogger.LogInfo($"Starting file upload. (Size:{totalFileLength} bytes. Attempt: {uploadAttempt}/{UploadRetryCount})");
+					_logger.LogInfo($"Starting file upload. (Size:{totalFileLength} bytes. Attempt: {uploadAttempt}/{UploadRetryCount})");
 					UploadResult<DriveItem> uploadResult;
 					transferSpeedHelper.Start();
 					if (uploadAttempt > 1)
@@ -190,17 +197,17 @@ namespace hassio_onedrive_backup.Graph
 					await Task.Delay(TimeSpan.FromSeconds(2));
 					if (uploadResult.UploadSucceeded)
 					{
-						ConsoleLogger.LogInfo("Upload completed successfully");
+						_logger.LogInfo("Upload completed successfully");
 						break;
 					}
 					else
 					{
-						ConsoleLogger.LogError("Upload failed");
+						_logger.LogError("Upload failed");
 					}
 				}
 				catch (ServiceException ex)
 				{
-					ConsoleLogger.LogError($"Error uploading: {ex}");
+					_logger.LogError($"Error uploading: {ex}");
 					return false;
 				}
 			}
@@ -224,7 +231,7 @@ namespace hassio_onedrive_backup.Graph
 			}
 			catch (Exception ex)
 			{
-				ConsoleLogger.LogError($"Error getting free space: {ex}");
+				_logger.LogError($"Error getting free space: {ex}");
 				return null;
 			}
 		}
@@ -234,7 +241,7 @@ namespace hassio_onedrive_backup.Graph
 			var item = await _userClient.Drive.Special.AppRoot.ItemWithPath(fileName).Request().GetAsync();
 			if (item.AdditionalData.TryGetValue("@microsoft.graph.downloadUrl", out var downloadUrl) == false)
 			{
-				ConsoleLogger.LogError($"Failed getting file download data. ${fileName}");
+				_logger.LogError($"Failed getting file download data. ${fileName}");
 				return null;
 			}
 
@@ -259,7 +266,7 @@ namespace hassio_onedrive_backup.Graph
 				{
 					if (attempt >= DownloadRetryCount)
 					{
-						ConsoleLogger.LogError($"Failed downloading file {fileName}. {ex}");
+						_logger.LogError($"Failed downloading file {fileName}. {ex}");
 						progressCallback?.Invoke(null);
 						return null;
 					}
@@ -269,7 +276,7 @@ namespace hassio_onedrive_backup.Graph
 			}
 
 			progressCallback?.Invoke(null);
-			ConsoleLogger.LogInfo($"{fileName} downloaded successfully");
+			_logger.LogInfo($"{fileName} downloaded successfully");
 			return fileInfo.FullName;
 		}
 
@@ -313,7 +320,7 @@ namespace hassio_onedrive_backup.Graph
 		{
 			if (File.Exists(PersistentAuthRecordFullPath) == false)
 			{
-				ConsoleLogger.LogWarning("Token cache is empty");
+				_logger.LogWarning("Token cache is empty");
 				return null;
 			}
 
@@ -325,7 +332,7 @@ namespace hassio_onedrive_backup.Graph
 		private Task DeviceCodeBallBackPrompt(DeviceCodeInfo info, CancellationToken ct)
 		{
 			IsAuthenticated = false;
-			ConsoleLogger.LogInfo(info.Message);
+			_logger.LogInfo(info.Message);
 			(AuthUrl, AuthCode) = ExtractAuthParams(info.Message);
 			return Task.FromResult(0);
 		}

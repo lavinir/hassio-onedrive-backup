@@ -1,0 +1,53 @@
+# .NET build and test folders
+/bin/
+/obj/
+/TestResults/
+
+# Visual Studio
+.vscode/
+*.suo
+*.user
+*.sln.docstates
+*.sln.ide
+*.suo
+*.user
+.vs/
+.vsconfig
+.vscode/
+
+# JetBrains Rider
+.idea/
+*.sln.iml
+*.iml
+*.iws
+.idea/
+
+# Test framework specific
+.nunit
+TestResult.xml
+
+# Windows image file caches
+Thumbs.db
+ehthumbs.db
+
+# Folder config file
+Desktop.ini
+
+# Recycle Bin used on file shares
+$RECYCLE.BIN/
+
+# Visual Studio Code workspace files
+.vscode/settings.json
+.vscode/tasks.json
+.vscode/launch.json
+
+# Rider workspace files
+.idea/workspace.xml
+
+# User-specific files
+*.suo
+*.user
+*.userosscache
+*.sln.iml
+*.sln.ide
+*.userprefs

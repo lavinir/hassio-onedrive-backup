@@ -3,54 +3,75 @@ using hassio_onedrive_backup.Graph;
 using hassio_onedrive_backup.Hass;
 using Microsoft.Extensions.FileSystemGlobbing;
 using Microsoft.Graph;
+using onedrive_backup;
+using onedrive_backup.Extensions;
 using onedrive_backup.Graph;
+using onedrive_backup.Sync;
 using System.Collections;
 using System.Diagnostics;
 using System.Security.Cryptography;
 
 namespace hassio_onedrive_backup.Sync
 {
-    internal class SyncManager
+    public class SyncManager
     {
-        private const string HashAlgo = "SHA256";
-        private const string OneDriveFileSyncRootDir = "FileSync";
-        private AddonOptions _addonOptions;
+        public const string OneDriveFileSyncRootDir = "FileSync";
+		private readonly ConsoleLogger _logger;
+		private readonly IDateTimeProvider _dateTimeProvider;
+		private AddonOptions _addonOptions;
         private IGraphHelper _graphHelper;
-        private IHassioClient _hassIoClient;
         private BitArray _allowedHours;
         private HassOnedriveFileSyncEntityState _hassEntityState;
 		private IWebHostEnvironment? _environment;
         private TransferSpeedHelper _transferSpeedHelper;
         private Matcher _fileMatcher;
 
-        public SyncManager(IServiceProvider serviceProvider, BitArray allowedHours, TransferSpeedHelper? transferSpeedHelper)
+        public SyncManager(IServiceProvider serviceProvider, BitArray allowedHours, TransferSpeedHelper? transferSpeedHelper, ConsoleLogger logger, IDateTimeProvider dateTimeProvider)
         {
             _addonOptions = serviceProvider.GetService<AddonOptions>();
             _graphHelper = serviceProvider.GetService<IGraphHelper>();
-            _hassIoClient = serviceProvider.GetService<IHassioClient>();
             _hassEntityState = serviceProvider.GetService<HassOnedriveFileSyncEntityState>();
             _environment = serviceProvider.GetService<IWebHostEnvironment>();
             _transferSpeedHelper = transferSpeedHelper;
             _allowedHours = allowedHours;
             _fileMatcher = new();
-            _fileMatcher.AddIncludePatterns(_addonOptions.SyncPaths);
+            _fileMatcher.AddIncludePatterns(_addonOptions.SyncPaths.Where(path => string.IsNullOrWhiteSpace(path) == false));
+            _logger = logger;
+            _dateTimeProvider = dateTimeProvider;
         }
 
-        public async void SyncLoop(CancellationToken ct)
+        public void UpdateFileMatcherPaths()
         {
+			_fileMatcher = new();
+			_fileMatcher.AddIncludePatterns(_addonOptions.SyncPaths.Where(path => string.IsNullOrWhiteSpace(path) == false));
+		}
+
+		public async void SyncLoop(CancellationToken ct)
+        {
+            _logger.LogVerbose($"Setting up Sync Loop");
             while (true && ct.IsCancellationRequested == false)
             {
                 try
                 {
-                    var now = DateTimeHelper.Instance!.Now;
+                    if (_addonOptions.FileSyncEnabled == false)
+                    {
+						_logger.LogVerbose($"File Sync Disabled..."); //Todo: Remove
+						await Task.Delay(TimeSpan.FromMinutes(5));
+						continue;
+					}
+
+					var now = _dateTimeProvider.Now;
 
                     // Check if we are in the allowed hours
-                    if (_allowedHours[now.Hour] == false)
+                    if (_allowedHours[now.Hour] == false && _addonOptions.IgnoreAllowedHoursForFileSync == false)
                     {
-                        continue;
+                        _logger.LogVerbose($"Skipping syncing (Outside allowed hours)");
+						await Task.Delay(TimeSpan.FromMinutes(5));
+						continue;
                     }
 
-                    _hassEntityState.State = HassOnedriveFileSyncEntityState.FileState.Syncing;
+					_logger.LogVerbose($"Evaulating File Sync Diffs");
+					_hassEntityState.State = HassOnedriveFileSyncEntityState.FileState.Syncing;
                     await _hassEntityState.UpdateBackupEntityInHass();
 
                     var matchingFiles = _fileMatcher.GetResultsInFullPath("/");
@@ -62,7 +83,7 @@ namespace hassio_onedrive_backup.Sync
 						}
 						catch (Exception ex)
                         {
-                            ConsoleLogger.LogError($"Error syncing file {matchingFile}: {ex}");
+                            _logger.LogError($"Error syncing file {matchingFile}: {ex}");
 						}
 					}
 
@@ -73,7 +94,7 @@ namespace hassio_onedrive_backup.Sync
                 }
                 catch (Exception ex)
                 {
-                    ConsoleLogger.LogError($"Error Syncing: {ex}");
+                    _logger.LogError($"Error Syncing: {ex}");
                 }
                 finally
                 {
@@ -89,12 +110,13 @@ namespace hassio_onedrive_backup.Sync
             var fileInfo = new FileInfo(path);
             if (fileInfo.Length == 0)
             {
-                ConsoleLogger.LogWarning($"Skipping 0-byte file: {path}");
+                _logger.LogWarning($"Skipping 0-byte file: {path}");
                 return;
             }
 
-            var now = DateTimeHelper.Instance!.Now;
-            string fileHash = CalculateFileHash(path);
+            _logger.LogVerbose($"Evaluating file: {fileInfo.FullName}");
+            var now = _dateTimeProvider.Now;
+            string fileHash = FileOperationHelper.CalculateFileHash(path);
             var localFileSyncData = new SyncFileData(path, fileHash, fileInfo.Length);
 
             string remotePath = $"/{OneDriveFileSyncRootDir}{path}".Replace("//", "/").Replace(@"\\", @"\");
@@ -111,10 +133,11 @@ namespace hassio_onedrive_backup.Sync
 
             if (requiresUpload == false)
             {
-                return;
+				_logger.LogVerbose($"File: {fileInfo.FullName} up to date. No sync required");
+				return;
             }
             
-            ConsoleLogger.LogInfo($"File {path} out of sync. Starting Upload");
+            _logger.LogInfo($"File {path} out of sync. Starting Upload");
             var uploadSuccessful = await _graphHelper.UploadFileAsync(
                 path, 
                 now, 
@@ -133,18 +156,6 @@ namespace hassio_onedrive_backup.Sync
             );
         }
 
-        private string CalculateFileHash(string path)
-        {
-            using (var hasher = HashAlgorithm.Create(HashAlgo))
-            {
-                using (var fileStream = System.IO.File.OpenRead(path))
-                {
-                    byte[] hash = hasher!.ComputeHash(fileStream);
-                    return BitConverter.ToString(hash).Replace("-", "");
-                }
-            }
-        }
-
         private async Task DeleteRemovedFilesFromOneDrive(string remotePath, string localPath)
         {
             var item = await _graphHelper.GetItemInAppFolderAsync(remotePath);
@@ -153,7 +164,7 @@ namespace hassio_onedrive_backup.Sync
                 return;
             }
 
-            ConsoleLogger.LogVerbose($"Evaulating {remotePath}");
+            _logger.LogVerbose($"Evaulating {remotePath}");
             localPath = Path.Combine(localPath, item.Name);
             if (localPath.StartsWith($"/{OneDriveFileSyncRootDir}"))
             {
@@ -164,7 +175,7 @@ namespace hassio_onedrive_backup.Sync
             {
                 if (System.IO.Directory.Exists(localPath) == false)
                 {
-                    ConsoleLogger.LogInfo($"{localPath} does not exist locally. Deleting from OneDrive");
+                    _logger.LogInfo($"{localPath} does not exist locally. Deleting from OneDrive");
                     await _graphHelper.DeleteItemFromAppFolderAsync(remotePath);
                 }
                 else
@@ -188,17 +199,17 @@ namespace hassio_onedrive_backup.Sync
             {
                 if (System.IO.File.Exists(localPath) == false)
                 {
-                    ConsoleLogger.LogInfo($"{localPath} does not exist locally. Deleting from OneDrive");
+                    _logger.LogInfo($"{localPath} does not exist locally. Deleting from OneDrive");
                     await _graphHelper.DeleteItemFromAppFolderAsync(remotePath);
                 }
-                else if (_fileMatcher.Match(localPath).HasMatches == false)
+                else if (_fileMatcher.Match(localPath.StripLeadingSlash()).HasMatches == false)
                 {
-					ConsoleLogger.LogInfo($"{localPath} not included in Sync Paths. Deleting from OneDrive");
+					_logger.LogInfo($"{localPath} not included in Sync Paths. Deleting from OneDrive");
 					await _graphHelper.DeleteItemFromAppFolderAsync(remotePath);
 				}
                 else
                 {
-                    ConsoleLogger.LogVerbose($"{remotePath} in sync with {localPath}");
+                    _logger.LogVerbose($"{remotePath} in sync with {localPath}");
                 }
 			}
         }

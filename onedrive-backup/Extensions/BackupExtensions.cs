@@ -1,7 +1,10 @@
 ﻿using hassio_onedrive_backup;
 using hassio_onedrive_backup.Contracts;
+using Microsoft.VisualBasic;
+using onedrive_backup.Contracts;
 using onedrive_backup.Hass;
 using onedrive_backup.Models;
+using System.Globalization;
 using static hassio_onedrive_backup.Contracts.HassBackupsResponse;
 using Addon = hassio_onedrive_backup.Contracts.HassAddonsResponse.Addon;
 
@@ -74,11 +77,147 @@ namespace onedrive_backup.Extensions
             };
         }
 
+		public static IList<IBackup> GetDailyGenerations(this IEnumerable<IBackup> backups, int dailyBackupNum, DateTime now)
+		{
+            if (dailyBackupNum < 0)
+            {
+                return Enumerable.Empty<IBackup>().ToList();
+            }
+
+			return backups.Where(backup => now - backup.BackupDate.Date < TimeSpan.FromDays(dailyBackupNum)).ToList();
+		}
+
+		public static IList<IBackup> GetWeeklyGenerations(this IEnumerable<IBackup> backups, int weeklyBackupNum, DayOfWeek firstDayOfWeek, DateTime now)
+		{
+			if (weeklyBackupNum < 0)
+			{
+                return Enumerable.Empty<IBackup>().ToList();
+			}
+
+            List<IBackup> ret = new();
+            var currentWeek = CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(now, CalendarWeekRule.FirstDay, firstDayOfWeek);
+            var currentYear = now.Year;
+            var groupedBackups = backups.GroupBy(backup => CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(backup.BackupDate.Date, CalendarWeekRule.FirstDay, firstDayOfWeek))
+                   .Select(weekGroup => weekGroup.OrderByDescending(backup => backup.BackupDate).First())
+                   .OrderByDescending(backup => backup.BackupDate)
+                   .Take(weeklyBackupNum)
+                   .ToList();
+
+            for (int i=0; i < weeklyBackupNum; i++)
+            {
+				int backupYear = currentYear;
+				var week = currentWeek - i;
+                while (week < 1)
+                {
+                    backupYear--;
+                    week = CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(new DateTime(backupYear, 12, 31), CalendarWeekRule.FirstDay, firstDayOfWeek);
+				}
+
+				var weeklyBackup = groupedBackups.FirstOrDefault(backup => backup.BackupDate.Year == backupYear && CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(backup.BackupDate.Date, CalendarWeekRule.FirstDay, firstDayOfWeek) == week);
+				if (weeklyBackup != null)
+                {
+                    ret.Add(weeklyBackup);
+				}
+                //else
+                //{
+                //    var weekCutoffDate = DateTimeHelper.GetStartDateByWeekAndYear(year, week, firstDayOfWeek);
+                //    var nextCandidateBackup = backups.OrderByDescending(b => b.BackupDate).FirstOrDefault(b => b.BackupDate <= weekCutoffDate);
+                //    if (nextCandidateBackup != null)
+                //    {
+                //        ret.Add(nextCandidateBackup);
+                //    }
+                //}
+			}
+
+            return ret.Distinct().ToList();
+		}
+
+        public static IList<IBackup> GetMonthlyGenerations(this IEnumerable<IBackup> backups, int monthlyBackupNum, DateTime now)
+        {
+			if (monthlyBackupNum < 0)
+			{
+                return Enumerable.Empty<IBackup>().ToList();
+			}
+
+			List<IBackup> ret = new();
+			var currentMonth = now.Month;
+            var currentYear = now.Year;
+			var groupedBackups = backups.GroupBy(backup => backup.BackupDate.Month)
+				  .Select(monthGrp => monthGrp.OrderByDescending(backup => backup.BackupDate).First())
+				  .OrderByDescending(backup => backup.BackupDate)
+				  .Take(monthlyBackupNum)
+				  .ToList();
+
+			for (int i = 0; i < monthlyBackupNum; i++)
+			{
+				var year = currentYear;
+				var month = currentMonth - i;
+                while (month < 1)
+                {
+					month = 12 - Math.Abs(month);
+					year--;
+				}
+
+				var monthlyBackup = groupedBackups.FirstOrDefault(backup => backup.BackupDate.Month == month && backup.BackupDate.Year == year);
+				if (monthlyBackup != null)
+				{
+                    ret.Add(monthlyBackup);
+				}
+    //            else
+    //            {
+    //                var cutoffDate = new DateTime(year, month, 1);
+				//	var nextCandidateBackup = backups.OrderByDescending(b => b.BackupDate).FirstOrDefault(b => b.BackupDate >= cutoffDate);
+				//	if (nextCandidateBackup != null)
+				//	{
+    //                    ret.Add(nextCandidateBackup);
+				//	}
+				//}
+			}
+
+            return ret.Distinct().ToList();
+		}
+
+        public static IList<IBackup> GetYearlyGenerations(this IEnumerable<IBackup> backups, int yearlyBackups , DateTime now)
+        {
+			if (yearlyBackups < 0)
+			{
+                return Enumerable.Empty<IBackup>().ToList();
+			}
+
+			List<IBackup> ret = new();
+			var currentYear = now.Year;
+
+			var groupedBackups = backups.GroupBy(backup => backup.BackupDate.Year)
+			  .Select(yearGrp => yearGrp.OrderByDescending(backup => backup.BackupDate).First())
+			  .OrderByDescending(backup => backup.BackupDate)
+			  .Take(yearlyBackups)
+			  .ToList();
+
+			for (int i = 0; i < yearlyBackups; i++)
+            {
+                var yearlyBackup = groupedBackups.FirstOrDefault(b => b.BackupDate.Year == currentYear - i);
+				if (yearlyBackup != null)
+				{
+                    ret.Add(yearlyBackup);
+				}
+				//else
+				//{
+				//	var cutoffDate = new DateTime(currentYear, 1, 1);
+				//	var nextCandidateBackup = backups.OrderByDescending(b => b.BackupDate).FirstOrDefault(b => b.BackupDate >= cutoffDate);
+				//	if (nextCandidateBackup != null)
+				//	{
+    //                    ret.Add(nextCandidateBackup);
+				//	}
+				//}
+			}
+
+            return ret.Distinct().ToList();
+		}
+
 		private static string GetAddonNameFromSlug(IEnumerable<Addon> addons, string slug)
 		{
-            ConsoleLogger.LogVerbose($"Looking for Addon name matching slug: {slug}. Checking agaisnt {addons.Count()} Addons in cache ");
 			string name = addons.FirstOrDefault(addon => addon.Slug.Equals(slug, StringComparison.OrdinalIgnoreCase))?.Name;
 			return name ?? string.Empty;
-		}
+		}        
 	}
 }

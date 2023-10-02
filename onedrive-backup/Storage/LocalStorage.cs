@@ -4,13 +4,14 @@
     {
         public const string TempFolder = "../tmp";
         private const string oldTempFolder = "./tmp";
+        private static HashSet<Flag> setFlags = new();
 
-        public static void InitializeTempStorage()
+        public static void InitializeTempStorage(ConsoleLogger logger)
         {
             // Legacy cleanup
             if (Directory.Exists(oldTempFolder))
             {
-                ConsoleLogger.LogVerbose($"Deleting deprecated temp storage folder");
+                logger.LogVerbose($"Deleting deprecated temp storage folder");
                 Directory.Delete(oldTempFolder, true);
             }
 
@@ -19,7 +20,7 @@
             {
                 if (Directory.EnumerateFiles($"{TempFolder}").Any())
                 {
-                    ConsoleLogger.LogVerbose("Cleaning up temporary artifcats");
+                    logger.LogVerbose("Cleaning up temporary artifcats");
                 }
 
                 Directory.Delete(TempFolder, true); 
@@ -27,6 +28,24 @@
 
             // (Re)Create temporary directory
             Directory.CreateDirectory(TempFolder);
+        }
+
+        public static bool CheckAndMarkFlag(Flag flag)
+        {
+            string fileName = $"./.{flag}";
+            if (setFlags.Contains(flag) || File.Exists(fileName))
+            {
+                return true;
+            }
+
+            File.Create(fileName);
+            setFlags.Add(flag);
+            return false;        
+        }
+
+        public enum Flag
+        {
+            NativeSettings,
         }
     }
 }

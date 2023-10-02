@@ -1,4 +1,5 @@
 @using hassio_onedrive_backup.Graph;
+@using hassio_onedrive_backup.Storage;
 @inherits LayoutComponentBase
 @inject NavigationManager NavigationManager
 @inject IGraphHelper GraphHelper
@@ -20,6 +21,11 @@
         <div class="nav-item">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
                 Dashboard
+            </NavLink>
+        </div>
+        <div id="settingsNav" class="nav-item">
+            <NavLink class="nav-link" href="settings" Match="NavLinkMatch.All">
+                Settings
             </NavLink>
         </div>
         <div class="nav-item">
@@ -45,6 +51,19 @@
     {
         base.OnInitialized();
         GraphHelper.AuthStatusChangedEventHandler += OnStateChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("initSettingsPopover");
+            if (LocalStorage.CheckAndMarkFlag(LocalStorage.Flag.NativeSettings) == false)
+            {
+                await Task.Delay(1000);
+                await JS.InvokeVoidAsync("showSettingsPopover");
+            }
+        }
     }
 
     private void CopyCodeToClipboard()

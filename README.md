@@ -9,7 +9,7 @@ This addon enables easy Home Assistant backup creation and sync to OneDrive.
 - Set backup creation schedule
 - Syncs backups to OneDrive **(Personal Account only. OneDrive for business not currently supported)**
 - Additional File Sync to OneDrive
-- Supports backup retention for removing older backups
+- Supports standard backup retention / Generational backup mode
 - Supports multiple Home Assistant instances
 - Supports Home Assistant Persistent Notifications 
 - Supports Home Assistant Events
@@ -61,7 +61,22 @@ The maximum amount of backups to keep in OneDrive
 The backup creation frequency in days.
 > For setting a sub-day frequency you can use a number between 0 and 1, so for example if the value here is set to **0.5**, the backup frequency will occur every 12 hours. You should avoid using a value less than 0.083 (~2 hours) as the [current enforced minimum sync interval](#sync_interval_hours) is once an hour.
 
-> **NOTE**: There is a bug in the Home Assistant UI that will light up the value in red (invalid) when you try to use a non whole number here. Ignore this and save the configuration with the value you want.
+### **Generational backups**
+By setting a value for any of the Generational retention periods (days, weeks, months, years) you are changing the default retention policy of keeping the latest backups only.
+> Generational backups only effect retention and not backup creation. You should have your [Backup interval days](#backup-interval-days) set to 1 so that the generational policy has enough available backups to align with the policy.
+
+> Generational backups do not override the maximum number of backups configured (applicable to both local and OneDrive backups). You should make sure the max backup number is enough to accomodate your Generational settings. If Max backups was reached and all backups are needed by the Generational backup settings, backups will be removed to align with the Max Backup settings (deleting the oldest backups first)
+#### **Generational backups - Days**
+Will attempt to keep the latest X days set in **Generational Days** 
+#### **Generational backups - Weeks**
+Will attempt to keep the latest backup from each week, going back X weeks, where X is weeks set in **Generational Weeks**. 
+> Weeks are aligned to week number of year. First day of week is selected based on your Locale. 
+
+#### **Generational backups - Months**
+Will attempt to keep the latest backup from each month, going back X months, where X is the months set in **Generational Months**
+
+#### **Generational backups - Years**
+Will attempt to keep the latest backup from each year, going back X years, where X is the years set in **Generational Years**
 
 ### **Backup name**
 Name to use for the backups created by the add-on.
@@ -70,8 +85,9 @@ Name to use for the backups created by the add-on.
 ### **Monitor all local backups**
 When enabled the add-on will monitor all local backups whether created by the addon or not
 
-### **Ignore Home Assistant Upgrade Backups**
+### **Ignore upgrade backups**
 When enabled, the add-on will ignore backups that are automatically created during upgrades (of Home Assistant / Addons)
+
 ### **Backup password**
 The password to use to protect the backups created and uploaded to OneDrive.
 > You need to toggle the "Show unused optional configuration options" to see it in the Configuration screen.
@@ -137,11 +153,32 @@ sync_paths:
 ### Remove deleted files during File Sync
 When enabled, the FileSync folder on OneDrive will mirror your included [Sync Paths](#file-sync-paths-optional) meaning any 'extra' content that remains in OneDrive will be removed.
 
+### Ignore allowed hours for File Sync
+When enabled, [Allowed Hours](#allowed-hours-optional) will be ignored for File Syncing and allow syncing to occur in all hours (this does **not** effect backups, only File Syncing)
+
 ### Excluded Addons (Optional)
 When enabled, partial backups will be created excluding the addons specified in this list. You need to specify the addon id (slug) in this list. To find the correct slug you can navigate in Home Assistant to **Settings** -> **Addons** and click on an addon. When you are in the addon Info screen you will see the addon slug in the url: ht<area>tps://your.homeassistant.host/hassio/addon/**addonslug**/info
 
 ### Log Level
 You can opt to see more / less logs by adjusting the verbosity of the addon logs. Possible values are (verbose, info, warning, error)
+
+### Enable Anonymous Telemetry
+Sends anonymous telemetry once a day containing data about which features are enabled in the addon. This helps focus development on relevant features and improve the addon.
+
+**What data is sent?**
+A random Guid is generated when you run your addon for the first time (not persisted through uninstall). That is sent along with the following data:
+* File Sync Enabled Flag
+* Generational Backups Enabled Flag
+* Backup Allowed Hours Enabled Flag
+* Instance Name Enabled Flag (The instance name is **NOT** sent)
+* Monitor all Local Backups Enabled Flag
+* Ignore Upgrade Backups Enabled Flag
+* Ignore Allowed Hours for File Sync Enabled Flag
+* Addon Version
+* Notify On Error Enabled Flag
+
+
+
 ## Backup Location in OneDrive
 The add-on has specific permissions to a single folder in your OneDrive known as the **App Folder**. (More details can be found in the [Security and Privacy](#security-and-privacy) section.)
 

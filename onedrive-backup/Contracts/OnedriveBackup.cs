@@ -1,6 +1,8 @@
-﻿namespace hassio_onedrive_backup.Contracts
+﻿using onedrive_backup.Contracts;
+
+namespace hassio_onedrive_backup.Contracts
 {
-    public class OnedriveBackup
+	public class OnedriveBackup : IBackup
     {
         public OnedriveBackup()
         {
@@ -37,5 +39,7 @@
         public IEnumerable<string> Addons { get; set; }
 
         public IEnumerable<string> Folders { get; set; }
-    }
+
+        public BackupTypeDisplayName TypeDisplayName => BackupTypeDisplayName.Online;
+	}
 }
