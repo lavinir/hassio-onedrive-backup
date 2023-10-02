@@ -59,19 +59,11 @@ namespace hassio_onedrive_backup
             }
 
             // Initialize File Sync Manager
-            if (_addonOptions.FileSyncEnabled)
-            {
-				_logger.LogInfo($"File Sync Enabled");
-                var transferSpeedHelper = new TransferSpeedHelper(null);
-                _syncManager = new SyncManager(_serviceProvider, _allowedBackupHours, transferSpeedHelper, _logger, _dateTimeProvider);
-                var tokenSource = new CancellationTokenSource();
-                await _graphHelper.GetAndCacheUserTokenAsync();
-                var fileSyncTask = Task.Run(() => _syncManager.SyncLoop(tokenSource.Token), tokenSource.Token);
-            }
-            else
-            {
-                _logger.LogInfo($"File Sync Disabled");
-            }
+            var transferSpeedHelper = new TransferSpeedHelper(null);
+            _syncManager = new SyncManager(_serviceProvider, _allowedBackupHours, transferSpeedHelper, _logger, _dateTimeProvider);
+            var tokenSource = new CancellationTokenSource();
+            await _graphHelper.GetAndCacheUserTokenAsync();
+            var fileSyncTask = Task.Run(() => _syncManager.SyncLoop(tokenSource.Token), tokenSource.Token);
 
 			while (_enabled)
             {

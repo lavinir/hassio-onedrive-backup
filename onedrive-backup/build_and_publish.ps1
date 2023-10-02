@@ -9,9 +9,10 @@ param(
     [string]$casApiKey
 )
 
-$env:CAS_API_KEY = $casApiKey
-& cas-v1.0.3-windows-amd64.exe login
-
+if ($signImages.IsPresent) {
+    $env:CAS_API_KEY = $casApiKey
+    & cas-v1.0.3-windows-amd64.exe login
+}
 ##################  linux-x64
 Write-Host "Building linux-x64"
 docker build -t "ghcr.io/lavinir/amd64-hassonedrive:$($version)" --build-arg BUILD_ARCH=linux-x64 --build-arg SDK_IMAGE_ARCH_TAG=7.0-alpine --build-arg RUNTIME_IMAGE_ARCH_TAG=7.0.3-alpine3.17-amd64 . 

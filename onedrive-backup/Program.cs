@@ -62,6 +62,7 @@ namespace hassio_onedrive_backup
 				// Add services to the container.
 				builder.Services.AddRazorPages();
 				builder.Services.AddServerSideBlazor();
+				builder.Services.AddSingleton<ConsoleLogger>(logger);
 				builder.Services.AddSingleton(addonOptions);
 				builder.Services.AddSingleton<IHassioClient>(hassIoClient);
 				
@@ -78,7 +79,7 @@ namespace hassio_onedrive_backup
 
 				if (!builder.Environment.IsDevelopment())
 				{
-					// builder.Logging.ClearProviders();
+					builder.Logging.ClearProviders();
 					// builder.Logging.AddConsole();
 				}
 

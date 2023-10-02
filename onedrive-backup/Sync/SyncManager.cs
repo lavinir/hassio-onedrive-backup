@@ -48,19 +48,30 @@ namespace hassio_onedrive_backup.Sync
 
 		public async void SyncLoop(CancellationToken ct)
         {
+            _logger.LogVerbose($"Setting up Sync Loop");
             while (true && ct.IsCancellationRequested == false)
             {
                 try
                 {
-                    var now = _dateTimeProvider.Now;
+                    if (_addonOptions.FileSyncEnabled == false)
+                    {
+						_logger.LogVerbose($"File Sync Disabled..."); //Todo: Remove
+						await Task.Delay(TimeSpan.FromMinutes(5));
+						continue;
+					}
+
+					var now = _dateTimeProvider.Now;
 
                     // Check if we are in the allowed hours
                     if (_allowedHours[now.Hour] == false && _addonOptions.IgnoreAllowedHoursForFileSync == false)
                     {
-                        continue;
+                        _logger.LogVerbose($"Skipping syncing (Outside allowed hours)");
+						await Task.Delay(TimeSpan.FromMinutes(5));
+						continue;
                     }
 
-                    _hassEntityState.State = HassOnedriveFileSyncEntityState.FileState.Syncing;
+					_logger.LogVerbose($"Evaulating File Sync Diffs");
+					_hassEntityState.State = HassOnedriveFileSyncEntityState.FileState.Syncing;
                     await _hassEntityState.UpdateBackupEntityInHass();
 
                     var matchingFiles = _fileMatcher.GetResultsInFullPath("/");
@@ -103,6 +114,7 @@ namespace hassio_onedrive_backup.Sync
                 return;
             }
 
+            _logger.LogVerbose($"Evaluating file: {fileInfo.FullName}");
             var now = _dateTimeProvider.Now;
             string fileHash = FileOperationHelper.CalculateFileHash(path);
             var localFileSyncData = new SyncFileData(path, fileHash, fileInfo.Length);
@@ -121,7 +133,8 @@ namespace hassio_onedrive_backup.Sync
 
             if (requiresUpload == false)
             {
-                return;
+				_logger.LogVerbose($"File: {fileInfo.FullName} up to date. No sync required");
+				return;
             }
             
             _logger.LogInfo($"File {path} out of sync. Starting Upload");

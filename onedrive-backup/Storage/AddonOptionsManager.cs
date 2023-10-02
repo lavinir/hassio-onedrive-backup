@@ -10,16 +10,24 @@ namespace hassio_onedrive_backup.Storage
 {
     internal class AddonOptionsManager
     {
-        public static AddonOptions ReadOptions(ConsoleLogger logger, string path = "settings.json")
+        public static AddonOptions ReadOptions(ConsoleLogger logger, string path = "settings.json", bool suppressLogs = false)
         {
             if (File.Exists(path) == false)
             {
-                logger.LogInfo($"No new settings file. Attempting to restore from legacy configuration");
-                path = "options.json";
+                if (suppressLogs == false)
+                {
+					logger.LogInfo($"No new settings file. Attempting to restore from legacy configuration");
+				}
+
+				path = "options.json";
 
 				if (File.Exists(path) == false)
 				{
-					logger.LogWarning($"No legacy configuration found. Loading default settings");
+                    if (suppressLogs == false)
+                    {
+                        logger.LogWarning($"No legacy configuration found. Loading default settings");
+                    }
+
 					return new AddonOptions();
 				}
 			}

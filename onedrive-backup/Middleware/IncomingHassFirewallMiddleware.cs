@@ -10,21 +10,16 @@ namespace onedrive_backup.Middleware
 		private readonly ConsoleLogger _logger;
 		private const string _allowedIP = "172.30.32.2";
 		
-		public IncomingHassFirewallMiddleware(ConsoleLogger logger)
-		{
-			_logger = logger;
-		}
-
-		public IncomingHassFirewallMiddleware(RequestDelegate next, IHostEnvironment env)
+		public IncomingHassFirewallMiddleware(RequestDelegate next, IHostEnvironment env, ConsoleLogger logger)
 		{
 			_next = next;
 			_env = env;
+			_logger = logger;
 		}
 
 		public async Task InvokeAsync(HttpContext context)
 		{
 			var ip = context.Connection.RemoteIpAddress.MapToIPv4();
-			_logger.LogVerbose($"Source IP: {ip}");
 			if (_env.IsDevelopment() ==false && ip.ToString().Equals(_allowedIP, StringComparison.OrdinalIgnoreCase) == false)
 			{
 				_logger.LogError($"Blocking request from unauthorized source IP : {ip.ToString()}");

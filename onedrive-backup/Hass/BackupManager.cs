@@ -140,7 +140,7 @@ namespace hassio_onedrive_backup.Hass
                 if (_addonOptions.GenerationalBackups)
                 {
                     _logger.LogVerbose("Evaluating Online Generational Backups");
-                    generationalBackupsToDelete = GetGenerationalBackupsForRemoval(onlineBackups.Cast<IBackup>());
+                    generationalBackupsToDelete = GetGenerationalBackupsForRemoval(onlineBackups.Cast<IBackup>(), "OneDrive");
 				}
 
 				int numOfOnlineBackupsToDelete = Math.Max(0, onlineBackups.Count - _addonOptions.MaxOnedriveBackups);
@@ -178,7 +178,7 @@ namespace hassio_onedrive_backup.Hass
 				if (_addonOptions.GenerationalBackups)
 				{
 					_logger.LogVerbose("Evaluating Local Generational Backups");
-					generationalBackupsToDelete = GetGenerationalBackupsForRemoval(LocalBackups.Cast<IBackup>());
+					generationalBackupsToDelete = GetGenerationalBackupsForRemoval(LocalBackups.Cast<IBackup>(), "local");
 				}
 
                 int numOfLocalBackupsToRemove = LocalBackups.Count - _addonOptions.MaxLocalBackups;
@@ -221,7 +221,7 @@ namespace hassio_onedrive_backup.Hass
             }   
         }
 
-		private IEnumerable<IBackup> GetGenerationalBackupsForRemoval(IEnumerable<IBackup> backups)
+		private IEnumerable<IBackup> GetGenerationalBackupsForRemoval(IEnumerable<IBackup> backups, string backupType)
 		{
             var requiredBackups = new HashSet<IBackup>();
             var now = _dateTimeProvider.Now;
@@ -251,9 +251,13 @@ namespace hassio_onedrive_backup.Hass
 			}
 
             var backupsToRemove = backups.Where(backup => requiredBackups.Contains(backup) == false).ToList();
-            _logger.LogInfo($"Found {backupsToRemove.Count} backups that can be removed (Generational Rules)");
-            _logger.LogVerbose($"Potential backups for removal: {string.Join(",", backupsToRemove.Select(backup => $"{backup.Slug} ({backup.BackupDate})"))}");
-            return backupsToRemove;
+            _logger.LogInfo($"Found {backupsToRemove.Count} {backupType} backups that can be removed (Generational Rules)");
+            if (backupsToRemove.Any())
+            {
+				_logger.LogVerbose($"Potential {backupType} backups for removal: {string.Join(",", backupsToRemove.Select(backup => $"{backup.Slug} ({backup.BackupDate})"))}");
+			}
+
+			return backupsToRemove;
 
             // Add Generation Backups to Retention List
 			void AddGenerationBackups(string generationName, Func<IEnumerable<IBackup>> getGenerationalBackups)
@@ -261,7 +265,7 @@ namespace hassio_onedrive_backup.Hass
                 var requiredGenerationBackups = getGenerationalBackups();
 				foreach (var backup in requiredGenerationBackups)
 				{
-					_logger.LogVerbose($"Backup ({backup.Slug} ({backup.BackupDate}) retained for Generational {generationName} policy");
+					_logger.LogVerbose($"Backup ({backup.Slug} ({backup.BackupDate}) retained for Generational {generationName} policy {backupType}");
 					requiredBackups.Add(backup);
 				}
 			}
