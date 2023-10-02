@@ -251,7 +251,7 @@ namespace hassio_onedrive_backup.Hass
 			}
 
             var backupsToRemove = backups.Where(backup => requiredBackups.Contains(backup) == false).ToList();
-            _logger.LogInfo($"Found {backupsToRemove.Count} {backupType} backups that can be removed (Generational Rules)");
+            _logger.LogVerbose($"Found {backupsToRemove.Count} {backupType} backups that can be removed (Generational Rules)");
             if (backupsToRemove.Any())
             {
 				_logger.LogVerbose($"Potential {backupType} backups for removal: {string.Join(",", backupsToRemove.Select(backup => $"{backup.Slug} ({backup.BackupDate})"))}");

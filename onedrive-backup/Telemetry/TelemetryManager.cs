@@ -1,23 +1,16 @@
 ﻿using hassio_onedrive_backup;
 using hassio_onedrive_backup.Contracts;
-using Kusto.Data;
-using Kusto.Data.Common;
-using Kusto.Ingest;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
-using Newtonsoft.Json;
-using System.Runtime.CompilerServices;
-using System.Text;
 
 namespace onedrive_backup.Telemetry
 {
-	public class TelemetryManager
+    public class TelemetryManager
 	{
 		private const string AppInsightsConnection = "InstrumentationKey=039e8125-ce48-4cce-94e4-71527e72214c;IngestionEndpoint=https://westeurope-5.in.applicationinsights.azure.com/;LiveEndpoint=https://westeurope.livediagnostics.monitor.azure.com/";
 		private const string ClientIdPath = ".clientId";
 
-		private KustoConnectionStringBuilder _kcsb;
 		private TelemetryClient _telemetryClient;
 		private Guid _clientId;
 		private readonly ConsoleLogger _logger;
@@ -72,43 +65,6 @@ namespace onedrive_backup.Telemetry
 			{
 				_logger.LogError(e.ToString());
 			}		
-		}
-
-		public async Task SendError(Exception ex)
-		{
-			try
-			{
-				var telemetryMsg = new
-				{
-					clientId = _clientId,
-					Timestamp = DateTime.UtcNow,
-					error = ex.ToString()
-				};
-
-				var serializedMsg = JsonConvert.SerializeObject(telemetryMsg, Formatting.None);
-
-				using var client = KustoIngestFactory.CreateQueuedIngestClient(
-					_kcsb,
-					new QueueOptions { MaxRetries = 2 });
-
-				var ingestionProperties = new KustoIngestionProperties("telemetry", "error")
-				{
-					Format = Kusto.Data.Common.DataSourceFormat.json,
-				};
-
-				await SendToKusto(serializedMsg, client, ingestionProperties);
-
-			}
-			catch (Exception e)
-			{
-				_logger.LogError(e.ToString());
-			}
-		}
-
-		private static async Task SendToKusto(string serializedMsg, IKustoQueuedIngestClient client, KustoIngestionProperties ingestionProperties)
-		{
-			var memoryStream = new MemoryStream(Encoding.UTF8.GetBytes(serializedMsg));
-			var result = await client.IngestFromStreamAsync(memoryStream, ingestionProperties);
 		}
 	}
 }
