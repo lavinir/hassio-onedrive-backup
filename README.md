@@ -48,7 +48,7 @@ After consent has been granted you're good to go. The authentication banner will
     > Alternatively, you can also verify in the logs that authentication has indeed succeeded.
 
 ## Configuration
-All configuration options for the addon can be found in the native **Configuration** section of the addon in Home Assistant. 
+All configuration options for the addon can be found under **Settings** in the addon's Web Interface
 
 ### **Number of local backups**
 The maximum amount of backups to keep locally in Home Assistant
