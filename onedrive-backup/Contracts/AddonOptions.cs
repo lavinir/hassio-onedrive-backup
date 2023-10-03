@@ -147,6 +147,35 @@ namespace hassio_onedrive_backup.Contracts
             handler?.Invoke();
         }
 
+        public void CopyValuesFromInstance(AddonOptions newOptions)
+        {
+            MaxLocalBackups = newOptions.MaxLocalBackups;
+            MaxOnedriveBackups = newOptions.MaxOnedriveBackups;
+            GenerationalDays = newOptions.GenerationalDays;
+            GenerationalWeeks = newOptions.GenerationalWeeks;
+            GenerationalMonths = newOptions.GenerationalMonths;
+            GenerationalYears = newOptions.GenerationalYears;
+            BackupIntervalDays = newOptions.BackupIntervalDays;
+            BackupPassword = newOptions.BackupPassword;
+            BackupName = newOptions.BackupName;
+            MonitorAllLocalBackups = newOptions.MonitorAllLocalBackups;
+            NotifyOnError = newOptions.NotifyOnError;
+            HassAPITimeoutMinutes = newOptions.HassAPITimeoutMinutes;
+            ExcludeMediaFolder = newOptions.ExcludeMediaFolder;
+            ExcludeSSLFolder = newOptions.ExcludeSSLFolder;
+            ExcludeShareFolder = newOptions.ExcludeShareFolder;
+            ExcludeLocalAddonsFolder = newOptions.ExcludeLocalAddonsFolder;
+            BackupAllowedHours = newOptions.BackupAllowedHours;
+            InstanceName = newOptions.InstanceName;
+            SyncPaths = newOptions.SyncPaths;
+            FileSyncRemoveDeleted = newOptions.FileSyncRemoveDeleted;
+            ExcludedAddons = newOptions.ExcludedAddons;
+            LogLevelStr = newOptions.LogLevelStr;
+            IgnoreUpgradeBackups = newOptions.IgnoreUpgradeBackups;
+            EnableAnonymousTelemetry = newOptions.EnableAnonymousTelemetry;
+            IgnoreAllowedHoursForFileSync = newOptions.IgnoreAllowedHoursForFileSync;
+        }
+
 		public bool Equals(AddonOptions? options1, AddonOptions? options2)
 		{
             if (options1 == null && options2 == null)
@@ -201,7 +230,7 @@ namespace hassio_onedrive_backup.Contracts
                 return true;
             }
 
-            if ((obj.GetType() != this.GetType()))
+            if ((obj.GetType() != GetType()))
             {
                 return false;
             }
