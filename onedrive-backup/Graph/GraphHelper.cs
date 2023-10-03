@@ -4,6 +4,7 @@ using hassio_onedrive_backup.Storage;
 using Microsoft.Graph;
 using onedrive_backup;
 using onedrive_backup.Contracts;
+using onedrive_backup.Extensions;
 using onedrive_backup.Graph;
 using System.Reflection;
 using System.Text;
@@ -146,8 +147,8 @@ namespace hassio_onedrive_backup.Graph
 
 			using var fileStream = File.OpenRead(filePath);
 			destinationFileName = destinationFileName ?? (flatten ? Path.GetFileName(filePath) : filePath);
-			// string originalFileName = Path.GetFileNameWithoutExtension(filePath);
-			var uploadSession = await _userClient.Drive.Special.AppRoot.ItemWithPath(destinationFileName).CreateUploadSession(new DriveItemUploadableProperties
+			string sanitizedDestinationFileName = NormalizeDestinationFileName(destinationFileName);
+			var uploadSession = await _userClient.Drive.Special.AppRoot.ItemWithPath(sanitizedDestinationFileName).CreateUploadSession(new DriveItemUploadableProperties
 			{				 
 				Description = description
 			}
@@ -215,7 +216,15 @@ namespace hassio_onedrive_backup.Graph
 			return true;
 		}
 
-		public async Task<OneDriveFreeSpaceData> GetFreeSpaceInGB()
+        private static string NormalizeDestinationFileName(string destinationFileName)
+        {
+            int fileNameIdx = destinationFileName.IndexOf(System.IO.Path.GetFileName(destinationFileName));
+			string destinationFileNameWithoutFileName = destinationFileName.Substring(0, fileNameIdx);
+			string sanitizedFileName = destinationFileName + destinationFileName.SanitizeString();
+			return sanitizedFileName;
+        }
+
+        public async Task<OneDriveFreeSpaceData> GetFreeSpaceInGB()
 		{
 			try
 			{

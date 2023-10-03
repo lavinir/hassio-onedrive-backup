@@ -11,5 +11,19 @@
 
 			return str;
 		}
-	}
+
+        public static string SanitizeString(this string input)
+        {
+            if (string.IsNullOrEmpty(input))
+            {
+                return input; 
+            }
+
+            char[] illegalChars = { '*', ':', '<', '>', '?', '/', '\\', '|' };
+
+            string sanitizedString = new string(input.Select(c => illegalChars.Contains(c) ? '_' : c).ToArray());
+
+            return sanitizedString;
+        }
+    }
 }
