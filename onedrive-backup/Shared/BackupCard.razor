@@ -107,7 +107,7 @@
     [Parameter]
     public BackupModel Backup { get; set; }
 
-    public string BackupTypeColor => Backup.Type.Equals("full", StringComparison.OrdinalIgnoreCase) ? "bg-info" : "bg-secondary";
+    public string BackupTypeColor => Backup.Type.Equals("full", StringComparison.OrdinalIgnoreCase) ? "bg-info" : AddonOptions.DarkMode ? "bg-light text-dark" : "bg-secondary";
 
     private bool detailsDisabled => (Backup.Addons?.Count() > 0 || Backup.Folders?.Count() > 0) ? false : true;
 

@@ -7,7 +7,7 @@
 @inject IJSRuntime JS
 @inject AddonOptions AddonOptions
 
-<div class="container-fluid p-1">
+<div class="container-fluid p-1  @(AddonOptions.DarkMode ? "body-dark-mode": "body-light-mode")">
     @if (GraphHelper.IsAuthenticated == false)
     {
         <div class="alert alert-danger" role="alert" style="padding:1px;margin-bottom:1px;">
@@ -18,20 +18,20 @@
         </div>
     }
 
-    <nav class="navbar navbar-expand-lg">
-        <span class="navbar-brand" href="#">OneDrive Backup</span>
+    <nav class="navbar navbar-expand-lg  @(AddonOptions.DarkMode ? "dark": "")">
+        <span class="navbar-brand @(AddonOptions.DarkMode ? "dark": "")" href="#">OneDrive Backup</span>
         <div class="nav-item">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+            <NavLink class="@navUiStyle" href="" Match="NavLinkMatch.All">
                 Dashboard
             </NavLink>
         </div>
-        <div id="settingsNav" class="nav-item">
-            <NavLink class="nav-link" href="settings" Match="NavLinkMatch.All">
+        <div id="settingsNav" class="nav-item @(AddonOptions.DarkMode ? "dark": "")">
+            <NavLink class="@navUiStyle" href="settings" Match="NavLinkMatch.All">
                 Settings
             </NavLink>
         </div>
-        <div class="nav-item">
-            <NavLink class="nav-link" href="about" Match="NavLinkMatch.All">
+        <div class="nav-item @(AddonOptions.DarkMode ? "dark": "")">
+            <NavLink class="@navUiStyle" href="about" Match="NavLinkMatch.All">
                 About
             </NavLink>
         </div>
@@ -51,6 +51,7 @@
 @code{
 
     private string uiStyle => AddonOptions.DarkMode ? "body-dark-mode" : "body-light-mode";
+    private string navUiStyle => AddonOptions.DarkMode ? "nav-link dark" : "nav-link";
     protected override void OnInitialized()
     {
         base.OnInitialized();
