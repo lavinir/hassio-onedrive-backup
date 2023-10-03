@@ -220,7 +220,8 @@ namespace hassio_onedrive_backup.Graph
         {
             int fileNameIdx = destinationFileName.IndexOf(System.IO.Path.GetFileName(destinationFileName));
 			string destinationFileNameWithoutFileName = destinationFileName.Substring(0, fileNameIdx);
-			string sanitizedFileName = destinationFileName + destinationFileName.SanitizeString();
+			string fileName = Path.GetFileName(destinationFileName);
+			string sanitizedFileName = destinationFileNameWithoutFileName + fileName.SanitizeString();
 			return sanitizedFileName;
         }
 

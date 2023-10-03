@@ -1,11 +1,13 @@
+@using hassio_onedrive_backup.Contracts;
 @using hassio_onedrive_backup.Graph;
 @using hassio_onedrive_backup.Storage;
 @inherits LayoutComponentBase
 @inject NavigationManager NavigationManager
 @inject IGraphHelper GraphHelper
 @inject IJSRuntime JS
+@inject AddonOptions AddonOptions
 
-<div class="container-fluid p-1 pb-5">
+<div class="container-fluid p-1">
     @if (GraphHelper.IsAuthenticated == false)
     {
         <div class="alert alert-danger" role="alert" style="padding:1px;margin-bottom:1px;">
@@ -36,7 +38,7 @@
     </nav>
 </div>
 
-<div class="container" style="padding-bottom: 2rem">
+<div class="container-fluid @uiStyle fullheight" style="padding-bottom: 2rem;margin:0;">
     @Body
 </div>
 
@@ -47,10 +49,13 @@
 </footer>
 
 @code{
+
+    private string uiStyle => AddonOptions.DarkMode ? "body-dark-mode" : "body-light-mode";
     protected override void OnInitialized()
     {
         base.OnInitialized();
         GraphHelper.AuthStatusChangedEventHandler += OnStateChanged;
+        AddonOptions.OnOptionsChanged += OnStateChanged;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

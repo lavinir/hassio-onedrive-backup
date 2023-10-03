@@ -1,5 +1,6 @@
 ﻿@page "/"
 @using Microsoft.AspNetCore.Components.Web
+@using hassio_onedrive_backup.Contracts;
 @using onedrive_backup;
 @using onedrive_backup.Hass;
 @namespace hassio_onedrive_backup.Pages
@@ -21,7 +22,7 @@
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <component type="typeof(HeadOutlet)" render-mode="ServerPrerendered" />
 </head>
-<body style="background: #f4f4f4; background-image: linear-gradient(to bottom, #f4f4f4, #e6e6e6);">
+<body>
     <div id="alertPlaceholder"></div>
     <component type="typeof(App)" render-mode="ServerPrerendered" />
     <div id="blazor-error-ui">
@@ -34,7 +35,6 @@
         <a href="" class="reload">Reload</a>
         <a class="dismiss">🗙</a>
     </div>
-
     <script src="lib/jquery/jquery.slim.min.js"></script>
     <script src="lib/popper.js/umd/popper.min.js"></script>
     <script src="lib/bootstrap/js/bootstrap.min.js"></script>
@@ -42,3 +42,4 @@
     <script src="_framework/blazor.server.js"></script>    
 </body>
 </html>
+

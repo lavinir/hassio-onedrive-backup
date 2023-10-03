@@ -10,13 +10,21 @@
 @inject IJSRuntime JS
 @inject ConsoleLogger Logger
 
-<div class="container">
-    <EditForm Model="@AddonOptions" OnValidSubmit="Save">
+<div class="pt-3 container-fluid fullheight @(AddonOptions.DarkMode ? "body-dark-mode": "body-light-mode")">
+    <EditForm Model="@AddonOptions" OnValidSubmit="Save" class="@(AddonOptions.DarkMode ? "text-white": "text-dark")">
         <DataAnnotationsValidator />
         <h3>General</h3>
+        <div class="mb-3 form-switch">
+            <label class="form-check-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.dark_mode.description">
+                <input type="checkbox" class="form-check-input" role="switch" id="@SettingsReader.Settings.dark_mode.name" @bind="newOptions.DarkMode">
+                @SettingsReader.Settings.dark_mode.name
+            </label>
+        </div>
+
+
         <div class="mb-3">
             <label for="hassApiTimeoutMinutes" class="form-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.hass_api_timeout_minutes.description">@SettingsReader.Settings.hass_api_timeout_minutes.name</label>
-            <input type="number" class="form-control" min="30" id="@SettingsReader.Settings.hass_api_timeout_minutes.name" @bind="newOptions.HassAPITimeoutMinutes" placeholder="30" required>
+            <input type="number" class="form-control @(AddonOptions.DarkMode ? "dark": "")" min="30" id="@SettingsReader.Settings.hass_api_timeout_minutes.name" @bind="newOptions.HassAPITimeoutMinutes" placeholder="30" required>
         </div>
 
 
@@ -65,7 +73,7 @@
                    class="form-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.local_backup_num_to_keep.description">
                 @SettingsReader.Settings.local_backup_num_to_keep.name
             </label>
-            <input type="number" class="form-control" min="0" id="@SettingsReader.Settings.local_backup_num_to_keep.name" placeholder="0" @bind="newOptions.MaxLocalBackups" required>
+            <input type="number" class="form-control @(AddonOptions.DarkMode ? "dark": "")" min="0" id="@SettingsReader.Settings.local_backup_num_to_keep.name" placeholder="0" @bind="newOptions.MaxLocalBackups" required>
         </div>
 
         <div class="mb-3">
@@ -73,57 +81,57 @@
                    class="form-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.onedrive_backup_num_to_keep.description">
                 @SettingsReader.Settings.onedrive_backup_num_to_keep.name
             </label>
-            <input type="number" class="form-control" min="1" id="@SettingsReader.Settings.onedrive_backup_num_to_keep.name" placeholder="1" @bind="newOptions.MaxOnedriveBackups" required>
+            <input type="number" class="form-control @(AddonOptions.DarkMode ? "dark": "")" min="1" id="@SettingsReader.Settings.onedrive_backup_num_to_keep.name" placeholder="1" @bind="newOptions.MaxOnedriveBackups" required>
         </div>
 
         <div class="mb-3">
             <label for="@SettingsReader.Settings.backup_interval_days.name" class="form-label"
                    data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.backup_interval_days.description">@SettingsReader.Settings.backup_interval_days.name</label>
-            <input type="number" min="1" class="form-control" id="@SettingsReader.Settings.backup_interval_days.name" placeholder="1" @bind="newOptions.BackupIntervalDays" required>
+            <input type="number" min="1" class="form-control @(AddonOptions.DarkMode ? "dark": "")" id="@SettingsReader.Settings.backup_interval_days.name" placeholder="1" @bind="newOptions.BackupIntervalDays" required>
         </div>
 
         <div class="mb-3">
             <label for="@SettingsReader.Settings.generational_days.name" class="form-label"
                    data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.generational_days.description">@SettingsReader.Settings.generational_days.name</label>
-            <input type="number" class="form-control" min="0" id="@SettingsReader.Settings.generational_days.name" placeholder="GenDays (Optional)" @bind="newOptions.GenerationalDays">
+            <input type="number" class="form-control @(AddonOptions.DarkMode ? "dark": "")" min="0" id="@SettingsReader.Settings.generational_days.name" placeholder="GenDays (Optional)" @bind="newOptions.GenerationalDays">
         </div>
 
         <div class="mb-3">
             <label for="@SettingsReader.Settings.generational_weeks.name" class="form-label"
                    data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.generational_weeks.description">@SettingsReader.Settings.generational_weeks.name</label>
-            <input type="number" class="form-control" min="0" id="@SettingsReader.Settings.generational_weeks.name" placeholder="GenWeeks (Optional)" @bind="newOptions.GenerationalWeeks">
+            <input type="number" class="form-control @(AddonOptions.DarkMode ? "dark": "")" min="0" id="@SettingsReader.Settings.generational_weeks.name" placeholder="GenWeeks (Optional)" @bind="newOptions.GenerationalWeeks">
         </div>
 
         <div class="mb-3">
             <label for="@SettingsReader.Settings.generational_months.name" class="form-label"
                    data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.generational_months.description">@SettingsReader.Settings.generational_months.name</label>
-            <input type="number" class="form-control" min="0" id="@SettingsReader.Settings.generational_months.name" placeholder="GenMonths (Optional)" @bind="newOptions.GenerationalMonths">
+            <input type="number" class="form-control @(AddonOptions.DarkMode ? "dark": "")" min="0" id="@SettingsReader.Settings.generational_months.name" placeholder="GenMonths (Optional)" @bind="newOptions.GenerationalMonths">
         </div>
 
         <div class="mb-3">
             <label for="@SettingsReader.Settings.generational_years.name" class="form-label"
                    data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.generational_years.description">@SettingsReader.Settings.generational_years.name</label>
-            <input type="number" class="form-control" min="0" id="@SettingsReader.Settings.generational_years.name" placeholder="GenYears (Optional)" @bind="newOptions.GenerationalYears">
+            <input type="number" class="form-control @(AddonOptions.DarkMode ? "dark": "")" min="0" id="@SettingsReader.Settings.generational_years.name" placeholder="GenYears (Optional)" @bind="newOptions.GenerationalYears">
         </div>
 
         <div class="mb-3">
             <label for="@SettingsReader.Settings.backup_name.name" class="form-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.backup_name.description">@SettingsReader.Settings.backup_name.name</label>
-            <input type="text" class="form-control" pattern="[A-Za-z0-9_]+" id="@SettingsReader.Settings.backup_name.name" placeholder="hass_backup" @bind="newOptions.BackupName" required>
+            <input type="text" class="form-control @(AddonOptions.DarkMode ? "dark": "")" pattern="[A-Za-z0-9_]+" id="@SettingsReader.Settings.backup_name.name" placeholder="hass_backup" @bind="newOptions.BackupName" required>
         </div>
 
         <div class="mb-3">
             <label for="@SettingsReader.Settings.backup_instance_name.name" class="form-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.backup_instance_name.description">@SettingsReader.Settings.backup_instance_name.name</label>
-            <input type="text" class="form-control" pattern="[A-Za-z0-9_]+" id="@SettingsReader.Settings.backup_instance_name.name" @bind="newOptions.InstanceName" placeholder="Enter backup instance name (Optional)">
+            <input type="text" class="form-control @(AddonOptions.DarkMode ? "dark": "")" pattern="[A-Za-z0-9_]+" id="@SettingsReader.Settings.backup_instance_name.name" @bind="newOptions.InstanceName" placeholder="Enter backup instance name (Optional)">
         </div>
 
         <div class="mb-3">
             <label for="@SettingsReader.Settings.backup_allowed_hours.name" class="form-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.backup_allowed_hours.description">@SettingsReader.Settings.backup_allowed_hours.name</label>
-            <input type="text" class="form-control" pattern="[0-9,-]+" id="@SettingsReader.Settings.backup_allowed_hours.name" @bind="newOptions.BackupAllowedHours" placeholder="Enter allowed hours (e.g. 1-4) (Optional)">
+            <input type="text" class="form-control @(AddonOptions.DarkMode ? "dark": "")" pattern="[0-9,-]+" id="@SettingsReader.Settings.backup_allowed_hours.name" @bind="newOptions.BackupAllowedHours" placeholder="Enter allowed hours (e.g. 1-4) (Optional)">
         </div>
 
         <div class="mb-3">
             <label for="backupPasswd" class="form-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.backup_passwd.description">@SettingsReader.Settings.backup_passwd.name</label>
-            <input type="password" class="form-control" id="@SettingsReader.Settings.backup_passwd.name" @bind="newOptions.BackupPassword" placeholder="Enter password (Optional)">
+            <input type="password" class="form-control @(AddonOptions.DarkMode ? "dark": "")" id="@SettingsReader.Settings.backup_passwd.name" @bind="newOptions.BackupPassword" placeholder="Enter password (Optional)">
         </div>
 
         <div class="mb-3">
@@ -133,7 +141,7 @@
             {
                 var tmpIdx = idx;
                 <div class="mb-3">
-                    <input type="text" class="form-control" placeholder="Addon Name to exclude (Optional)" value="@AddonOptions.ExcludedAddons[idx]"
+                    <input type="text" class="form-control @(AddonOptions.DarkMode ? "dark": "")" placeholder="Addon Name to exclude (Optional)" value="@AddonOptions.ExcludedAddons[idx]"
                     @onchange="e => UpdateExcludedAddons(e, tmpIdx)" />
                 </div>
             }
@@ -192,7 +200,7 @@
             {
                 var tmpIdx = idx;
                 <div class="mb-3">
-                    <input type="text" class="form-control" placeholder="Enter path (Optional)" value="@AddonOptions.SyncPaths[idx]"
+                    <input type="text" class="form-control @(AddonOptions.DarkMode ? "dark": "")" placeholder="Enter path (Optional)" value="@AddonOptions.SyncPaths[idx]"
                     @onchange="e => UpdateSyncPath(e, tmpIdx)" />
                 </div>
             }
@@ -236,6 +244,7 @@
 
     protected override void OnInitialized()
     {
+        AddonOptions.OnOptionsChanged += TriggerStateChanged;
         newOptions.CopyValuesFromInstance(AddonOptions);
         base.OnInitialized();
     }

@@ -87,6 +87,9 @@ namespace hassio_onedrive_backup.Contracts
 		[JsonProperty("ignore_allowed_hours_for_file_sync")]
 		public bool IgnoreAllowedHoursForFileSync { get; set; } = false;
 
+        [JsonProperty("dark_mode")]
+        public bool DarkMode { get; set; } = false;
+
         [JsonIgnore]
 		public ConsoleLogger.LogLevel LogLevel => LogLevelStr switch
         {
@@ -111,6 +114,9 @@ namespace hassio_onedrive_backup.Contracts
 
         [JsonIgnore]
         public bool GenerationalBackups => GenerationalDays != null || GenerationalWeeks != null || GenerationalMonths != null || GenerationalYears != null;
+
+        [JsonIgnore]
+        public string UI_Display_Mode => DarkMode ? "dark-mode" : "light-mode";
 
         public List<string> IncludedFolderList
         {
@@ -174,6 +180,7 @@ namespace hassio_onedrive_backup.Contracts
             IgnoreUpgradeBackups = newOptions.IgnoreUpgradeBackups;
             EnableAnonymousTelemetry = newOptions.EnableAnonymousTelemetry;
             IgnoreAllowedHoursForFileSync = newOptions.IgnoreAllowedHoursForFileSync;
+            DarkMode = newOptions.DarkMode;
         }
 
 		public bool Equals(AddonOptions? options1, AddonOptions? options2)
