@@ -87,7 +87,7 @@
         <div class="mb-3">
             <label for="@SettingsReader.Settings.backup_interval_days.name" class="form-label"
                    data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.backup_interval_days.description">@SettingsReader.Settings.backup_interval_days.name</label>
-            <input type="number" min="1" class="form-control @(AddonOptions.DarkMode ? "dark": "")" id="@SettingsReader.Settings.backup_interval_days.name" placeholder="1" @bind="newOptions.BackupIntervalDays" required>
+            <input type="number" min="0.1" step="0.1" class="form-control @(AddonOptions.DarkMode ? "dark": "")" id="@SettingsReader.Settings.backup_interval_days.name" placeholder="1" @bind="newOptions.BackupIntervalDays" required>
         </div>
 
         <div class="mb-3">
