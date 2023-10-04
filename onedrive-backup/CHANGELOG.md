@@ -1,9 +1,10 @@
-## v.2.2.1 [October 4th 2023]
+## v2.2.1 [October 4th 2023]
 ### 🆕 Added  
 * Dark Mode support!
 
 ### 🐞 Fixed
 * Uploading backups with unsupported chars in name - The addon will now replace unsupported OneDrive chars with an "_" instead of failing
+* Full backups treated as partial backups by addon
 * Save confirmation fix for invalid settings input
 
 ## v2.2 [October 2nd 2023]
