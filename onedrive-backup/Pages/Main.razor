@@ -9,8 +9,9 @@
 @inject IGraphHelper GraphHelper;
 @inject Orchestrator Orchestrator;
 @inject HassContext HassContext;
+@inject AddonOptions AddonOptions
 
-<div class="pt-3"  style="height:100vh">
+<div class="pt-3 @(AddonOptions.DarkMode ? "body-dark-mode": "body-light-mode")" style="height:100vh;">
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-12 d-flex justify-content-center">
@@ -18,7 +19,7 @@
         </div>
     </div>
 </div>
-<div class="container">
+<div class="container pt-0">
     <div class="row row-cols-1 row-cols-md-3 g-4">
         @foreach (var backup in Backups)
         {
@@ -36,6 +37,7 @@
     protected override void OnInitialized()
     {
         base.OnInitialized();
+        AddonOptions.OnOptionsChanged += OnStateChanged;
         GraphHelper.AuthStatusChangedEventHandler += OnStateChanged;
         Orchestrator.BackupManager.OneDriveBackupsUpdated += OnStateChanged;
         Orchestrator.BackupManager.LocalBackupsUpdated += OnStateChanged;
