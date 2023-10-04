@@ -8,8 +8,8 @@
 @inject IJSRuntime JS
 @inject IDateTimeProvider DateTimeProvider;
 
-<div class="card text-white bg-light mb-3 w-100 h-100" style="min-width: 16rem">
-    <div class="card-header text-dark">
+<div class="card mb-3 w-100 h-100 @(AddonOptions.DarkMode ? "text-white bg-secondary": "text-dark bg-light")" style="min-width: 16rem">
+    <div class="card-header  @(AddonOptions.DarkMode ? "text-light" : "text-dark") ">
         <div class="row">
             <div class="col-8">
                 @**************Add Badges*****************@
@@ -36,9 +36,9 @@
             </div>
         </div>
     </div>
-    <div class="card-body bg-light text-body">
+    <div class="card-body  @(AddonOptions.DarkMode ? "text-white bg-dark": "text-dark bg-light")">
         <h6 class="card-title">@Backup.DisplayName</h6>
-        <h7 class="card-subtitle text-muted">@(Backup.Date)</h7>
+        <h7 class="card-subtitle @(AddonOptions.DarkMode ? "text-white": "text-muted")">@(Backup.Date)</h7>
         @if (Backup.Size > 0)
         {
             <div class="card-text">@Backup.Size MB</div>
@@ -57,7 +57,7 @@
         @*Upload Button*@
         @if (@Backup.Location == BackupModel.BackupLocation.Local)
         {
-            <button type="button" @onclick="UploadBackup" class="btn btn-sm m-1 btn-outline-primary" data-bs-toggle="tooltip" data-bs-title="Upload backup to OneDrive" disabled="@uploading">
+            <button type="button" @onclick="UploadBackup" class="btn btn-sm m-1 @(AddonOptions.DarkMode ? "btn-outline-info": "btn-outline-primary")" data-bs-toggle="tooltip" data-bs-title="Upload backup to OneDrive" disabled="@uploading">
                 @if (uploading)
                 {
                     <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
@@ -73,7 +73,7 @@
         @*Download Button*@
         @if (@Backup.Location == BackupModel.BackupLocation.OneDrive)
         {
-            <button type="button" @onclick="DownloadBackup" class="btn btn-sm m-1 btn-outline-primary" data-bs-toggle="tooltip" data-bs-title="Download Backup to Home Assistant" disabled="@downloading">
+            <button type="button" @onclick="DownloadBackup" class="btn btn-sm m-1 @(AddonOptions.DarkMode ? "btn-outline-info": "btn-outline-primary")" data-bs-toggle="tooltip" data-bs-title="Download Backup to Home Assistant" disabled="@downloading">
                 @if (downloading)
                 {
                     <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
@@ -87,11 +87,11 @@
         }
 
         @*Details Button*@
-        <button type="button" class="btn btn-sm m-1 btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#details-@Backup.Slug" disabled="@detailsDisabled"><span class="oi oi-expand-down" title="Backup details">Details</span></button>
+        <button type="button" class="btn btn-sm m-1 @(AddonOptions.DarkMode ? "btn-outline-info": "btn-outline-primary")" data-bs-toggle="collapse" data-bs-target="#details-@Backup.Slug" disabled="@detailsDisabled"><span class="oi oi-expand-down" title="Backup details">Details</span></button>
 
         @if (transferSpeed > 0)
         {
-            <span class="text-end ms-auto my-auto text-dark">@TransferSpeedText</span>
+            <span class="text-end ms-auto my-auto @(AddonOptions.DarkMode ? "text-white": "text-dark")">@TransferSpeedText</span>
         }
     </div>
 </div>
@@ -107,13 +107,19 @@
     [Parameter]
     public BackupModel Backup { get; set; }
 
-    public string BackupTypeColor => Backup.Type.Equals("full", StringComparison.OrdinalIgnoreCase) ? "bg-info" : "bg-secondary";
+    public string BackupTypeColor => Backup.Type.Equals("full", StringComparison.OrdinalIgnoreCase) ? "bg-info" : AddonOptions.DarkMode ? "bg-light text-dark" : "bg-secondary";
 
     private bool detailsDisabled => (Backup.Addons?.Count() > 0 || Backup.Folders?.Count() > 0) ? false : true;
 
     private string timeAgoText => CalculateTimeAgoText();
 
     private string TransferSpeedText => ViewHelpers.GetSpeedDisplayText(transferSpeed / 1000);
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        AddonOptions.OnOptionsChanged += TriggerStateChanged;
+    }
 
     private string CalculateTimeAgoText()
     {

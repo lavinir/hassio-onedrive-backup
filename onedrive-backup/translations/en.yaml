@@ -78,3 +78,6 @@ configuration:
   ignore_allowed_hours_for_file_sync:
     name: Ignore allowed hours for File Sync
     description: File syncing is always enabled regardless of the "Allowed Hours" time window for backups
+  dark_mode:
+    name: Dark Mode
+    description: Use Dark mode for Addon UI

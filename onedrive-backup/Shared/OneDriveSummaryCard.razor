@@ -10,8 +10,8 @@
 @inject Orchestrator Orchestrator
 @inject IGraphHelper GraphHelper
 
-<div class="card text-white bg-light mb-3 w-100" style="min-width: 16rem">
-	<div class="card-header text-dark">
+<div class="card mb-3 w-100 @(AddonOptions.DarkMode ? "text-white bg-secondary": "text-dark bg-light")" style="min-width: 16rem">
+	<div class="card-header @(AddonOptions.DarkMode ? "text-light" : "text-dark") ">
 		<div class="row">
 			<div class="col d-flex align-items-center">
 				Summary <span class="badge rounded-pill m-1 @SummaryBadgeColor">@SummaryBadgeText</span>
@@ -42,7 +42,7 @@
 			}
 		</div>
 	</div>
-	<div class="card-body bg-light text-body">
+	<div class="card-body  @(AddonOptions.DarkMode ? "bg-dark text-white" : "bg-light text-body")">
 		<div class="row">
 			<div class="col">
 				<span class="card-text">OneDrive Storage</span>
@@ -212,6 +212,7 @@
 		HassOnedriveFileSyncEntityState.PropertyChanged += TriggerStateChanged;
 		Orchestrator.BackupManager.OneDriveBackupsUpdated += TriggerStateChanged;
 		Orchestrator.BackupManager.LocalBackupsUpdated += TriggerStateChanged;
+		AddonOptions.OnOptionsChanged += TriggerStateChanged;
 	}
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)

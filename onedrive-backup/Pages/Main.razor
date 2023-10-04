@@ -6,10 +6,11 @@
 @using onedrive_backup.Hass;
 @using onedrive_backup.Models;
 @using static hassio_onedrive_backup.Contracts.HassBackupsResponse;
-@inject IGraphHelper GraphHelper
-@inject Orchestrator Orchestrator
+@inject IGraphHelper GraphHelper;
+@inject Orchestrator Orchestrator;
 @inject HassContext HassContext;
 
+<div class="pt-3"  style="height:100vh">
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-12 d-flex justify-content-center">
@@ -27,7 +28,7 @@
         }
     </div>
 </div>
-
+</div>
 @code
 {
     private List<BackupModel> Backups => GetBackupModels();
@@ -41,7 +42,7 @@
     }
 
     private List<BackupModel> GetBackupModels()
-    {        
+    {
         var ret = new List<BackupModel>();
         var _localBackups = Orchestrator.BackupManager.LocalBackups?.Select(backup => backup.ToBackupModel(HassContext)) ?? Enumerable.Empty<BackupModel>();
         var _onedriveBackups = Orchestrator.BackupManager.OnlineBackups?.Select(backup => backup.ToBackupModel(HassContext)) ?? Enumerable.Empty<BackupModel>();

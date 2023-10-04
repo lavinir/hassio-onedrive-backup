@@ -57,3 +57,39 @@ footer {
     padding: 0.3rem 0.8rem; /* Adjusted padding */
     border-radius: 20px; /* Adjusted border-radius for a rounded "pill" shape */
 }
+
+/* Styles applied when the "dark" class is present on the element */
+::deep nav.navbar.dark {
+    box-shadow: 0px 2px 6px rgba(255, 255, 255, 0.05);
+    background-color: #333;
+}
+
+    ::deep nav.navbar .nav-link.dark {
+        color: #fff;
+        font-size: 16px;
+        font-weight: 500;
+        text-transform: uppercase;
+        padding: 16px;
+        border-bottom: 2px solid transparent;
+        transition: border-color 0.3s ease;
+    }
+
+        ::deep nav.navbar .dark.nav-link:hover {
+            color: #0066CC;
+        }
+
+        ::deep nav.navbar .dark.nav-link.active {
+            color: #0066CC;
+            border-bottom-color: #0066CC;
+        }
+
+/* Styles applied when the "dark" class is present on the element */
+.dark.navbar-brand {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #333;
+    background-color: #3498db; /* Subtle blue background color */
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+}
+

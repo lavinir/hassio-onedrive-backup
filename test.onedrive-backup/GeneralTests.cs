@@ -1,5 +1,6 @@
 ﻿using hassio_onedrive_backup.Contracts;
 using Newtonsoft.Json;
+using onedrive_backup.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -66,6 +67,25 @@ namespace test.onedrive_backup
 			}
 		}
 
+		[TestMethod]
+		public void SanitizedStringTests()
+		{
+			var dataSet = new Dictionary<string, string>
+			{
+                { "hass:backup:123.tar", "hass_backup_123.tar" },
+                { "hass:backup*123.tar", "hass_backup_123.tar" },
+                { "hass<backup*123.tar", "hass_backup_123.tar" },
+                { "hass>backup??123.tar", "hass_backup__123.tar" },
+                { "hass<backup*123//.tar", "hass_backup_123__.tar" },
+                { "hass<backup*123||.tar", "hass_backup_123__.tar" },
+                { "hass<backup*123\\.tar", "hass_backup_123_.tar" }
+			};
+
+			foreach (var ds in dataSet)
+			{
+				Assert.IsTrue(ds.Value.Equals(ds.Key.SanitizeString()), $"Original: {ds.Key}. Sanitized: {ds.Key.SanitizeString()}. Expected: {ds.Value}");
+			}
+		}
 
 		private IEnumerable<string> GetAddonOptionsProperties()
 		{

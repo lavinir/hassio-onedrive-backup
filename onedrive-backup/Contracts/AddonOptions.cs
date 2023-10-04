@@ -8,7 +8,7 @@ namespace hassio_onedrive_backup.Contracts
 {
     public class AddonOptions : IEqualityComparer<AddonOptions>
     {
-        public const string AddonVersion = "2.2";
+        public const string AddonVersion = "2.2.1";
 
         public event Action OnOptionsChanged;
 
@@ -87,6 +87,9 @@ namespace hassio_onedrive_backup.Contracts
 		[JsonProperty("ignore_allowed_hours_for_file_sync")]
 		public bool IgnoreAllowedHoursForFileSync { get; set; } = false;
 
+        [JsonProperty("dark_mode")]
+        public bool DarkMode { get; set; } = false;
+
         [JsonIgnore]
 		public ConsoleLogger.LogLevel LogLevel => LogLevelStr switch
         {
@@ -104,13 +107,16 @@ namespace hassio_onedrive_backup.Contracts
         public string BackupNameSafe => string.IsNullOrEmpty(BackupName) ? "hass_backup" : BackupName;
 
         [JsonIgnore]
-        public bool IsPartialBackup => ExcludeLocalAddonsFolder || ExcludeMediaFolder || ExcludeShareFolder || ExcludeSSLFolder || ExcludedAddons.Any();
+        public bool IsPartialBackup => ExcludeLocalAddonsFolder || ExcludeMediaFolder || ExcludeShareFolder || ExcludeSSLFolder || ExcludedAddons.Where(addon => string.IsNullOrWhiteSpace(addon) == false).Any();
 
         [JsonIgnore]
         public bool FileSyncEnabled => SyncPaths != null && SyncPaths.Where(sp => string.IsNullOrWhiteSpace(sp) == false).Any();
 
         [JsonIgnore]
         public bool GenerationalBackups => GenerationalDays != null || GenerationalWeeks != null || GenerationalMonths != null || GenerationalYears != null;
+
+        [JsonIgnore]
+        public string UI_Display_Mode => DarkMode ? "dark-mode" : "light-mode";
 
         public List<string> IncludedFolderList
         {
@@ -145,6 +151,36 @@ namespace hassio_onedrive_backup.Contracts
         {
             var handler = OnOptionsChanged;
             handler?.Invoke();
+        }
+
+        public void CopyValuesFromInstance(AddonOptions newOptions)
+        {
+            MaxLocalBackups = newOptions.MaxLocalBackups;
+            MaxOnedriveBackups = newOptions.MaxOnedriveBackups;
+            GenerationalDays = newOptions.GenerationalDays;
+            GenerationalWeeks = newOptions.GenerationalWeeks;
+            GenerationalMonths = newOptions.GenerationalMonths;
+            GenerationalYears = newOptions.GenerationalYears;
+            BackupIntervalDays = newOptions.BackupIntervalDays;
+            BackupPassword = newOptions.BackupPassword;
+            BackupName = newOptions.BackupName;
+            MonitorAllLocalBackups = newOptions.MonitorAllLocalBackups;
+            NotifyOnError = newOptions.NotifyOnError;
+            HassAPITimeoutMinutes = newOptions.HassAPITimeoutMinutes;
+            ExcludeMediaFolder = newOptions.ExcludeMediaFolder;
+            ExcludeSSLFolder = newOptions.ExcludeSSLFolder;
+            ExcludeShareFolder = newOptions.ExcludeShareFolder;
+            ExcludeLocalAddonsFolder = newOptions.ExcludeLocalAddonsFolder;
+            BackupAllowedHours = newOptions.BackupAllowedHours;
+            InstanceName = newOptions.InstanceName;
+            SyncPaths = newOptions.SyncPaths;
+            FileSyncRemoveDeleted = newOptions.FileSyncRemoveDeleted;
+            ExcludedAddons = newOptions.ExcludedAddons;
+            LogLevelStr = newOptions.LogLevelStr;
+            IgnoreUpgradeBackups = newOptions.IgnoreUpgradeBackups;
+            EnableAnonymousTelemetry = newOptions.EnableAnonymousTelemetry;
+            IgnoreAllowedHoursForFileSync = newOptions.IgnoreAllowedHoursForFileSync;
+            DarkMode = newOptions.DarkMode;
         }
 
 		public bool Equals(AddonOptions? options1, AddonOptions? options2)
@@ -201,7 +237,7 @@ namespace hassio_onedrive_backup.Contracts
                 return true;
             }
 
-            if ((obj.GetType() != this.GetType()))
+            if ((obj.GetType() != GetType()))
             {
                 return false;
             }

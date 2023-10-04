@@ -1,6 +1,16 @@
 ﻿h3 {
-    margin-top: 20px;
+/*    margin-top: 20px;*/
     color: #007bff; /* Change header color to blue */
     border-bottom: 2px solid #007bff; /* Add a bottom border for emphasis */
     padding-bottom: 10px; /* Add some spacing below the header */
 }
+
+input.dark {
+    background-color: #333; /* Background color for the input */
+    color: #fff; /* Text color */
+
+}
+
+    input.dark::placeholder {
+        color:lightgray;
+    }

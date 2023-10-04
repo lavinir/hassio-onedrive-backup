@@ -177,7 +177,8 @@ A random Guid is generated when you run your addon for the first time (not persi
 * Addon Version
 * Notify On Error Enabled Flag
 
-
+### Dark Mode
+Use Dark mode for Addon UI
 
 ## Backup Location in OneDrive
 The add-on has specific permissions to a single folder in your OneDrive known as the **App Folder**. (More details can be found in the [Security and Privacy](#security-and-privacy) section.)
