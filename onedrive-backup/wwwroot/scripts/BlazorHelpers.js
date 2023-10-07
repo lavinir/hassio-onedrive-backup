@@ -41,6 +41,10 @@ function copyToClipboard(txt) {
     navigator.clipboard.writeText(txt);
 }
 
+function scrollToTop() {
+    document.documentElement.scrollTop = 0;
+}
+
 function showAlert(title, message, type, linkUrl, linkCaption, message2) {
     const alertPlaceholder = document.getElementById('alertPlaceholder');
     const wrapper = document.createElement('div')

@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using System.Security.Principal;
 using System.Text.Json.Serialization;
@@ -61,7 +62,8 @@ namespace hassio_onedrive_backup.Contracts
         public bool ExcludeLocalAddonsFolder { get; set; }
 
         [JsonProperty("backup_allowed_hours")]
-        public string? BackupAllowedHours { get; set; }
+		[RegularExpression(@"^[0-9,-]+$", ErrorMessage = "Backup Allowed Hours contains invalid characters.")]
+		public string? BackupAllowedHours { get; set; }
 
         [JsonProperty("backup_instance_name")]
         public string? InstanceName { get; set; }
@@ -195,7 +197,7 @@ namespace hassio_onedrive_backup.Contracts
                 return false;
             }
 
-			bool check = 
+            bool check =
                 options1.MaxLocalBackups == options2.MaxLocalBackups &&
                 options1.MaxOnedriveBackups == options2.MaxOnedriveBackups &&
                 options1.GenerationalDays == options2.GenerationalDays &&
@@ -220,7 +222,8 @@ namespace hassio_onedrive_backup.Contracts
                 options1.LogLevelStr == options2.LogLevelStr &&
                 options1.IgnoreUpgradeBackups == options2.IgnoreUpgradeBackups &&
                 options1.EnableAnonymousTelemetry == options2.EnableAnonymousTelemetry &&
-                options1.IgnoreAllowedHoursForFileSync == options2.IgnoreAllowedHoursForFileSync;
+                options1.IgnoreAllowedHoursForFileSync == options2.IgnoreAllowedHoursForFileSync &&
+                options1.DarkMode == options2.DarkMode;
 
             return check;
 		}
@@ -243,32 +246,33 @@ namespace hassio_onedrive_backup.Contracts
             }
 
             var options = obj as AddonOptions;
-			bool check =
-	            options!.MaxLocalBackups == MaxLocalBackups &&
-	            options.MaxOnedriveBackups == MaxOnedriveBackups &&
-	            options.GenerationalDays == GenerationalDays &&
-	            options.GenerationalWeeks == GenerationalWeeks &&
-	            options.GenerationalMonths == GenerationalMonths &&
-	            options.GenerationalYears == GenerationalYears &&
-	            options.BackupIntervalDays == BackupIntervalDays &&
-	            options.BackupPassword == BackupPassword &&
-	            options.BackupName == BackupName &&
-	            options.MonitorAllLocalBackups == MonitorAllLocalBackups &&
-	            options.NotifyOnError == NotifyOnError &&
-	            options.HassAPITimeoutMinutes == HassAPITimeoutMinutes &&
-	            options.ExcludeMediaFolder == ExcludeMediaFolder &&
-	            options.ExcludeSSLFolder == ExcludeSSLFolder &&
-	            options.ExcludeShareFolder == ExcludeShareFolder &&
-	            options.ExcludeLocalAddonsFolder == ExcludeLocalAddonsFolder &&
-	            options.BackupAllowedHours == BackupAllowedHours &&
-	            options.InstanceName == InstanceName &&
-	            options.SyncPaths.SequenceEqual(SyncPaths) &&
-	            options.FileSyncRemoveDeleted == FileSyncRemoveDeleted &&
-	            options.ExcludedAddons.SequenceEqual(ExcludedAddons) &&
-	            options.LogLevelStr == LogLevelStr &&
-	            options.IgnoreUpgradeBackups == IgnoreUpgradeBackups &&
-	            options.EnableAnonymousTelemetry == EnableAnonymousTelemetry &&
-	            options.IgnoreAllowedHoursForFileSync == IgnoreAllowedHoursForFileSync;
+            bool check =
+                options!.MaxLocalBackups == MaxLocalBackups &&
+                options.MaxOnedriveBackups == MaxOnedriveBackups &&
+                options.GenerationalDays == GenerationalDays &&
+                options.GenerationalWeeks == GenerationalWeeks &&
+                options.GenerationalMonths == GenerationalMonths &&
+                options.GenerationalYears == GenerationalYears &&
+                options.BackupIntervalDays == BackupIntervalDays &&
+                options.BackupPassword == BackupPassword &&
+                options.BackupName == BackupName &&
+                options.MonitorAllLocalBackups == MonitorAllLocalBackups &&
+                options.NotifyOnError == NotifyOnError &&
+                options.HassAPITimeoutMinutes == HassAPITimeoutMinutes &&
+                options.ExcludeMediaFolder == ExcludeMediaFolder &&
+                options.ExcludeSSLFolder == ExcludeSSLFolder &&
+                options.ExcludeShareFolder == ExcludeShareFolder &&
+                options.ExcludeLocalAddonsFolder == ExcludeLocalAddonsFolder &&
+                options.BackupAllowedHours == BackupAllowedHours &&
+                options.InstanceName == InstanceName &&
+                options.SyncPaths.SequenceEqual(SyncPaths) &&
+                options.FileSyncRemoveDeleted == FileSyncRemoveDeleted &&
+                options.ExcludedAddons.SequenceEqual(ExcludedAddons) &&
+                options.LogLevelStr == LogLevelStr &&
+                options.IgnoreUpgradeBackups == IgnoreUpgradeBackups &&
+                options.EnableAnonymousTelemetry == EnableAnonymousTelemetry &&
+                options.IgnoreAllowedHoursForFileSync == IgnoreAllowedHoursForFileSync &&
+                options.DarkMode == DarkMode;
 
 
             return check;
@@ -303,6 +307,7 @@ namespace hassio_onedrive_backup.Contracts
 				hashCode = (hashCode * 23) + IgnoreUpgradeBackups.GetHashCode();
 				hashCode = (hashCode * 23) + EnableAnonymousTelemetry.GetHashCode();
 				hashCode = (hashCode * 23) + IgnoreAllowedHoursForFileSync.GetHashCode();
+				hashCode = (hashCode * 23) + DarkMode.GetHashCode();
 
 				hashCode = SyncPaths.Aggregate(hashCode, (current, path) => current ^ path.GetHashCode());
 				hashCode = ExcludedAddons.Aggregate(hashCode, (current, addon) => current ^ addon.GetHashCode());
