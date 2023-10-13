@@ -130,8 +130,7 @@ namespace hassio_onedrive_backup.Hass
             {
                 if (tce.InnerException is TimeoutException)
                 {
-                    _logger.LogError($"Backup request timed out. {tce}");
-                    _logger.LogError($"Increase the timeout value in configuration");
+                    _logger.LogError($"Backup request timed out (Increase the Hass API timeout in settings to fix). {tce}");
                     return false;
                 }
             }
