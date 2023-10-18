@@ -104,7 +104,7 @@ namespace hassio_onedrive_backup
         public void Stop()
         {
             _enabled = false;
-        }o
+        }
 
         private void OnOptionsChanged()
         {
