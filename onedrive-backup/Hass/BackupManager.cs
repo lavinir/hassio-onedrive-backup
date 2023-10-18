@@ -81,7 +81,7 @@ namespace hassio_onedrive_backup.Hass
                 {
                     if (_allowedHours[now.Hour] == false)
                     {
-                        _logger.LogWarning("Not performing backup outside allowed times");
+                        _logger.LogVerbose("Not performing backup outside allowed times");
                     }
                     else
                     {
