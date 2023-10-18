@@ -11,8 +11,10 @@
 @inject ConsoleLogger Logger
 
 <div class="pt-3 container-fluid fullheight @(AddonOptions.DarkMode ? "body-dark-mode": "body-light-mode")">
-    <EditForm Model="@AddonOptions" OnValidSubmit="Save" class="@(AddonOptions.DarkMode ? "text-white": "text-dark")">
+    <EditForm Model="@AddonOptions" OnValidSubmit="Save" OnInvalidSubmit="InvalidSubmit" class="@(AddonOptions.DarkMode ? "text-white": "text-dark")">
         <DataAnnotationsValidator />
+        @*<ValidationSummary />*@
+
         <h3>General</h3>
         <div class="mb-3 form-switch">
             <label class="form-check-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.dark_mode.description">
@@ -116,17 +118,17 @@
 
         <div class="mb-3">
             <label for="@SettingsReader.Settings.backup_name.name" class="form-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.backup_name.description">@SettingsReader.Settings.backup_name.name</label>
-            <input type="text" class="form-control @(AddonOptions.DarkMode ? "dark": "")" pattern="[A-Za-z0-9_]+" id="@SettingsReader.Settings.backup_name.name" placeholder="hass_backup" @bind="newOptions.BackupName" required>
+            <input type="text" class="form-control @(AddonOptions.DarkMode ? "dark": "")" pattern="[A\-Za\-z0\-9\_]+" id="@SettingsReader.Settings.backup_name.name" placeholder="hass_backup" @bind="newOptions.BackupName" required>
         </div>
 
         <div class="mb-3">
             <label for="@SettingsReader.Settings.backup_instance_name.name" class="form-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.backup_instance_name.description">@SettingsReader.Settings.backup_instance_name.name</label>
-            <input type="text" class="form-control @(AddonOptions.DarkMode ? "dark": "")" pattern="[A-Za-z0-9_]+" id="@SettingsReader.Settings.backup_instance_name.name" @bind="newOptions.InstanceName" placeholder="Enter backup instance name (Optional)">
+            <input type="text" class="form-control @(AddonOptions.DarkMode ? "dark": "")" pattern="[A\-Za\-z0\-9\_]+" id="@SettingsReader.Settings.backup_instance_name.name" @bind="newOptions.InstanceName" placeholder="Enter backup instance name (Optional)">
         </div>
 
         <div class="mb-3">
             <label for="@SettingsReader.Settings.backup_allowed_hours.name" class="form-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.backup_allowed_hours.description">@SettingsReader.Settings.backup_allowed_hours.name</label>
-            <input type="text" class="form-control @(AddonOptions.DarkMode ? "dark": "")" pattern="[0-9,-]+" id="@SettingsReader.Settings.backup_allowed_hours.name" @bind="newOptions.BackupAllowedHours" placeholder="Enter allowed hours (e.g. 1-4) (Optional)">
+            <input type="text" class="form-control @(AddonOptions.DarkMode ? "dark": "")" pattern="[0-9,\-]+" id="@SettingsReader.Settings.backup_allowed_hours.name" @bind="newOptions.BackupAllowedHours" placeholder="Enter allowed hours (e.g. 1-4) (Optional)">
         </div>
 
         <div class="mb-3">
@@ -258,15 +260,15 @@
             await JS.InvokeVoidAsync("hideSettingsPopover");
         }
 
-        if (string.IsNullOrWhiteSpace(AddonOptions.SyncPaths.LastOrDefault()) == false || AddonOptions.SyncPaths.Any() == false)
+        if (string.IsNullOrWhiteSpace(newOptions.SyncPaths.LastOrDefault()) == false || newOptions.SyncPaths.Any() == false)
         {
-            AddonOptions.SyncPaths.Add(string.Empty);
+            newOptions.SyncPaths.Add(string.Empty);
             TriggerStateChanged();
         }
 
-        if (string.IsNullOrWhiteSpace(AddonOptions.ExcludedAddons.LastOrDefault()) == false || AddonOptions.ExcludedAddons.Any() == false)
+        if (string.IsNullOrWhiteSpace(newOptions.ExcludedAddons.LastOrDefault()) == false || newOptions.ExcludedAddons.Any() == false)
         {
-            AddonOptions.ExcludedAddons.Add(string.Empty);
+            newOptions.ExcludedAddons.Add(string.Empty);
             TriggerStateChanged();
         }
     }
@@ -280,20 +282,25 @@
         TriggerStateChanged();
     }
 
+    private async Task InvalidSubmit()
+    {
+        await JS.InvokeVoidAsync("scrollToTop");
+    }
+
     private void UpdateSyncPath(ChangeEventArgs e, int index)
     {
         var val = e.Value.ToString();
-        AddonOptions.SyncPaths[index] = val;
+        newOptions.SyncPaths[index] = val;
     }
 
     private void UpdateExcludedAddons(ChangeEventArgs e, int index)
     {
-        AddonOptions.ExcludedAddons[index] = e.Value.ToString();
+        newOptions.ExcludedAddons[index] = e.Value.ToString();
     }
 
     private void LogLevelChanged(ChangeEventArgs e)
     {
-        AddonOptions.LogLevelStr = e.Value.ToString();
+        newOptions.LogLevelStr = e.Value.ToString();
     }
 
     private async void TriggerStateChanged()

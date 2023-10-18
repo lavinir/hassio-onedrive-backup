@@ -14,22 +14,30 @@ namespace hassio_onedrive_backup
                 return allowedHours;
             }
 
-            var sections = allowedHoursExpression.Split(',', StringSplitOptions.RemoveEmptyEntries);
-            foreach (string section in sections)
+            try
             {
-                string fromStr;
-                string toStr;
-
-                fromStr = section.StartsWith('-') ? "0" : section.Split('-').FirstOrDefault(s => string.IsNullOrWhiteSpace(s) == false, "0");
-                toStr = section.EndsWith('-') ? "23" : section.Split('-').LastOrDefault(s => string.IsNullOrWhiteSpace(s) == false, "23");
-
-                int from = int.Parse(fromStr);
-                int to = int.Parse(toStr);
-
-                for (int i = from; i <= to; i++)
+                var sections = allowedHoursExpression.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                foreach (string section in sections)
                 {
-                    allowedHours.Set(i, true);
+                    string fromStr;
+                    string toStr;
+
+                    fromStr = section.StartsWith('-') ? "0" : section.Split('-').FirstOrDefault(s => string.IsNullOrWhiteSpace(s) == false, "0");
+                    toStr = section.EndsWith('-') ? "23" : section.Split('-').LastOrDefault(s => string.IsNullOrWhiteSpace(s) == false, "23");
+
+                    int from = int.Parse(fromStr);
+                    int to = int.Parse(toStr);
+
+                    for (int i = from; i <= to; i++)
+                    {
+                        allowedHours.Set(i, true);
+                    }
                 }
+
+            }
+            catch (Exception ex)
+            {
+                allowedHours.SetAll(true);
             }
 
             return allowedHours;
