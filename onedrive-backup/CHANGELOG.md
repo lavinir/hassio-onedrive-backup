@@ -1,3 +1,10 @@
+## v2.2.4 [November 10th 2023]
+### 🐞 Fixed
+* Allowed hours requires restart - Fixed a bug where changing the allowed hours wouldn't take effect until addon was restarted.
+* Dark Mode - Fixed some display issues with dark mode
+* Small UI changes
+
+
 ## v2.2.3 [October 18th 2023]
 ### 🐞 Fixed
 * Settings Binding Issues - Fixed bugs where settings were displayed / saved incorrectly

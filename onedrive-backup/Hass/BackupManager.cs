@@ -39,10 +39,10 @@ namespace hassio_onedrive_backup.Hass
             _hassEntityState = serviceProvider.GetService<HassOnedriveEntityState>();
             _transferSpeedHelper = transferSpeedHelper;
             _hassContext = serviceProvider.GetService<HassContext>();
-            _allowedHours = TimeRangeHelper.GetAllowedHours(_addonOptions.BackupAllowedHours);
             _logger = serviceProvider.GetService<ConsoleLogger>();
             _dateTimeProvider = serviceProvider.GetService<IDateTimeProvider>();
-		}
+            UpdateAllowedHours(_addonOptions.BackupAllowedHours);
+        }
 
         public event Action? LocalBackupsUpdated;
 
@@ -553,6 +553,11 @@ namespace hassio_onedrive_backup.Hass
 
             _hassEntityState.State = state;
             await _hassEntityState.UpdateBackupEntityInHass();
+        }
+
+        public void UpdateAllowedHours(string allowedHours)
+        {
+            _allowedHours = TimeRangeHelper.GetAllowedHours(allowedHours);
         }
 
         public async Task RefreshBackupData()
