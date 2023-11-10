@@ -67,7 +67,7 @@ namespace hassio_onedrive_backup.Hass
                 Protected = !string.IsNullOrEmpty(password),
                 Type = folders == null && addons == null ? "full" : "partial",
                 Date = DateTime.Now,
-                Slug = Guid.NewGuid().ToString()
+                Slug = Guid.NewGuid().ToString(),                
             };
 
             _backups.Add(backup);

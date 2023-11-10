@@ -111,6 +111,7 @@ namespace hassio_onedrive_backup
             _hassIoClient.UpdateTimeoutValue(_addonOptions.HassAPITimeoutMinutes);
             _logger.SetLogLevel(_addonOptions.LogLevel);
             _syncManager?.UpdateFileMatcherPaths();
+            BackupManager.UpdateAllowedHours(_addonOptions.BackupAllowedHours);
             _addonOptions.SyncPaths.RemoveAll(path => string.IsNullOrWhiteSpace(path));
             _addonOptions.ExcludedAddons.RemoveAll(addon => string.IsNullOrWhiteSpace(addon));
         }
