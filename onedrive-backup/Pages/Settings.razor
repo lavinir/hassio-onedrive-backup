@@ -10,7 +10,7 @@
 @inject IJSRuntime JS
 @inject ConsoleLogger Logger
 
-<div class="pt-3 container-fluid fullheight @(AddonOptions.DarkMode ? "body-dark-mode": "body-light-mode")">
+<div class="p-3 container-fluid fullheight @(AddonOptions.DarkMode ? "body-dark-mode": "body-light-mode")">
     <EditForm Model="@AddonOptions" OnValidSubmit="Save" OnInvalidSubmit="InvalidSubmit" class="@(AddonOptions.DarkMode ? "text-white": "text-dark")">
         <DataAnnotationsValidator />
         @*<ValidationSummary />*@
