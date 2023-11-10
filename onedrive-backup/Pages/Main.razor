@@ -19,7 +19,7 @@
         </div>
     </div>
 </div>
-<div class="container pt-0">
+    <div class="container-fluid pt-0 pb-5 @(AddonOptions.DarkMode ? "body-dark-mode": "body-light-mode")" style="overflow-x:hidden">
     <div class="row row-cols-1 row-cols-md-3 g-4">
         @foreach (var backup in Backups)
         {

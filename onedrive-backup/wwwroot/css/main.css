@@ -15,7 +15,7 @@
 
 .body-light-mode {
     background: #f4f4f4;
-    background-image: linear-gradient(to bottom, #f4f4f4, #e6e6e6);
+    background-image: linear-gradient(to right, #f4f4f4, #e6e6e6);
 }
 
 .body-dark-mode {
@@ -23,8 +23,7 @@
     width:100%;
     padding-right:0;
     padding-left:0;
-    background-image: linear-gradient(to bottom, #222, #111); 
-    background-repeat: repeat-y;
+    background-image: linear-gradient(to right, #222, #111); 
 }
 
 @keyframes rotate {
