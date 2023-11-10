@@ -21,6 +21,7 @@
 .body-dark-mode {
     background: #222; 
     background-image: linear-gradient(to bottom, #222, #111); 
+    background-repeat: repeat-y;
 }
 
 @keyframes rotate {
