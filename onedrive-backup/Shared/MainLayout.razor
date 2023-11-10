@@ -7,7 +7,7 @@
 @inject IJSRuntime JS
 @inject AddonOptions AddonOptions
 
-<div class="container-fluid p-1  @(AddonOptions.DarkMode ? "body-dark-mode": "body-light-mode")">
+<div class="container-fluid p-0 @(AddonOptions.DarkMode ? "body-dark-mode": "body-light-mode")">
     @if (GraphHelper.IsAuthenticated == false)
     {
         <div class="alert alert-danger" role="alert" style="padding:1px;margin-bottom:1px;">
@@ -38,7 +38,7 @@
     </nav>
 </div>
 
-<div class="container-fluid" style="padding-bottom: 2rem;margin:0;">
+<div class="container-fluid p-0" style="padding-bottom: 2rem;margin:0;">
     @Body
 </div>
 

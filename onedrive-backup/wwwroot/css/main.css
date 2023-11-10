@@ -20,6 +20,9 @@
 
 .body-dark-mode {
     background: #222; 
+    width:100%;
+    padding-right:0;
+    padding-left:0;
     background-image: linear-gradient(to bottom, #222, #111); 
     background-repeat: repeat-y;
 }
