@@ -1,6 +1,7 @@
 using hassio_onedrive_backup.Contracts;
 using hassio_onedrive_backup.Graph;
 using Microsoft.Graph;
+using Microsoft.Graph.Models;
 using Newtonsoft.Json;
 using onedrive_backup;
 using onedrive_backup.Contracts;

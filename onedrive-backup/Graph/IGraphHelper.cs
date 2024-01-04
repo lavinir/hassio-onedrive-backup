@@ -1,4 +1,4 @@
-﻿using Microsoft.Graph;
+﻿using Microsoft.Graph.Models;
 using onedrive_backup.Contracts;
 using onedrive_backup.Graph;
 
@@ -27,8 +27,6 @@ namespace hassio_onedrive_backup.Graph
         Task<string?> DownloadFileAsync(string fileName, Action<int?>? progressCallback);
 
         Task<OneDriveFreeSpaceData> GetFreeSpaceInGB();
-
-        Task<DriveItem> GetOrCreateFolder(string path);
     }
 
     public delegate void AuthStatusChanged();
