@@ -83,16 +83,25 @@ namespace hassio_onedrive_backup.Graph
             return response.Token;
         }
 
-        public async Task<DriveItem?> GetItemInAppFolderAsync(string subPath = "")
+        public async Task<DriveItem?> GetItemInAppFolderAsync(string subPath = "/")
         {
             try
             {
                 var driveItem = await _userClient.Me.Drive.GetAsync();
-                var item = await _userClient.Drives[driveItem.Id].Special["approot"].WithUrl(subPath).GetAsync(config => config.QueryParameters.Expand = new string[] { "children" });
+                var appFolder = await _userClient.Drives[driveItem.Id].Special["approot"].GetAsync();
+                var item = await _userClient.Drives[driveItem.Id].Items[appFolder.Id].ItemWithPath(subPath).GetAsync(config => config.QueryParameters.Expand = new string[] { "children" });
+                //var appRoot = await _userClient.Drives[driveItem.Id].Items .WithUrl($"approot:/{subPath}:/children").GetAsync();
+                 //var item = await _userClient.Drives[driveItem.Id].Special[$"approot/{subPath}"].GetAsync(config => config.QueryParameters.Expand = new string[] { "children" });
+                //var item = await _userClient.Drives[driveItem.Id].WithUrl($"approot:/{subPath}:/children").GetAsync();
 
                 //var item = await _userClient.Drives[  Me.Drive. .Special.AppRoot.ItemWithPath(subPath).Request().Expand("children").GetAsync();
                 return item;
                 // return item.Children.ToList();
+            }
+            catch (ODataError oe) when (oe.Error?.Code == "itemNotFound")
+            {
+                _logger.LogInfo($"Item {subPath} not found");
+                return null;
             }
             catch (ODataError oe)
             {
@@ -103,7 +112,7 @@ namespace hassio_onedrive_backup.Graph
 
         }
 
-        public async Task<List<DriveItem>?> GetItemsInAppFolderAsync(string subPath = "")
+        public async Task<List<DriveItem>?> GetItemsInAppFolderAsync(string subPath = "/")
         {
             var parent = await GetItemInAppFolderAsync(subPath);
             return parent?.Children?.ToList();
@@ -138,9 +147,11 @@ namespace hassio_onedrive_backup.Graph
             using var fileStream = File.OpenRead(filePath);
             destinationFileName = destinationFileName ?? (flatten ? Path.GetFileName(filePath) : filePath);
             string sanitizedDestinationFileName = NormalizeDestinationFileName(destinationFileName);
-            var myDrive = await _userClient.Me.Drive.GetAsync();
-            var uploadSession = await _userClient.Drives[myDrive?.Id]
-                .Items["special/approot"]
+            var driveItem = await _userClient.Me.Drive.GetAsync();
+            var appFolder = await _userClient.Drives[driveItem.Id].Special["approot"].GetAsync();
+
+            var uploadSession = await _userClient.Drives[driveItem?.Id]
+                .Items[appFolder.Id]
                 .ItemWithPath(sanitizedDestinationFileName)
                 .CreateUploadSession
                 .PostAsync(new DriveUpload.CreateUploadSessionPostRequestBody()

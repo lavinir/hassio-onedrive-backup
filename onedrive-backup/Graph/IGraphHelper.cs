@@ -16,7 +16,7 @@ namespace hassio_onedrive_backup.Graph
 
         Task<string> GetAndCacheUserTokenAsync();
 
-        Task<List<DriveItem>> GetItemsInAppFolderAsync(string subPath = "");
+        Task<List<DriveItem>> GetItemsInAppFolderAsync(string subPath = "/");
 
         Task<DriveItem?> GetItemInAppFolderAsync(string subPath = "");
 

@@ -3,6 +3,7 @@ using hassio_onedrive_backup.Graph;
 using hassio_onedrive_backup.Hass;
 using Microsoft.Extensions.FileSystemGlobbing;
 using Microsoft.Graph;
+using Microsoft.Graph.Models;
 using onedrive_backup;
 using onedrive_backup.Extensions;
 using onedrive_backup.Graph;
