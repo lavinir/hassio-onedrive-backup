@@ -180,7 +180,8 @@
         });
 
         downloading = false;
-        await Orchestrator.BackupManager.RefreshLocalBackups();
+        await Orchestrator.BackupManager.
+        RefreshLocalBackups();
     }
 
     private async void TriggerStateChanged()

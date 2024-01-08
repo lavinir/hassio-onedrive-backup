@@ -1,5 +1,6 @@
 using hassio_onedrive_backup.Contracts;
 using hassio_onedrive_backup.Graph;
+using Microsoft.Extensions.Logging;
 using Microsoft.Graph;
 using Microsoft.Graph.Models;
 using Newtonsoft.Json;
@@ -23,7 +24,8 @@ namespace hassio_onedrive_backup.Hass
         private readonly HassContext _hassContext;
 		private readonly ConsoleLogger _logger;
 		private readonly IDateTimeProvider _dateTimeProvider;
-		private AddonOptions _addonOptions;
+        private readonly HassOnedriveFreeSpaceEntityState? _hassOneDriveFreeSpaceEntityState;
+        private AddonOptions _addonOptions;
         private IGraphHelper _graphHelper;
         private IHassioClient _hassIoClient;
 		private BitArray _allowedHours;
@@ -42,6 +44,7 @@ namespace hassio_onedrive_backup.Hass
             _hassContext = serviceProvider.GetService<HassContext>();
             _logger = serviceProvider.GetService<ConsoleLogger>();
             _dateTimeProvider = serviceProvider.GetService<IDateTimeProvider>();
+            _hassOneDriveFreeSpaceEntityState = serviceProvider.GetService<HassOnedriveFreeSpaceEntityState>();
             UpdateAllowedHours(_addonOptions.BackupAllowedHours);
         }
 
@@ -60,16 +63,12 @@ namespace hassio_onedrive_backup.Hass
             try
             {
                 _isExecuting = true;
-                await UpdateHassEntity();
                 var now = _dateTimeProvider.Now;
 
-                // Get existing local backups
-                _logger.LogVerbose("Retrieving existing local backups...");
-                await RefreshLocalBackups();
+                _logger.LogVerbose("Refreshing existing backups...");
+                await RefreshBackupsAndUpdateHassEntity();
 
-                // Get existing online backups
-                _logger.LogVerbose("Retrieving existing online backups...");
-                var onlineBackups = await GetOnlineBackupsAsync(_addonOptions.InstanceName);
+                var onlineBackups = OnlineBackups;
 
                 DateTime lastLocalBackupTime = LocalBackups.Any() ? LocalBackups.Max(backup => backup.Date) : DateTime.MinValue;
                 _logger.LogVerbose($"Last local backup Date: {(lastLocalBackupTime == DateTime.MinValue ? "None" : lastLocalBackupTime)}");
@@ -86,6 +85,12 @@ namespace hassio_onedrive_backup.Hass
                     }
                     else
                     {
+                        // Refresh Detected Addons
+                        var addons = _hassIoClient.GetAddonsAsync().Result;
+                        _logger.LogVerbose($"Detected Addons: {string.Join(",", addons.Select(addon => addon.Slug))}");
+                        _hassContext.Addons = addons;
+
+                        //Perform Backup
                         _hassEntityState.State = HassOnedriveEntityState.BackupState.Syncing;
                         await _hassEntityState.UpdateBackupEntityInHass();
                         await CreateLocalBackup();
@@ -214,7 +219,7 @@ namespace hassio_onedrive_backup.Hass
 
 				}
 
-				await UpdateHassEntity();
+				await RefreshBackupsAndUpdateHassEntity();
 
             }
             finally
@@ -356,6 +361,14 @@ namespace hassio_onedrive_backup.Hass
             string? tempBackupFilePath = null;
             try
             {
+                double backupSizeGB = backup.Size / Math.Pow(10, 9);
+                _logger.LogVerbose($"Backup size to upload: {backup.Size}");
+                if (_hassOneDriveFreeSpaceEntityState!.FreeSpaceGB != null && _hassOneDriveFreeSpaceEntityState.FreeSpaceGB < backupSizeGB)
+                {
+                    _logger.LogError($"Not enough free space to upload backup ({backup.Slug}). (Required: {backupSizeGB.ToString("0.00")}GB. Available: {((double)_hassOneDriveFreeSpaceEntityState.FreeSpaceGB).ToString("0.00")}GB");
+                    return false;
+                }
+
                 _logger.LogInfo($"Uploading {backup.Name} ({backup.Date})");
                 string? instanceSuffix = _addonOptions.InstanceName == null ? null : $".{_addonOptions.InstanceName.Substring(0, Math.Min(InstanceNameMaxLength, _addonOptions.InstanceName.Length))}";
                 string destinationFileName = $"{backup.Name}{instanceSuffix}.tar";
@@ -462,7 +475,7 @@ namespace hassio_onedrive_backup.Hass
             return serializedDesc;
         }
 
-        private async Task UpdateHassEntity()
+        private async Task RefreshBackupsAndUpdateHassEntity()
         {
             var now = _dateTimeProvider.Now;
             var localBackups = await RefreshLocalBackups();
