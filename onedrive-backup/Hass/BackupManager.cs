@@ -125,14 +125,15 @@ namespace hassio_onedrive_backup.Hass
                     {
                         await UploadLocalBackupToOneDrive(backup);
                     }
+
+                    // Refresh Online Backups
+                    onlineBackups = await GetOnlineBackupsAsync(_addonOptions.InstanceName);
                 }
                 else
                 {
                     _logger.LogVerbose("Online backups synced. No upload required");
                 }
 
-                // Refresh Online Backups
-                onlineBackups = await GetOnlineBackupsAsync(_addonOptions.InstanceName);
 
                 // Delete Old Online Backups
 
@@ -397,56 +398,6 @@ namespace hassio_onedrive_backup.Hass
             }
 
             return true;
-        }
-
-        public async Task DownloadCloudBackupsAsync()
-        {
-            _hassEntityState.State = HassOnedriveEntityState.BackupState.RecoveryMode;
-            await _hassEntityState.UpdateBackupEntityInHass();
-            var onlineBackups = await GetOnlineBackupsAsync("*");
-            var onlineInstanceBackups = onlineBackups.Where(backup => string.Equals(backup.InstanceName, _addonOptions.InstanceName, StringComparison.OrdinalIgnoreCase)).ToList();
-            var localBackups = await RefreshLocalBackups();
-
-            if (onlineInstanceBackups.Count > 0)
-            {
-                _logger.LogInfo($"Found {onlineInstanceBackups.Count} matching backups in OneDrive");
-            }
-            else if (onlineBackups.Count > 0)
-            {
-                var instanceNames = onlineBackups.Select(backup => backup.InstanceName ?? "*NoInstance*").Distinct();                    
-                _logger.LogInfo($"Found backups belonging to other instances: {string.Join(',', instanceNames)}. If you would like to use another instance backup please update the addon configuration and set the appropriate instance name");
-                return;
-            }
-            else
-            {
-                _logger.LogWarning($"No backups found in OneDrive");
-                return;
-            }
-
-            var localBackupNum = localBackups.Count;
-            int numberOfBackupsToDownload = Math.Max(0, _addonOptions.MaxLocalBackups - localBackupNum);
-            if (numberOfBackupsToDownload == 0)
-            {
-                _logger.LogWarning(
-                    $"Local backups at maximum configured number ({_addonOptions.MaxLocalBackups}). To sync additional backups from OneDrive either delete some local backups or increase the configured maximum");
-                return;
-            }
-
-            var backupsToDownload = onlineInstanceBackups
-                .OrderByDescending(backup => backup.BackupDate)
-                .Where(backup => localBackups.Any(local => local.Slug.Equals(backup.Slug, StringComparison.OrdinalIgnoreCase)) == false)
-                .Take(numberOfBackupsToDownload)
-                .ToList();
-
-            if (backupsToDownload.Count == 0)
-            {
-                _logger.LogInfo($"All {Math.Min(numberOfBackupsToDownload, onlineInstanceBackups.Count)} latest backups already exist locally");
-            }
-
-            foreach (var onlineBackup in backupsToDownload)
-            {
-                await DownloadBackupFromOneDrive(onlineBackup);
-            }
         }
 
         public async Task<bool> DownloadBackupFromOneDrive(OnedriveBackup onlineBackup, Action<int?>? progressCallback = null, bool updateHassEntityState = true)

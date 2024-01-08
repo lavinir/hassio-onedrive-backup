@@ -89,9 +89,19 @@ namespace hassio_onedrive_backup.Graph
             {
                 var driveItem = await _userClient.Me.Drive.GetAsync();
                 var appFolder = await _userClient.Drives[driveItem.Id].Special["approot"].GetAsync();
-                var item = await _userClient.Drives[driveItem.Id].Items[appFolder.Id].ItemWithPath(subPath).GetAsync(config => config.QueryParameters.Expand = new string[] { "children" });
+                DriveItem? item;
+
+                if (subPath == "/")
+                {
+                    item = await _userClient.Drives[driveItem.Id].Items[appFolder.Id].GetAsync(config => config.QueryParameters.Expand = new string[] { "children" });
+                }
+                else
+                {
+                    item = await _userClient.Drives[driveItem.Id].Items[appFolder.Id].ItemWithPath(subPath).GetAsync(config => config.QueryParameters.Expand = new string[] { "children" });
+                }
+
                 //var appRoot = await _userClient.Drives[driveItem.Id].Items .WithUrl($"approot:/{subPath}:/children").GetAsync();
-                 //var item = await _userClient.Drives[driveItem.Id].Special[$"approot/{subPath}"].GetAsync(config => config.QueryParameters.Expand = new string[] { "children" });
+                //var item = await _userClient.Drives[driveItem.Id].Special[$"approot/{subPath}"].GetAsync(config => config.QueryParameters.Expand = new string[] { "children" });
                 //var item = await _userClient.Drives[driveItem.Id].WithUrl($"approot:/{subPath}:/children").GetAsync();
 
                 //var item = await _userClient.Drives[  Me.Drive. .Special.AppRoot.ItemWithPath(subPath).Request().Expand("children").GetAsync();
