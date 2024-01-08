@@ -16,6 +16,7 @@ map:
   - media:rw
   - share:rw
   - backup:rw
+  - all_addon_configs:rw
 
 ingress: true
 hassio_role : "manager"
