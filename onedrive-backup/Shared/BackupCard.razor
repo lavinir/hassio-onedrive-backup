@@ -61,11 +61,11 @@
                 @if (uploading)
                 {
                     <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                    <span class="oi oi-cloud-upload">Uploading @uploadPercent%</span>
+                    @* <span class="bi bi-cloud-upload-fill">Uploading @uploadPercent%</span> *@
                 }
                 else
                 {
-                    <span class="oi oi-cloud-upload">Upload</span>
+                    <i class="bi bi-cloud-arrow-up"></i>
                 }
             </button>
         }
@@ -77,20 +77,32 @@
                 @if (downloading)
                 {
                     <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                    <span class="oi oi-cloud-download">Downloading @downloadPercent%</span>
                 }
                 else
                 {
-                    <span class="oi oi-cloud-download">Download</span>
+                    <i class="bi bi-cloud-arrow-down"></i>
                 }
             </button>
         }
 
         @*Details Button*@
-        <button type="button" class="btn btn-sm m-1 @(AddonOptions.DarkMode ? "btn-outline-info": "btn-outline-primary")" data-bs-toggle="collapse" data-bs-target="#details-@Backup.Slug" disabled="@detailsDisabled"><span class="oi oi-expand-down" title="Backup details">Details</span></button>
+        <button type="button" class="btn btn-sm m-1 @(AddonOptions.DarkMode ? "btn-outline-info": "btn-outline-primary")" data-bs-toggle="collapse" data-bs-target="#details-@Backup.Slug" disabled="@detailsDisabled">
+            <i class="bi bi-chevron-expand"></i>
+            <span title="Backup details">Details</span>
+        </button>
 
         @if (transferSpeed > 0)
         {
+            @if (uploading)
+            {
+                <span class="text-end ms-auto my-auto @(AddonOptions.DarkMode ? "text-white": "text-dark")">Uploading @uploadPercent%</span>
+            }
+
+            @if (downloading)
+            {
+                <span class="text-end ms-auto my-auto @(AddonOptions.DarkMode ? "text-white": "text-dark")">Downloading @downloadPercent%</span>
+            }
+
             <span class="text-end ms-auto my-auto @(AddonOptions.DarkMode ? "text-white": "text-dark")">@TransferSpeedText</span>
         }
     </div>

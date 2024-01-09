@@ -134,8 +134,8 @@ namespace hassio_onedrive_backup.Graph
             {
                 _logger.LogInfo($"Deleting item: {itemPath}");
                 var driveItem = await _userClient.Me.Drive.GetAsync();
-                var item = await _userClient.Drives[driveItem.Id].Special["approot"].WithUrl(itemPath).GetAsync();
-                await _userClient.Drives[driveItem.Id].Items[item.Id].DeleteAsync();
+                var appFolder = await _userClient.Drives[driveItem.Id].Special["approot"].GetAsync();
+                await _userClient.Drives[driveItem.Id].Items[appFolder.Id].ItemWithPath(itemPath).DeleteAsync();
             }
             catch (Exception ex)
             {

@@ -147,3 +147,7 @@ nav.navbar .dark.nav-link.active {
     .transition-visible.transition-collapsed {
         transform: scaleY(0);
     }
+
+.button-icon{
+    margin: 0 1em 0 0;
+}

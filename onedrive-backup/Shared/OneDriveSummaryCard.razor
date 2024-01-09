@@ -28,7 +28,14 @@
 @*					<span class="oi oi-data-transfer-upload"></span>
 					<span class="card-text">@UploadSpeed</span>
 *@					<button type="button" @onclick="RefreshData" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" data-bs-title="Refresh Backups Data" disabled="@refreshingData">
-						<span class="oi oi-reload @(refreshingData ? "refreshing" : string.Empty)" aria-hidden="true"></span>
+						@if (refreshingData)
+						{
+							<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+						}
+						else
+						{
+							<i class="bi bi-arrow-clockwise"></i>
+						}
 					</button>
 
 					<button type="button" @onclick="TriggerBackup" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" data-bs-title="Trigger a backup now" disabled="@onDemandBackup">
