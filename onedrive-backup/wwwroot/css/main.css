@@ -151,3 +151,10 @@ nav.navbar .dark.nav-link.active {
 .button-icon{
     margin: 0 1em 0 0;
 }
+
+.vr {
+    width: 0.6em; 
+    border-radius: 0.3em; 
+    margin-left: 0.5em; 
+    margin-right: 0.5em; 
+}

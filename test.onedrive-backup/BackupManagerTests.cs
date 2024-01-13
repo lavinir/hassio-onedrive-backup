@@ -1,7 +1,7 @@
 ﻿using hassio_onedrive_backup.Contracts;
 using hassio_onedrive_backup.Graph;
 using hassio_onedrive_backup.Hass;
-using Microsoft.Graph;
+using Microsoft.Graph.Models;
 using Moq;
 using Newtonsoft.Json;
 using onedrive_backup;
@@ -411,7 +411,7 @@ namespace hassio_onedrive_backup.Tests
 		{
 			_graphHelperMock = new Mock<IGraphHelper>();
 			_graphHelperMock.Setup(gh => gh.GetItemsInAppFolderAsync(""))
-				.ReturnsAsync(() => _onedriveBackups.Select(backup => new Microsoft.Graph.DriveItem()
+				.ReturnsAsync(() => _onedriveBackups.Select(backup => new DriveItem()
 				{
 					Name = backup.FileName,
 					Description = JsonConvert.SerializeObject(new OnedriveItemDescription

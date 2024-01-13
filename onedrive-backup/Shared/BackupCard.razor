@@ -1,12 +1,16 @@
 ﻿@using hassio_onedrive_backup;
 @using hassio_onedrive_backup.Contracts;
+@using onedrive_backup.Contracts;
 @using onedrive_backup.Extensions;
 @using onedrive_backup.Hass;
 @using onedrive_backup.Models;
+@using hassio_onedrive_backup.Storage;
+
 @inject Orchestrator Orchestrator;
 @inject AddonOptions AddonOptions;
 @inject IJSRuntime JS
 @inject IDateTimeProvider DateTimeProvider;
+@inject BackupAdditionalData BackupAdditionalData;
 
 <div class="card mb-3 w-100 h-100 @(AddonOptions.DarkMode ? "text-white bg-secondary": "text-dark bg-light")" style="min-width: 16rem">
     <div class="card-header  @(AddonOptions.DarkMode ? "text-light" : "text-dark") ">
@@ -55,41 +59,53 @@
     <div class="card-footer d-flex">
 
         @*Upload Button*@
-        @if (@Backup.Location == BackupModel.BackupLocation.Local)
-        {
-            <button type="button" @onclick="UploadBackup" class="btn btn-sm m-1 @(AddonOptions.DarkMode ? "btn-outline-info": "btn-outline-primary")" data-bs-toggle="tooltip" data-bs-title="Upload backup to OneDrive" disabled="@uploading">
-                @if (uploading)
-                {
-                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                    @* <span class="bi bi-cloud-upload-fill">Uploading @uploadPercent%</span> *@
-                }
-                else
-                {
-                    <i class="bi bi-cloud-arrow-up"></i>
-                }
-            </button>
-        }
+        <button type="button" @onclick="UploadBackup" class="btn btn-sm m-1 @(AddonOptions.DarkMode ? "btn-outline-info": "btn-outline-primary")" data-bs-toggle="tooltip" data-bs-title="Upload backup to OneDrive" disabled="@(uploading || Backup.Location != BackupModel.BackupLocation.Local)">
+            @if (uploading)
+            {
+                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                @* <span class="bi bi-cloud-upload-fill">Uploading @uploadPercent%</span> *@
+            }
+            else
+            {
+                <i class="bi bi-cloud-arrow-up"></i>
+            }
+        </button>
 
         @*Download Button*@
-        @if (@Backup.Location == BackupModel.BackupLocation.OneDrive)
-        {
-            <button type="button" @onclick="DownloadBackup" class="btn btn-sm m-1 @(AddonOptions.DarkMode ? "btn-outline-info": "btn-outline-primary")" data-bs-toggle="tooltip" data-bs-title="Download Backup to Home Assistant" disabled="@downloading">
-                @if (downloading)
-                {
-                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                }
-                else
-                {
-                    <i class="bi bi-cloud-arrow-down"></i>
-                }
-            </button>
-        }
+        <button type="button" @onclick="DownloadBackup" class="btn btn-sm m-1 @(AddonOptions.DarkMode ? "btn-outline-info": "btn-outline-primary")" data-bs-toggle="tooltip" data-bs-title="Download Backup to Home Assistant" disabled="@(downloading || Backup.Location != BackupModel.BackupLocation.OneDrive)">
+            @if (downloading)
+            {
+                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            }
+            else
+            {
+                <i class="bi bi-cloud-arrow-down"></i>
+            }
+        </button>
 
         @*Details Button*@
         <button type="button" class="btn btn-sm m-1 @(AddonOptions.DarkMode ? "btn-outline-info": "btn-outline-primary")" data-bs-toggle="collapse" data-bs-target="#details-@Backup.Slug" disabled="@detailsDisabled">
             <i class="bi bi-chevron-expand"></i>
             <span title="Backup details">Details</span>
         </button>
+
+        <div class="vr"></div>
+
+        @*Retain Local Button*@
+        <input type="checkbox" @oninput="RetainLocal" @bind="Backup.RetainLocal" id="retain-local-chk-@Backup.Slug" class="btn-check btn-sm m-1" autocomplete="off">
+        </input>
+        <label class="btn btn-sm m-1 @(AddonOptions.DarkMode ? "btn-outline-info": "btn-outline-primary")" for="retain-local-chk-@Backup.Slug" data-bs-toggle="tooltip" data-bs-title="Retain local backup indefinitely">
+            <i class="bi bi-floppy"></i>
+        </label>
+
+        @*Retain OneDrive Button*@
+        <input type="checkbox" @oninput="RetainOneDrive" @bind="Backup.RetainOneDrive" id="retain-onedrive-chk-@Backup.Slug" class="btn-sm m-1 btn-check" autocomplete="off">
+        </input>
+        <label class="btn btn-sm m-1 @(AddonOptions.DarkMode ? "btn-outline-info": "btn-outline-primary")" for="retain-onedrive-chk-@Backup.Slug" data-bs-toggle="tooltip" data-bs-title="Retain OneDrive backup indefinitely">
+            <i class="bi bi-cloudy-fill"></i>
+        </label>
+
+        <div class="vr"></div>
 
         @if (transferSpeed > 0)
         {
@@ -179,6 +195,17 @@
         await Orchestrator.BackupManager.GetOnlineBackupsAsync(AddonOptions.InstanceName);
     }
 
+    private async void RetainLocal(ChangeEventArgs e)
+    {
+        BackupAdditionalData.UpdateRetainLocally(Backup.Slug, (bool)e.Value);
+        await LocalStorage.StoreBackupData(BackupAdditionalData);
+    }
+
+    private async void RetainOneDrive(ChangeEventArgs e)
+    {
+        BackupAdditionalData.UpdateRetainOneDrive(Backup.Slug, (bool)e.Value);
+        await LocalStorage.StoreBackupData(BackupAdditionalData);
+    }
 
     private async void DownloadBackup()
     {
@@ -192,8 +219,7 @@
         });
 
         downloading = false;
-        await Orchestrator.BackupManager.
-        RefreshLocalBackups();
+        await Orchestrator.BackupManager.RefreshLocalBackups();
     }
 
     private async void TriggerStateChanged()

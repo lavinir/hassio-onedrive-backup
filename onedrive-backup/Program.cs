@@ -7,6 +7,7 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
 using onedrive_backup;
+using onedrive_backup.Contracts;
 using onedrive_backup.Extensions;
 using onedrive_backup.Graph;
 using onedrive_backup.Hass;
@@ -25,7 +26,7 @@ namespace hassio_onedrive_backup
 		private static Orchestrator _orchestrator;
 		private static string _baseDirectory;
 
-		static void Main(string[] args)
+		static async Task Main(string[] args)
 		{
 			ConsoleLogger logger = new();
 
@@ -45,19 +46,21 @@ namespace hassio_onedrive_backup
             IHassioClient hassIoClient = new HassioClient(supervisorToken, addonOptions.HassAPITimeoutMinutes, logger);
 #endif
 				logger.SetLogLevel(addonOptions.LogLevel);
-				string timeZoneId = hassIoClient.GetTimeZoneAsync().Result;
+				string timeZoneId = await hassIoClient.GetTimeZoneAsync();
 				var dateTimeProvider = new DateTimeHelper(timeZoneId);
 				logger.SetDateTimeProvider(dateTimeProvider);
 				var builder = WebApplication.CreateBuilder(args);
 				builder.Services.AddSingleton<IDateTimeProvider>(dateTimeProvider);
 				LocalStorage.InitializeTempStorage(logger);
-				var addons = hassIoClient.GetAddonsAsync().Result;
+				var addons = await hassIoClient.GetAddonsAsync(); 
 				logger.LogVerbose($"Detected Addons: {string.Join(",", addons.Select(addon => addon.Slug))}");
 				HassContext hassContext = null;
-				var addonInfo = hassIoClient.GetAddonInfo("self").Result;
+				var addonInfo = await hassIoClient.GetAddonInfo("self");
 				hassContext = new HassContext { IngressUrl = addonInfo.DataProperty.IngressUrl, Addons = addons };
 				logger.LogVerbose($"Ingress URL: {addonInfo.DataProperty.IngressUrl}");
 				builder.Services.AddSingleton(hassContext);
+
+				BackupAdditionalData backupAdditionalData = (await LocalStorage.LoadBackupAdditionalData()) ?? new BackupAdditionalData();
 
 				// Add services to the container.
 				builder.Services.AddRazorPages();
@@ -65,7 +68,7 @@ namespace hassio_onedrive_backup
 				builder.Services.AddSingleton<ConsoleLogger>(logger);
 				builder.Services.AddSingleton(addonOptions);
 				builder.Services.AddSingleton<IHassioClient>(hassIoClient);
-				
+				builder.Services.AddSingleton(backupAdditionalData);
 
 				IGraphHelper graphHelper = new GraphHelper(scopes,clientId, dateTimeProvider, logger);
 				builder.Services.AddSingleton<IGraphHelper>(graphHelper);

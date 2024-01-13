@@ -12,7 +12,7 @@ namespace onedrive_backup.Extensions
 {
     public static class BackupExtensions
     {
-        public static BackupModel ToBackupModel(this Backup backup, HassContext hassContext)
+        public static BackupModel ToBackupModel(this Backup backup, HassContext hassContext, BackupAdditionalData backupAdditionalData)
         {
             return new BackupModel
             {
@@ -24,11 +24,13 @@ namespace onedrive_backup.Extensions
                 IsProtected = backup.Protected,
                 Location = BackupModel.BackupLocation.Local,
                 Addons = backup.Content?.Addons?.Select(slug => new Addon { Slug = slug, Name = GetAddonNameFromSlug(hassContext.Addons, slug) }).ToList() ?? Enumerable.Empty<Addon>(),
-                Folders = backup.Content?.Folders ?? Enumerable.Empty<string>()
+                Folders = backup.Content?.Folders ?? Enumerable.Empty<string>(),
+                RetainLocal = backupAdditionalData.IsRetainedLocally(backup.Slug),
+                RetainOneDrive = backupAdditionalData.IsRetainedOneDrive(backup.Slug)
             };
         }
 
-		public static BackupModel ToBackupModel(this OnedriveBackup onedriveBackup, HassContext hassContext)
+		public static BackupModel ToBackupModel(this OnedriveBackup onedriveBackup, HassContext hassContext, BackupAdditionalData backupAdditionalData)
         {
             return new BackupModel
             {
@@ -40,8 +42,10 @@ namespace onedrive_backup.Extensions
                 IsProtected = onedriveBackup.IsProtected,
                 Location = BackupModel.BackupLocation.OneDrive,
                 Addons = onedriveBackup.Addons?.Select(slug => new Addon { Slug = slug, Name = GetAddonNameFromSlug(hassContext.Addons, slug) }) ?? Enumerable.Empty<Addon>(),
-                Folders = onedriveBackup.Folders ?? Enumerable.Empty<string>()
-			};
+                Folders = onedriveBackup.Folders ?? Enumerable.Empty<string>(),
+                RetainLocal = backupAdditionalData.IsRetainedLocally(onedriveBackup.Slug),
+                RetainOneDrive = backupAdditionalData.IsRetainedOneDrive(onedriveBackup.Slug)
+            };
         } 
 
         public static OnedriveBackup ToOneDriveBackup(this BackupModel backupModel)

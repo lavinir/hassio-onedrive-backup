@@ -235,3 +235,4 @@ record.auth*
 .NativeSettings
 .clientId
 settings.json
+additionalBackupData.json
