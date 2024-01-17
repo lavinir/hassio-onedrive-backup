@@ -152,15 +152,15 @@
     private string CalculateTimeAgoText()
     {
         TimeSpan timeAgo = DateTimeProvider.Now - Backup.Date;
-        if (timeAgo.TotalDays > 1)
+        if (timeAgo.Days > 1)
         {
             return $"{timeAgo.Days} days ago";
         }
-        else if (timeAgo.TotalHours > 1)
+        else if (timeAgo.Hours > 1)
         {
             return $"{timeAgo.Hours} hours ago";
         }
-        else if (timeAgo.TotalMinutes > 1)
+        else if (timeAgo.Minutes > 1)
         {
             return $"{timeAgo.Minutes} minutes ago";
         }

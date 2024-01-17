@@ -47,11 +47,6 @@ namespace hassio_onedrive_backup.Storage
                 return;
             }
 
-            if (File.Exists(configFilePath) == false)
-            {
-                File.Create(configFilePath);
-            }
-
             await File.WriteAllTextAsync(configFilePath, JsonSerializer.Serialize(additionalData));
         }
 

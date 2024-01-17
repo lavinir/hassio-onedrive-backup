@@ -91,7 +91,7 @@ namespace hassio_onedrive_backup.Hass
             string backupFile = $"./{backupSlug}.tar";
             
             // 15MB File
-            byte[] data = new byte[100 * 1024 * 1024];
+            byte[] data = new byte[10 * 1024 * 1024];
             new Random().NextBytes(data);
             File.WriteAllBytes(backupFile, data); 
             return Task.FromResult(backupFile);

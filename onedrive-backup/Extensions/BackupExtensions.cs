@@ -122,15 +122,6 @@ namespace onedrive_backup.Extensions
                 {
                     ret.Add(weeklyBackup);
 				}
-                //else
-                //{
-                //    var weekCutoffDate = DateTimeHelper.GetStartDateByWeekAndYear(year, week, firstDayOfWeek);
-                //    var nextCandidateBackup = backups.OrderByDescending(b => b.BackupDate).FirstOrDefault(b => b.BackupDate <= weekCutoffDate);
-                //    if (nextCandidateBackup != null)
-                //    {
-                //        ret.Add(nextCandidateBackup);
-                //    }
-                //}
 			}
 
             return ret.Distinct().ToList();
@@ -167,15 +158,6 @@ namespace onedrive_backup.Extensions
 				{
                     ret.Add(monthlyBackup);
 				}
-    //            else
-    //            {
-    //                var cutoffDate = new DateTime(year, month, 1);
-				//	var nextCandidateBackup = backups.OrderByDescending(b => b.BackupDate).FirstOrDefault(b => b.BackupDate >= cutoffDate);
-				//	if (nextCandidateBackup != null)
-				//	{
-    //                    ret.Add(nextCandidateBackup);
-				//	}
-				//}
 			}
 
             return ret.Distinct().ToList();
@@ -204,21 +186,22 @@ namespace onedrive_backup.Extensions
 				{
                     ret.Add(yearlyBackup);
 				}
-				//else
-				//{
-				//	var cutoffDate = new DateTime(currentYear, 1, 1);
-				//	var nextCandidateBackup = backups.OrderByDescending(b => b.BackupDate).FirstOrDefault(b => b.BackupDate >= cutoffDate);
-				//	if (nextCandidateBackup != null)
-				//	{
-    //                    ret.Add(nextCandidateBackup);
-				//	}
-				//}
 			}
 
             return ret.Distinct().ToList();
 		}
 
-		private static string GetAddonNameFromSlug(IEnumerable<Addon> addons, string slug)
+        public static bool IsRetainedLocally(this IBackup backup, BackupAdditionalData additionalData) 
+        {
+            return additionalData.IsRetainedLocally(backup.Slug);
+        }
+
+        public static bool IsRetainedOneDrive(this IBackup backup, BackupAdditionalData additionalData)
+        {
+            return additionalData.IsRetainedOneDrive(backup.Slug);
+        }
+
+        private static string GetAddonNameFromSlug(IEnumerable<Addon> addons, string slug)
 		{
 			string name = addons.FirstOrDefault(addon => addon.Slug.Equals(slug, StringComparison.OrdinalIgnoreCase))?.Name;
 			return name ?? string.Empty;

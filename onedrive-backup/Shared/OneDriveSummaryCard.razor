@@ -76,7 +76,6 @@
 			<div class="col">
 				<div class="progress">
 					<div class="progress-bar bg-primary" role="progressbar" style="width: @(LocalBackupsPercentage)%" aria-valuenow="@LocalBackupsPercentage" aria-valuemin="0" aria-valuemax="@AddonOptions.MaxLocalBackups">@HassOnedriveEntityState.BackupsInHomeAssistant / @AddonOptions.MaxLocalBackups</div>
-					@*<div class="progress-bar bg-secondary" role="progressbar" style="width: @(100 - LocalBackupsPercentage)%" aria-valuenow="@(100 - LocalBackupsPercentage)" aria-valuemin="0" aria-valuemax="@AddonOptions.MaxLocalBackups"></div>*@
 				</div>
 			</div>
 		</div>
@@ -87,7 +86,6 @@
 			<div class="col">
 				<div class="progress">
 					<div class="progress-bar bg-primary" role="progressbar" style="width: @(OneDriveBackupsPercentage)%" aria-valuenow="@OneDriveBackupsPercentage" aria-valuemin="0" aria-valuemax="@AddonOptions.MaxOnedriveBackups">@HassOnedriveEntityState.BackupsInOnedrive / @AddonOptions.MaxOnedriveBackups</div>
-					@*<div class="progress-bar bg-secondary" role="progressbar" style="width: @(100 - OneDriveBackupsPercentage)%" aria-valuenow="@(100 - OneDriveBackupsPercentage)" aria-valuemin="0" aria-valuemax="@AddonOptions.MaxOnedriveBackups"></div>*@
 				</div>
 			</div>
 		</div>

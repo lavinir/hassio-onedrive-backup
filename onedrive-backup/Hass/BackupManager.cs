@@ -25,6 +25,7 @@ namespace hassio_onedrive_backup.Hass
 		private readonly ConsoleLogger _logger;
 		private readonly IDateTimeProvider _dateTimeProvider;
         private readonly HassOnedriveFreeSpaceEntityState? _hassOneDriveFreeSpaceEntityState;
+        private readonly BackupAdditionalData _backupAdditionalData;
         private AddonOptions _addonOptions;
         private IGraphHelper _graphHelper;
         private IHassioClient _hassIoClient;
@@ -44,6 +45,7 @@ namespace hassio_onedrive_backup.Hass
             _hassContext = serviceProvider.GetService<HassContext>();
             _logger = serviceProvider.GetService<ConsoleLogger>();
             _dateTimeProvider = serviceProvider.GetService<IDateTimeProvider>();
+            _backupAdditionalData = serviceProvider.GetService<BackupAdditionalData>();
             _hassOneDriveFreeSpaceEntityState = serviceProvider.GetService<HassOnedriveFreeSpaceEntityState>();
             UpdateAllowedHours(_addonOptions.BackupAllowedHours);
         }
@@ -86,7 +88,7 @@ namespace hassio_onedrive_backup.Hass
                     else
                     {
                         // Refresh Detected Addons
-                        var addons = _hassIoClient.GetAddonsAsync().Result;
+                        var addons = await _hassIoClient.GetAddonsAsync();
                         _logger.LogVerbose($"Detected Addons: {string.Join(",", addons.Select(addon => addon.Slug))}");
                         _hassContext.Addons = addons;
 
@@ -150,13 +152,14 @@ namespace hassio_onedrive_backup.Hass
                     generationalBackupsToDelete = GetGenerationalBackupsForRemoval(onlineBackups.Cast<IBackup>(), "OneDrive");
 				}
 
-				int numOfOnlineBackupsToDelete = Math.Max(0, onlineBackups.Count - _addonOptions.MaxOnedriveBackups);
+                int numOfRetainedOnlineBackups = onlineBackups.Count(backup => _backupAdditionalData.IsRetainedOneDrive(backup.Slug));
+				int numOfOnlineBackupsToDelete = Math.Max(0, (onlineBackups.Count - numOfRetainedOnlineBackups) - _addonOptions.MaxOnedriveBackups);
                 if (numOfOnlineBackupsToDelete > 0)
                 {
                     _logger.LogInfo($"Reached Max Online Backups ({_addonOptions.MaxOnedriveBackups})");
                 }
 
-                var backupsToDelete = generationalBackupsToDelete.OrderBy(gb => gb.BackupDate)
+                var backupsToDelete = generationalBackupsToDelete.Where(backup => !_backupAdditionalData.IsRetainedOneDrive(backup.Slug)).OrderBy(gb => gb.BackupDate)
                     .Union(onlineBackups.OrderBy(ob => ob.BackupDate)).Take(numOfOnlineBackupsToDelete).Cast<OnedriveBackup>();
                     
                 if (backupsToDelete.Any())
@@ -188,14 +191,15 @@ namespace hassio_onedrive_backup.Hass
 					generationalBackupsToDelete = GetGenerationalBackupsForRemoval(LocalBackups.Cast<IBackup>(), "local");
 				}
 
-                int numOfLocalBackupsToRemove = LocalBackups.Count - _addonOptions.MaxLocalBackups;
+                int numOfRetainedLocalBackups = LocalBackups.Count(backup => _backupAdditionalData.IsRetainedLocally(backup.Slug));
+                int numOfLocalBackupsToRemove = (LocalBackups.Count - numOfRetainedLocalBackups) - _addonOptions.MaxLocalBackups;
                 if (numOfLocalBackupsToRemove > 0)
                 {
 					_logger.LogInfo($"Reached Max Local Backups ({_addonOptions.MaxLocalBackups})");
 				}
 
 
-				var localBackupsToRemove = generationalBackupsToDelete.OrderBy(gb => gb.BackupDate)
+				var localBackupsToRemove = generationalBackupsToDelete.Where(backup => !_backupAdditionalData.IsRetainedLocally(backup.Slug)).OrderBy(gb => gb.BackupDate)
 					.Union(LocalBackups.OrderBy(ob => ob.BackupDate)).Take(numOfLocalBackupsToRemove).Cast<Backup>();
 
 				if (localBackupsToRemove.Any())
@@ -362,7 +366,7 @@ namespace hassio_onedrive_backup.Hass
             try
             {
                 double backupSizeGB = backup.Size / Math.Pow(10, 9);
-                _logger.LogVerbose($"Backup size to upload: {backup.Size}");
+                _logger.LogVerbose($"Backup size to upload: {backupSizeGB.ToString("0.00")}GB");
                 if (_hassOneDriveFreeSpaceEntityState!.FreeSpaceGB != null && _hassOneDriveFreeSpaceEntityState.FreeSpaceGB < backupSizeGB)
                 {
                     _logger.LogError($"Not enough free space to upload backup ({backup.Slug}). (Required: {backupSizeGB.ToString("0.00")}GB. Available: {((double)_hassOneDriveFreeSpaceEntityState.FreeSpaceGB).ToString("0.00")}GB");
@@ -479,10 +483,11 @@ namespace hassio_onedrive_backup.Hass
         {
             var now = _dateTimeProvider.Now;
             var localBackups = await RefreshLocalBackups();
-            var onlineBackups = await GetOnlineBackupsAsync(_addonOptions.InstanceName);
-            _hassEntityState.BackupsInHomeAssistant = localBackups.Count;
-            _hassEntityState.BackupsInOnedrive = onlineBackups.Count;
             _hassEntityState.LastLocalBackupDate = localBackups.Any() ? localBackups.Max(backup => backup.Date) : null;
+            _hassEntityState.BackupsInHomeAssistant = localBackups.Count(backup => !backup.IsRetainedLocally(_backupAdditionalData));
+
+            var onlineBackups = await GetOnlineBackupsAsync(_addonOptions.InstanceName);
+            _hassEntityState.BackupsInOnedrive = onlineBackups.Count(backup => !backup.IsRetainedOneDrive(_backupAdditionalData));
             _hassEntityState.LastOnedriveBackupDate = onlineBackups.Any() ? onlineBackups.Max(backup => backup.BackupDate) : null;
 
             bool onedriveSynced = false;
