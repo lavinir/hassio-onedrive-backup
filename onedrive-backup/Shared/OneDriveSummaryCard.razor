@@ -25,9 +25,7 @@
 			@if (GraphHelper.IsAuthenticated == true)
 			{
 				<div class="col text-end">
-@*					<span class="oi oi-data-transfer-upload"></span>
-					<span class="card-text">@UploadSpeed</span>
-*@					<button type="button" @onclick="RefreshData" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" data-bs-title="Refresh Backups Data" disabled="@refreshingData">
+					<button type="button" @onclick="RefreshData" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" data-bs-title="Refresh Backups Data" disabled="@refreshingData">
 						@if (refreshingData)
 						{
 							<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
@@ -176,7 +174,7 @@
 				case HassOnedriveEntityState.BackupState.Backed_Up:
 					return "bg-success";
 				case HassOnedriveEntityState.BackupState.Backed_Up_Local:
-					return "bg-secondary";
+					return "bg-info";
 				case HassOnedriveEntityState.BackupState.Backed_Up_Onedrive:
 					return "bg-primary";
 				case HassOnedriveEntityState.BackupState.Syncing:
@@ -215,8 +213,8 @@
 		HassOnedriveFreeSpaceEntityState.PropertyChanged += TriggerStateChanged;
 		HassOnedriveEntityState.PropertyChanged += TriggerStateChanged;
 		HassOnedriveFileSyncEntityState.PropertyChanged += TriggerStateChanged;
-		Orchestrator.BackupManager.OneDriveBackupsUpdated += TriggerStateChanged;
-		Orchestrator.BackupManager.LocalBackupsUpdated += TriggerStateChanged;
+		// Orchestrator.BackupManager.OneDriveBackupsUpdated += TriggerStateChanged;
+		// Orchestrator.BackupManager.LocalBackupsUpdated += TriggerStateChanged;
 		AddonOptions.OnOptionsChanged += TriggerStateChanged;
 	}
 

@@ -92,14 +92,14 @@
         <div class="vr"></div>
 
         @*Retain Local Button*@
-        <input type="checkbox" @oninput="RetainLocal" @bind="Backup.RetainLocal" id="retain-local-chk-@Backup.Slug" class="btn-check btn-sm m-1" autocomplete="off">
+        <input type="checkbox" @oninput="RetainLocal" @bind="Backup.RetainLocal" id="retain-local-chk-@Backup.Slug" class="btn-check btn-sm m-1" autocomplete="off" disabled="@(Backup.Location == BackupModel.BackupLocation.OneDrive)">
         </input>
         <label class="btn btn-sm m-1 @(AddonOptions.DarkMode ? "btn-outline-info": "btn-outline-primary")" for="retain-local-chk-@Backup.Slug" data-bs-toggle="tooltip" data-bs-title="Retain local backup indefinitely">
             <i class="bi bi-floppy"></i>
         </label>
 
         @*Retain OneDrive Button*@
-        <input type="checkbox" @oninput="RetainOneDrive" @bind="Backup.RetainOneDrive" id="retain-onedrive-chk-@Backup.Slug" class="btn-sm m-1 btn-check" autocomplete="off">
+        <input type="checkbox" @oninput="RetainOneDrive" @bind="Backup.RetainOneDrive" id="retain-onedrive-chk-@Backup.Slug" class="btn-sm m-1 btn-check" autocomplete="off" disabled="@(Backup.Location == BackupModel.BackupLocation.Local)">
         </input>
         <label class="btn btn-sm m-1 @(AddonOptions.DarkMode ? "btn-outline-info": "btn-outline-primary")" for="retain-onedrive-chk-@Backup.Slug" data-bs-toggle="tooltip" data-bs-title="Retain OneDrive backup indefinitely">
             <i class="bi bi-cloudy-fill"></i>
@@ -199,12 +199,14 @@
     {
         BackupAdditionalData.UpdateRetainLocally(Backup.Slug, (bool)e.Value);
         await LocalStorage.StoreBackupData(BackupAdditionalData);
+        await Orchestrator.BackupManager.UpdateHassEntity();
     }
 
     private async void RetainOneDrive(ChangeEventArgs e)
     {
         BackupAdditionalData.UpdateRetainOneDrive(Backup.Slug, (bool)e.Value);
         await LocalStorage.StoreBackupData(BackupAdditionalData);
+        await Orchestrator.BackupManager.UpdateHassEntity();
     }
 
     private async void DownloadBackup()

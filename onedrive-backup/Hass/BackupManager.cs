@@ -479,16 +479,21 @@ namespace hassio_onedrive_backup.Hass
             return serializedDesc;
         }
 
-        private async Task RefreshBackupsAndUpdateHassEntity()
+        public async Task UpdateHassEntity()
         {
             var now = _dateTimeProvider.Now;
-            var localBackups = await RefreshLocalBackups();
-            _hassEntityState.LastLocalBackupDate = localBackups.Any() ? localBackups.Max(backup => backup.Date) : null;
-            _hassEntityState.BackupsInHomeAssistant = localBackups.Count(backup => !backup.IsRetainedLocally(_backupAdditionalData));
 
-            var onlineBackups = await GetOnlineBackupsAsync(_addonOptions.InstanceName);
-            _hassEntityState.BackupsInOnedrive = onlineBackups.Count(backup => !backup.IsRetainedOneDrive(_backupAdditionalData));
-            _hassEntityState.LastOnedriveBackupDate = onlineBackups.Any() ? onlineBackups.Max(backup => backup.BackupDate) : null;
+            if (OnlineBackups != null)
+            {
+                _hassEntityState.BackupsInOnedrive = OnlineBackups.Count(backup => !backup.IsRetainedOneDrive(_backupAdditionalData));
+                _hassEntityState.LastOnedriveBackupDate = OnlineBackups.Any() ? OnlineBackups.Max(backup => backup.BackupDate) : null;
+            }
+
+            if (LocalBackups != null)
+            {
+                _hassEntityState.LastLocalBackupDate = LocalBackups.Any() ? LocalBackups.Max(backup => backup.Date) : null;
+                _hassEntityState.BackupsInHomeAssistant = LocalBackups.Count(backup => !backup.IsRetainedLocally(_backupAdditionalData));
+            }
 
             bool onedriveSynced = false;
             bool localSynced = false;
@@ -523,6 +528,7 @@ namespace hassio_onedrive_backup.Hass
 
             _hassEntityState.State = state;
             await _hassEntityState.UpdateBackupEntityInHass();
+
         }
 
         public void UpdateAllowedHours(string allowedHours)
@@ -548,7 +554,14 @@ namespace hassio_onedrive_backup.Hass
 
             OnlineBackups = onlineBackups;
             OneDriveBackupsUpdated?.Invoke();
-            return onlineBackups;
+			await UpdateHassEntity();
+			return onlineBackups;
+        }
+
+        private async Task RefreshBackupsAndUpdateHassEntity()
+        {
+            _ = await RefreshLocalBackups();
+            _ = await GetOnlineBackupsAsync(_addonOptions.InstanceName);
         }
 
         private OnedriveBackup? CheckIfFileIsBackup(DriveItem item)
@@ -589,6 +602,7 @@ namespace hassio_onedrive_backup.Hass
             var ret = await _hassIoClient.GetBackupsAsync(IsMonitoredBackup);
             LocalBackups = ret;
             LocalBackupsUpdated?.Invoke();
+            await UpdateHassEntity();
             return ret;
         }
 
