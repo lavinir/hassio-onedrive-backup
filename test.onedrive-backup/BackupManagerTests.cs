@@ -5,11 +5,13 @@ using Microsoft.Graph.Models;
 using Moq;
 using Newtonsoft.Json;
 using onedrive_backup;
+using onedrive_backup.Contracts;
 using onedrive_backup.Graph;
 using onedrive_backup.Hass;
 using System;
 using System.Globalization;
 using test.onedrive_backup.Mocks;
+using static hassio_onedrive_backup.Contracts.HassAddonsResponse;
 using static hassio_onedrive_backup.Contracts.HassBackupsResponse;
 
 namespace hassio_onedrive_backup.Tests
@@ -43,6 +45,9 @@ namespace hassio_onedrive_backup.Tests
 			_hassEntityStateMock = new Mock<HassOnedriveEntityState>(_hassIoClientMock.Object);
 			_transferSpeedHelperMock = new Mock<TransferSpeedHelper>(null);
 			_hassContextMock = new Mock<HassContext>();
+			var backupAdditionalData = new BackupAdditionalData();
+			var hassOneDriveFreeSpaceEntityState = new HassOnedriveFreeSpaceEntityState(_hassIoClientMock.Object);
+
 			_addonOptions = CreateAddonOptions();
 			_serviceProviderMock.Setup(provider => provider.GetService(typeof(IGraphHelper))).Returns(_graphHelperMock.Object);
 			_serviceProviderMock.Setup(provider => provider.GetService(typeof(IHassioClient))).Returns(_hassIoClientMock.Object);
@@ -50,6 +55,8 @@ namespace hassio_onedrive_backup.Tests
 			_serviceProviderMock.Setup(provider => provider.GetService(typeof(HassContext))).Returns(_hassContextMock.Object);
 			_serviceProviderMock.Setup(provider => provider.GetService(typeof(AddonOptions))).Returns(_addonOptions);
 			_serviceProviderMock.Setup(provider => provider.GetService(typeof(IDateTimeProvider))).Returns(_dateTimeProvider);
+			_serviceProviderMock.Setup(provider => provider.GetService(typeof(BackupAdditionalData))).Returns(backupAdditionalData);
+			_serviceProviderMock.Setup(provider => provider.GetService(typeof(HassOnedriveFreeSpaceEntityState))).Returns(hassOneDriveFreeSpaceEntityState);
 
 			var consoleLogger = new ConsoleLogger();
 			consoleLogger.SetDateTimeProvider(_dateTimeProvider);
@@ -404,13 +411,15 @@ namespace hassio_onedrive_backup.Tests
 				{
 					return _localBackups.Remove(backup);
 				});
-			
+
+			_hassIoClientMock.Setup(client => client.GetAddonsAsync())
+				.ReturnsAsync(() => { return new List<Addon>(); });
 		}
 
 		private void SetupIGraphHelper()
 		{
 			_graphHelperMock = new Mock<IGraphHelper>();
-			_graphHelperMock.Setup(gh => gh.GetItemsInAppFolderAsync(""))
+			_graphHelperMock.Setup(gh => gh.GetItemsInAppFolderAsync("/"))
 				.ReturnsAsync(() => _onedriveBackups.Select(backup => new DriveItem()
 				{
 					Name = backup.FileName,

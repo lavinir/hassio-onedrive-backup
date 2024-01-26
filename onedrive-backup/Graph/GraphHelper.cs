@@ -100,13 +100,7 @@ namespace hassio_onedrive_backup.Graph
                     item = await _userClient.Drives[driveItem.Id].Items[appFolder.Id].ItemWithPath(subPath).GetAsync(config => config.QueryParameters.Expand = new string[] { "children" });
                 }
 
-                //var appRoot = await _userClient.Drives[driveItem.Id].Items .WithUrl($"approot:/{subPath}:/children").GetAsync();
-                //var item = await _userClient.Drives[driveItem.Id].Special[$"approot/{subPath}"].GetAsync(config => config.QueryParameters.Expand = new string[] { "children" });
-                //var item = await _userClient.Drives[driveItem.Id].WithUrl($"approot:/{subPath}:/children").GetAsync();
-
-                //var item = await _userClient.Drives[  Me.Drive. .Special.AppRoot.ItemWithPath(subPath).Request().Expand("children").GetAsync();
                 return item;
-                // return item.Children.ToList();
             }
             catch (ODataError oe) when (oe.Error?.Code == "itemNotFound")
             {
@@ -172,13 +166,6 @@ namespace hassio_onedrive_backup.Graph
                     }
                 });
 
-            //         var uploadSession = await _userClient.Drive.Special.AppRoot.ItemWithPath(sanitizedDestinationFileName).CreateUploadSession(new DriveItemUploadableProperties
-            //{				 
-            //	Description = description
-            //}
-
-            //).Request().PostAsync();
-
             // todo: allow settings this in advanced configuration
             int maxSlizeSize = ChunkSize;
             long totalFileLength = fileStream.Length;
@@ -195,10 +182,6 @@ namespace hassio_onedrive_backup.Graph
                 }
 
                 progressCallback?.Invoke((int)percentage, (int)speed);
-                //if (delayMS >= 1)
-                //{
-                //	await Task.Delay((int)delayMS);
-                //}
             });
 
             int uploadAttempt = 0;
@@ -275,12 +258,6 @@ namespace hassio_onedrive_backup.Graph
             var drive = await _userClient.Me.Drive.GetAsync();
 
             var itemStream = await _userClient.Drives[drive.Id].Special["approot"].WithUrl(fileName).Content.GetAsync();
-            //if (item.AdditionalData.TryGetValue("@microsoft.graph.downloadUrl", out var downloadUrl) == false)
-            //{
-            //    _logger.LogError($"Failed getting file download data. ${fileName}");
-            //    return null;
-            //}
-
             var fileInfo = new FileInfo($"{LocalStorage.TempFolder}/{fileName}");
             using var fileStream = File.Create(fileInfo.FullName);
 
@@ -290,7 +267,6 @@ namespace hassio_onedrive_backup.Graph
             {
                 try
                 {
-                    //int chunkSize = Math.Min(position + ChunkSize, itemStream.Length - 1);
                     var buffer = new byte[ChunkSize];
                     int bytesRead = await itemStream.ReadAsync(buffer, 0, ChunkSize);
                     totalBytesDownloaded += bytesRead;
@@ -332,7 +308,6 @@ namespace hassio_onedrive_backup.Graph
 
             _deviceCodeCredential = new DeviceCodeCredential(deviceCodeCredOptions);
             _userClient = new GraphServiceClient(_deviceCodeCredential, _scopes);
-            // _userClient.HttpProvider.OverallTimeout = TimeSpan.FromMinutes(GraphRequestTimeoutMinutes);
         }
 
         private AuthenticationRecord GetAuthenticationRecordFromCredential()

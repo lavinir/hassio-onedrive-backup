@@ -73,7 +73,7 @@
 			</div>
 			<div class="col">
 				<div class="progress">
-					<div class="progress-bar bg-primary" role="progressbar" style="width: @(LocalBackupsPercentage)%" aria-valuenow="@LocalBackupsPercentage" aria-valuemin="0" aria-valuemax="@AddonOptions.MaxLocalBackups">@HassOnedriveEntityState.BackupsInHomeAssistant / @AddonOptions.MaxLocalBackups</div>
+					<div class="progress-bar bg-primary" role="progressbar" style="width: @(LocalBackupsPercentage)%" aria-valuenow="@LocalBackupsPercentage" aria-valuemin="0" aria-valuemax="@AddonOptions.MaxLocalBackups">@HassOnedriveEntityState.BackupsInHomeAssistant / @AddonOptions.MaxLocalBackups (@LocalBackupsSpace)</div>
 				</div>
 			</div>
 		</div>
@@ -83,7 +83,7 @@
 			</div>
 			<div class="col">
 				<div class="progress">
-					<div class="progress-bar bg-primary" role="progressbar" style="width: @(OneDriveBackupsPercentage)%" aria-valuenow="@OneDriveBackupsPercentage" aria-valuemin="0" aria-valuemax="@AddonOptions.MaxOnedriveBackups">@HassOnedriveEntityState.BackupsInOnedrive / @AddonOptions.MaxOnedriveBackups</div>
+					<div class="progress-bar bg-primary" role="progressbar" style="width: @(OneDriveBackupsPercentage)%" aria-valuenow="@OneDriveBackupsPercentage" aria-valuemin="0" aria-valuemax="@AddonOptions.MaxOnedriveBackups">@HassOnedriveEntityState.BackupsInOnedrive / @AddonOptions.MaxOnedriveBackups (@OneDriveBackupsSpace)</div>
 				</div>
 			</div>
 		</div>
@@ -99,6 +99,21 @@
 				else
 				{
 					<span class="card-text">@LastBackupDate</span>
+				}
+			</div>
+		</div>
+		<div class="row">
+			<div class="col">
+				<span class="card-text">Next Estimated Backup Date</span>
+			</div>
+			<div class="col">
+				@if (LastBackupDate == null)
+				{
+					<span class="card-text">None</span>
+				}
+				else
+				{
+					<span class="card-text">@NextBackupDate</span>
 				}
 			</div>
 		</div>
@@ -161,7 +176,37 @@
 
 	private DateTime? LastBackupDate => HassOnedriveEntityState.LastLocalBackupDate > HassOnedriveEntityState.LastOnedriveBackupDate ? HassOnedriveEntityState.LastLocalBackupDate : HassOnedriveEntityState.LastOnedriveBackupDate;
 
+	private DateTime? NextBackupDate => LastBackupDate.HasValue ? LastBackupDate.Value.AddDays(AddonOptions.BackupIntervalDays) : null;
+
 	private string FreeSpaceColor => OneDriveUsedSpacePercentage > 90 ? "bg-danger" : "bg-primary";
+
+	private string LocalBackupsSpace 
+	{ 
+		get
+		{
+			float totalSize = Orchestrator.BackupManager.LocalBackups?.Sum(backup => backup.Size) ?? 0;
+			if (totalSize < 1000)
+			{
+				return $"{totalSize:0.00}MB";
+			}
+
+			return $"{totalSize:0.00}GB";
+		}
+	}
+
+	private string OneDriveBackupsSpace
+	{
+		get
+		{
+			float totalSize = Orchestrator.BackupManager.OnlineBackups?.Sum(backup => backup.Size) ?? 0;
+			if (totalSize < 1000)
+			{
+				return $"{totalSize:0.00}MB";
+			}
+
+			return $"{totalSize:0.00}GB";
+		}
+	}
 
 	private string SummaryBadgeColor
 	{

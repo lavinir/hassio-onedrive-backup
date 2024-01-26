@@ -9,6 +9,8 @@ namespace hassio_onedrive_backup.Hass
         private const string OneDrive_Backup_Entity_ID = "sensor.onedrivebackup";
         private IHassioClient? _hassioClient;
         private BackupState state;
+        private bool _isSyncing = false;
+
         private List<JsonConverter> entityStateConverters = new List<JsonConverter>
         {
             new StringEnumConverter()
@@ -49,14 +51,30 @@ namespace hassio_onedrive_backup.Hass
 
         public int? DownloadPercentage { get; set; }
 
+        public int RetainedLocalBackups { get; set; }
+
+        public int RetainedOneDriveBackups { get; set; }
+
         // KB/s
         public int? UploadSpeed { get; set; }
+
+        public async Task SyncStart()
+        {
+            _isSyncing = true;
+            await UpdateBackupEntityInHass();
+        }
+
+        public async Task SyncEnd()
+        {
+            _isSyncing = false;
+            await UpdateBackupEntityInHass();
+        }
 
         public async Task UpdateBackupEntityInHass()
         {
             var payload = new
             {
-                state = State,
+                state = _isSyncing ? BackupState.Syncing : State,
                 attributes = new Dictionary<string, string?>
                 {
                     { BackupStateAttribute.LastLocalBackupDate, LastLocalBackupDate?.ToString(DateTimeHelper.DateTimeFormat) },
