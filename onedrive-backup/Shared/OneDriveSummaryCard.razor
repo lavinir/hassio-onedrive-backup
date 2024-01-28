@@ -64,7 +64,7 @@
 				else
 				{
 					<div class="progress">
-						<div class="progress-bar @FreeSpaceColor" role="progressbar" style="width: @(OneDriveUsedSpacePercentage)%;transition-duration:300ms;" aria-valuenow="@OneDriveUsedSpacePercentage" data-bs-toggle="tooltip" title=@(OneDriveUsedSpace.ToString("N2") + " GB / " + (HassOnedriveFreeSpaceEntityState.FreeSpaceGB ?? 0).ToString("N2") + " GB" ) aria-valuemin="0" aria-valuemax="100">Used: @(OneDriveUsedSpacePercentage)%</div>
+						<div id="free-space-pb" class="progress-bar @FreeSpaceColor" role="progressbar" style="width: @(OneDriveUsedSpacePercentage)%;transition-duration:300ms;" aria-valuenow="@OneDriveUsedSpacePercentage" data-bs-toggle="tooltip" title=@(OneDriveUsedSpace.ToString("N2") + " GB / " + (HassOnedriveFreeSpaceEntityState.FreeSpaceGB ?? 0).ToString("N2") + " GB" ) aria-valuemin="0" aria-valuemax="100">Used: @(OneDriveUsedSpacePercentage)%</div>
 					</div>
 				}
 			</div>
@@ -76,10 +76,10 @@
 			<div class="col">
 				<div class="progress-stacked">
 					<div class="progress" role="progressbar" aria-label="retained" aria-valuenow="@LocalRetainedBackupsPercentage" aria-valuemin="0" aria-valuemax="100" style="width: @(LocalRetainedBackupsPercentage)%;transition-duration:300ms;">
-						<div class="progress-bar bg-info">@HassOnedriveEntityState.RetainedLocalBackups</div>
+						<div id="local-retained-pb" class="progress-bar bg-info" data-bs-toggle="tooltip" title="@HassOnedriveEntityState.RetainedLocalBackups Local Backups Retained Indefinitely">@HassOnedriveEntityState.RetainedLocalBackups (Retained)</div>
 					</div>
 					<div class="progress" role="progressbar" aria-valuenow="@LocalBackupsPercentage" aria-label="backups" aria-valuemin="0" aria-valuemax="100" style="width: @(LocalBackupsPercentage)%;transition-duration:300ms;">
-						<div class="progress-bar bg-primary">@HassOnedriveEntityState.BackupsInHomeAssistant / @AddonOptions.MaxLocalBackups (Total Size: @LocalBackupsSpace)</div>
+						<div id="local-pb"  class="progress-bar bg-primary" data-bs-toggle="tooltip" title="@HassOnedriveEntityState.BackupsInHomeAssistant out of max @AddonOptions.MaxLocalBackups Local Backups. (Total Size: @LocalBackupsSpace">@HassOnedriveEntityState.BackupsInHomeAssistant / @AddonOptions.MaxLocalBackups (Total Size: @LocalBackupsSpace)</div>
 					</div>
 				</div>
 			</div>
@@ -91,10 +91,10 @@
 			<div class="col">
 				<div class="progress-stacked">
 					<div class="progress" role="progressbar" style="width: @(OneDriveRetainedBackupsPercentage)%;transition-duration:300ms;" aria-valuenow="@OneDriveRetainedBackupsPercentage" aria-valuemin="0" aria-valuemax="100">
-						<div class="progress-bar bg-info">@HassOnedriveEntityState.RetainedOneDriveBackups (Retained)</div>
+						<div id="onedrive-retained-pb" class="progress-bar bg-info" data-bs-toggle="tooltip" title="@HassOnedriveEntityState.RetainedOneDriveBackups OneDrive Backups Retained Indefinitely">@HassOnedriveEntityState.RetainedOneDriveBackups (Retained)</div>
 					</div>
 					<div class="progress" role="progressbar" style="width: @(OneDriveBackupsPercentage)%;transition-duration:300ms;" aria-valuenow="@OneDriveBackupsPercentage" aria-valuemin="0" aria-valuemax="100">
-						<div class="progress-bar bg-primary">@HassOnedriveEntityState.BackupsInOnedrive / @AddonOptions.MaxOnedriveBackups (Total Size: @OneDriveBackupsSpace)</div>
+						<div id="onedrive-pb" class="progress-bar bg-primary" data-bs-toggle="tooltip" title="@HassOnedriveEntityState.BackupsInOnedrive out of max @AddonOptions.MaxOnedriveBackups OneDrive Backups. (Total Size: @OneDriveBackupsSpace">@HassOnedriveEntityState.BackupsInOnedrive / @AddonOptions.MaxOnedriveBackups (Total Size: @OneDriveBackupsSpace)</div>
 					</div>
 				</div>
 			</div>
@@ -307,6 +307,8 @@
 
 	private async void TriggerStateChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
 	{
+		await JS.InvokeVoidAsync("refreshTooltipContent", "local-pb", "free-space-pb", "onedrive-pb", "onedrive-retained-pb", "local-retained-pb");
+
 		await InvokeAsync(() =>
 		{
 			StateHasChanged();

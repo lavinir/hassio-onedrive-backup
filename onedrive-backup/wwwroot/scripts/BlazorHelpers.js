@@ -7,6 +7,17 @@ function addTooltips() {
     const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
 }
 
+function refreshTooltipContent(elements) {
+    elements.forEach(elementId => {
+        const element = document.getElementById(elementId);
+        const tooltip = bootstrap.Tooltip.getInstance(element);
+        if (tooltip) {
+            tooltip.dispose();
+            new bootstrap.Tooltip(element);
+        }
+    });
+}
+
 function addToasts() {
     var toastElList = [].slice.call(document.querySelectorAll('.toast'))
     var toastList = toastElList.map(function (toastEl) {
@@ -22,7 +33,7 @@ function showSaveToast() {
 
 function initSettingsPopover() {
     settingsPopover = new bootstrap.Popover(document.querySelector('#settingsNav'), {
-        container: "body", 
+        container: "body",
         placement: "bottom",
         content: "Configuration is now done in the Settings tab",
         trigger: "manual"
