@@ -1,5 +1,5 @@
 /*!
-  * Bootstrap v5.3.0-alpha2 (https://getbootstrap.com/)
+  * Bootstrap v5.3.2 (https://getbootstrap.com/)
   * Copyright 2011-2023 The Bootstrap Authors (https://github.com/twbs/bootstrap/graphs/contributors)
   * Licensed under MIT (https://github.com/twbs/bootstrap/blob/main/LICENSE)
   */
@@ -27,6 +27,54 @@
   }
 
   const Popper__namespace = /*#__PURE__*/_interopNamespaceDefault(Popper);
+
+  /**
+   * --------------------------------------------------------------------------
+   * Bootstrap dom/data.js
+   * Licensed under MIT (https://github.com/twbs/bootstrap/blob/main/LICENSE)
+   * --------------------------------------------------------------------------
+   */
+
+  /**
+   * Constants
+   */
+
+  const elementMap = new Map();
+  const Data = {
+    set(element, key, instance) {
+      if (!elementMap.has(element)) {
+        elementMap.set(element, new Map());
+      }
+      const instanceMap = elementMap.get(element);
+
+      // make it clear we only want one instance per element
+      // can be removed later when multiple key/instances are fine to be used
+      if (!instanceMap.has(key) && instanceMap.size !== 0) {
+        // eslint-disable-next-line no-console
+        console.error(`Bootstrap doesn't allow more than one instance per element. Bound instance: ${Array.from(instanceMap.keys())[0]}.`);
+        return;
+      }
+      instanceMap.set(key, instance);
+    },
+    get(element, key) {
+      if (elementMap.has(element)) {
+        return elementMap.get(element).get(key) || null;
+      }
+      return null;
+    },
+    remove(element, key) {
+      if (!elementMap.has(element)) {
+        return;
+      }
+      const instanceMap = elementMap.get(element);
+      instanceMap.delete(key);
+
+      // free up element references if there are no instances left for an element
+      if (instanceMap.size === 0) {
+        elementMap.delete(element);
+      }
+    }
+  };
 
   /**
    * --------------------------------------------------------------------------
@@ -282,6 +330,7 @@
    * --------------------------------------------------------------------------
    */
 
+
   /**
    * Constants
    */
@@ -347,7 +396,7 @@
   }
   function normalizeParameters(originalTypeEvent, handler, delegationFunction) {
     const isDelegated = typeof handler === 'string';
-    // todo: tooltip passes `false` instead of selector, so we need to check
+    // TODO: tooltip passes `false` instead of selector, so we need to check
     const callable = isDelegated ? delegationFunction : handler || delegationFunction;
     let typeEvent = getTypeEvent(originalTypeEvent);
     if (!nativeEvents.has(typeEvent)) {
@@ -464,11 +513,10 @@
         nativeDispatch = !jQueryEvent.isImmediatePropagationStopped();
         defaultPrevented = jQueryEvent.isDefaultPrevented();
       }
-      let evt = new Event(event, {
+      const evt = hydrateObj(new Event(event, {
         bubbles,
         cancelable: true
-      });
-      evt = hydrateObj(evt, args);
+      }), args);
       if (defaultPrevented) {
         evt.preventDefault();
       }
@@ -496,54 +544,6 @@
     }
     return obj;
   }
-
-  /**
-   * --------------------------------------------------------------------------
-   * Bootstrap dom/data.js
-   * Licensed under MIT (https://github.com/twbs/bootstrap/blob/main/LICENSE)
-   * --------------------------------------------------------------------------
-   */
-
-  /**
-   * Constants
-   */
-
-  const elementMap = new Map();
-  const Data = {
-    set(element, key, instance) {
-      if (!elementMap.has(element)) {
-        elementMap.set(element, new Map());
-      }
-      const instanceMap = elementMap.get(element);
-
-      // make it clear we only want one instance per element
-      // can be removed later when multiple key/instances are fine to be used
-      if (!instanceMap.has(key) && instanceMap.size !== 0) {
-        // eslint-disable-next-line no-console
-        console.error(`Bootstrap doesn't allow more than one instance per element. Bound instance: ${Array.from(instanceMap.keys())[0]}.`);
-        return;
-      }
-      instanceMap.set(key, instance);
-    },
-    get(element, key) {
-      if (elementMap.has(element)) {
-        return elementMap.get(element).get(key) || null;
-      }
-      return null;
-    },
-    remove(element, key) {
-      if (!elementMap.has(element)) {
-        return;
-      }
-      const instanceMap = elementMap.get(element);
-      instanceMap.delete(key);
-
-      // free up element references if there are no instances left for an element
-      if (instanceMap.size === 0) {
-        elementMap.delete(element);
-      }
-    }
-  };
 
   /**
    * --------------------------------------------------------------------------
@@ -609,6 +609,7 @@
    * --------------------------------------------------------------------------
    */
 
+
   /**
    * Class definition
    */
@@ -661,11 +662,12 @@
    * --------------------------------------------------------------------------
    */
 
+
   /**
    * Constants
    */
 
-  const VERSION = '5.3.0-alpha2';
+  const VERSION = '5.3.2';
 
   /**
    * Class definition
@@ -728,6 +730,7 @@
    * Licensed under MIT (https://github.com/twbs/bootstrap/blob/main/LICENSE)
    * --------------------------------------------------------------------------
    */
+
   const getSelector = element => {
     let selector = element.getAttribute('data-bs-target');
     if (!selector || selector === '#') {
@@ -745,9 +748,9 @@
       if (hrefAttribute.includes('#') && !hrefAttribute.startsWith('#')) {
         hrefAttribute = `#${hrefAttribute.split('#')[1]}`;
       }
-      selector = hrefAttribute && hrefAttribute !== '#' ? hrefAttribute.trim() : null;
+      selector = hrefAttribute && hrefAttribute !== '#' ? parseSelector(hrefAttribute.trim()) : null;
     }
-    return parseSelector(selector);
+    return selector;
   };
   const SelectorEngine = {
     find(selector, element = document.documentElement) {
@@ -816,6 +819,7 @@
    * Licensed under MIT (https://github.com/twbs/bootstrap/blob/main/LICENSE)
    * --------------------------------------------------------------------------
    */
+
   const enableDismissTrigger = (component, method = 'hide') => {
     const clickEvent = `click.dismiss${component.EVENT_KEY}`;
     const name = component.NAME;
@@ -840,6 +844,7 @@
    * Licensed under MIT (https://github.com/twbs/bootstrap/blob/main/LICENSE)
    * --------------------------------------------------------------------------
    */
+
 
   /**
    * Constants
@@ -915,6 +920,7 @@
    * --------------------------------------------------------------------------
    */
 
+
   /**
    * Constants
    */
@@ -977,6 +983,7 @@
    * Licensed under MIT (https://github.com/twbs/bootstrap/blob/main/LICENSE)
    * --------------------------------------------------------------------------
    */
+
 
   /**
    * Constants
@@ -1096,6 +1103,7 @@
    * Licensed under MIT (https://github.com/twbs/bootstrap/blob/main/LICENSE)
    * --------------------------------------------------------------------------
    */
+
 
   /**
    * Constants
@@ -1352,7 +1360,7 @@
       }
       if (!activeElement || !nextElement) {
         // Some weirdness is happening, so we bail
-        // todo: change tests that use empty divs to avoid this check
+        // TODO: change tests that use empty divs to avoid this check
         return;
       }
       const isCycling = Boolean(this._interval);
@@ -1468,6 +1476,7 @@
    * Licensed under MIT (https://github.com/twbs/bootstrap/blob/main/LICENSE)
    * --------------------------------------------------------------------------
    */
+
 
   /**
    * Constants
@@ -1702,6 +1711,7 @@
    * --------------------------------------------------------------------------
    */
 
+
   /**
    * Constants
    */
@@ -1769,7 +1779,7 @@
       super(element, config);
       this._popper = null;
       this._parent = this._element.parentNode; // dropdown wrapper
-      // todo: v6 revert #37011 & change markup https://getbootstrap.com/docs/5.3/forms/input-group/
+      // TODO: v6 revert #37011 & change markup https://getbootstrap.com/docs/5.3/forms/input-group/
       this._menu = SelectorEngine.next(this._element, SELECTOR_MENU)[0] || SelectorEngine.prev(this._element, SELECTOR_MENU)[0] || SelectorEngine.findOne(SELECTOR_MENU, this._parent);
       this._inNavbar = this._detectNavbar();
     }
@@ -1943,7 +1953,7 @@
 
       // Disable Popper if we have a static display or Dropdown is in Navbar
       if (this._inNavbar || this._config.display === 'static') {
-        Manipulator.setDataAttribute(this._menu, 'popper', 'static'); // todo:v6 remove
+        Manipulator.setDataAttribute(this._menu, 'popper', 'static'); // TODO: v6 remove
         defaultBsPopperConfig.modifiers = [{
           name: 'applyStyles',
           enabled: false
@@ -2025,7 +2035,7 @@
       }
       event.preventDefault();
 
-      // todo: v6 revert #37011 & change markup https://getbootstrap.com/docs/5.3/forms/input-group/
+      // TODO: v6 revert #37011 & change markup https://getbootstrap.com/docs/5.3/forms/input-group/
       const getToggleButton = this.matches(SELECTOR_DATA_TOGGLE$3) ? this : SelectorEngine.prev(this, SELECTOR_DATA_TOGGLE$3)[0] || SelectorEngine.next(this, SELECTOR_DATA_TOGGLE$3)[0] || SelectorEngine.findOne(SELECTOR_DATA_TOGGLE$3, event.delegateTarget.parentNode);
       const instance = Dropdown.getOrCreateInstance(getToggleButton);
       if (isUpOrDownEvent) {
@@ -2064,107 +2074,11 @@
 
   /**
    * --------------------------------------------------------------------------
-   * Bootstrap util/scrollBar.js
-   * Licensed under MIT (https://github.com/twbs/bootstrap/blob/main/LICENSE)
-   * --------------------------------------------------------------------------
-   */
-
-  /**
-   * Constants
-   */
-
-  const SELECTOR_FIXED_CONTENT = '.fixed-top, .fixed-bottom, .is-fixed, .sticky-top';
-  const SELECTOR_STICKY_CONTENT = '.sticky-top';
-  const PROPERTY_PADDING = 'padding-right';
-  const PROPERTY_MARGIN = 'margin-right';
-
-  /**
-   * Class definition
-   */
-
-  class ScrollBarHelper {
-    constructor() {
-      this._element = document.body;
-    }
-
-    // Public
-    getWidth() {
-      // https://developer.mozilla.org/en-US/docs/Web/API/Window/innerWidth#usage_notes
-      const documentWidth = document.documentElement.clientWidth;
-      return Math.abs(window.innerWidth - documentWidth);
-    }
-    hide() {
-      const width = this.getWidth();
-      this._disableOverFlow();
-      // give padding to element to balance the hidden scrollbar width
-      this._setElementAttributes(this._element, PROPERTY_PADDING, calculatedValue => calculatedValue + width);
-      // trick: We adjust positive paddingRight and negative marginRight to sticky-top elements to keep showing fullwidth
-      this._setElementAttributes(SELECTOR_FIXED_CONTENT, PROPERTY_PADDING, calculatedValue => calculatedValue + width);
-      this._setElementAttributes(SELECTOR_STICKY_CONTENT, PROPERTY_MARGIN, calculatedValue => calculatedValue - width);
-    }
-    reset() {
-      this._resetElementAttributes(this._element, 'overflow');
-      this._resetElementAttributes(this._element, PROPERTY_PADDING);
-      this._resetElementAttributes(SELECTOR_FIXED_CONTENT, PROPERTY_PADDING);
-      this._resetElementAttributes(SELECTOR_STICKY_CONTENT, PROPERTY_MARGIN);
-    }
-    isOverflowing() {
-      return this.getWidth() > 0;
-    }
-
-    // Private
-    _disableOverFlow() {
-      this._saveInitialAttribute(this._element, 'overflow');
-      this._element.style.overflow = 'hidden';
-    }
-    _setElementAttributes(selector, styleProperty, callback) {
-      const scrollbarWidth = this.getWidth();
-      const manipulationCallBack = element => {
-        if (element !== this._element && window.innerWidth > element.clientWidth + scrollbarWidth) {
-          return;
-        }
-        this._saveInitialAttribute(element, styleProperty);
-        const calculatedValue = window.getComputedStyle(element).getPropertyValue(styleProperty);
-        element.style.setProperty(styleProperty, `${callback(Number.parseFloat(calculatedValue))}px`);
-      };
-      this._applyManipulationCallback(selector, manipulationCallBack);
-    }
-    _saveInitialAttribute(element, styleProperty) {
-      const actualValue = element.style.getPropertyValue(styleProperty);
-      if (actualValue) {
-        Manipulator.setDataAttribute(element, styleProperty, actualValue);
-      }
-    }
-    _resetElementAttributes(selector, styleProperty) {
-      const manipulationCallBack = element => {
-        const value = Manipulator.getDataAttribute(element, styleProperty);
-        // We only want to remove the property if the value is `null`; the value can also be zero
-        if (value === null) {
-          element.style.removeProperty(styleProperty);
-          return;
-        }
-        Manipulator.removeDataAttribute(element, styleProperty);
-        element.style.setProperty(styleProperty, value);
-      };
-      this._applyManipulationCallback(selector, manipulationCallBack);
-    }
-    _applyManipulationCallback(selector, callBack) {
-      if (isElement(selector)) {
-        callBack(selector);
-        return;
-      }
-      for (const sel of SelectorEngine.find(selector, this._element)) {
-        callBack(sel);
-      }
-    }
-  }
-
-  /**
-   * --------------------------------------------------------------------------
    * Bootstrap util/backdrop.js
    * Licensed under MIT (https://github.com/twbs/bootstrap/blob/main/LICENSE)
    * --------------------------------------------------------------------------
    */
+
 
   /**
    * Constants
@@ -2290,6 +2204,7 @@
    * --------------------------------------------------------------------------
    */
 
+
   /**
    * Constants
    */
@@ -2383,10 +2298,109 @@
 
   /**
    * --------------------------------------------------------------------------
+   * Bootstrap util/scrollBar.js
+   * Licensed under MIT (https://github.com/twbs/bootstrap/blob/main/LICENSE)
+   * --------------------------------------------------------------------------
+   */
+
+
+  /**
+   * Constants
+   */
+
+  const SELECTOR_FIXED_CONTENT = '.fixed-top, .fixed-bottom, .is-fixed, .sticky-top';
+  const SELECTOR_STICKY_CONTENT = '.sticky-top';
+  const PROPERTY_PADDING = 'padding-right';
+  const PROPERTY_MARGIN = 'margin-right';
+
+  /**
+   * Class definition
+   */
+
+  class ScrollBarHelper {
+    constructor() {
+      this._element = document.body;
+    }
+
+    // Public
+    getWidth() {
+      // https://developer.mozilla.org/en-US/docs/Web/API/Window/innerWidth#usage_notes
+      const documentWidth = document.documentElement.clientWidth;
+      return Math.abs(window.innerWidth - documentWidth);
+    }
+    hide() {
+      const width = this.getWidth();
+      this._disableOverFlow();
+      // give padding to element to balance the hidden scrollbar width
+      this._setElementAttributes(this._element, PROPERTY_PADDING, calculatedValue => calculatedValue + width);
+      // trick: We adjust positive paddingRight and negative marginRight to sticky-top elements to keep showing fullwidth
+      this._setElementAttributes(SELECTOR_FIXED_CONTENT, PROPERTY_PADDING, calculatedValue => calculatedValue + width);
+      this._setElementAttributes(SELECTOR_STICKY_CONTENT, PROPERTY_MARGIN, calculatedValue => calculatedValue - width);
+    }
+    reset() {
+      this._resetElementAttributes(this._element, 'overflow');
+      this._resetElementAttributes(this._element, PROPERTY_PADDING);
+      this._resetElementAttributes(SELECTOR_FIXED_CONTENT, PROPERTY_PADDING);
+      this._resetElementAttributes(SELECTOR_STICKY_CONTENT, PROPERTY_MARGIN);
+    }
+    isOverflowing() {
+      return this.getWidth() > 0;
+    }
+
+    // Private
+    _disableOverFlow() {
+      this._saveInitialAttribute(this._element, 'overflow');
+      this._element.style.overflow = 'hidden';
+    }
+    _setElementAttributes(selector, styleProperty, callback) {
+      const scrollbarWidth = this.getWidth();
+      const manipulationCallBack = element => {
+        if (element !== this._element && window.innerWidth > element.clientWidth + scrollbarWidth) {
+          return;
+        }
+        this._saveInitialAttribute(element, styleProperty);
+        const calculatedValue = window.getComputedStyle(element).getPropertyValue(styleProperty);
+        element.style.setProperty(styleProperty, `${callback(Number.parseFloat(calculatedValue))}px`);
+      };
+      this._applyManipulationCallback(selector, manipulationCallBack);
+    }
+    _saveInitialAttribute(element, styleProperty) {
+      const actualValue = element.style.getPropertyValue(styleProperty);
+      if (actualValue) {
+        Manipulator.setDataAttribute(element, styleProperty, actualValue);
+      }
+    }
+    _resetElementAttributes(selector, styleProperty) {
+      const manipulationCallBack = element => {
+        const value = Manipulator.getDataAttribute(element, styleProperty);
+        // We only want to remove the property if the value is `null`; the value can also be zero
+        if (value === null) {
+          element.style.removeProperty(styleProperty);
+          return;
+        }
+        Manipulator.removeDataAttribute(element, styleProperty);
+        element.style.setProperty(styleProperty, value);
+      };
+      this._applyManipulationCallback(selector, manipulationCallBack);
+    }
+    _applyManipulationCallback(selector, callBack) {
+      if (isElement(selector)) {
+        callBack(selector);
+        return;
+      }
+      for (const sel of SelectorEngine.find(selector, this._element)) {
+        callBack(sel);
+      }
+    }
+  }
+
+  /**
+   * --------------------------------------------------------------------------
    * Bootstrap modal.js
    * Licensed under MIT (https://github.com/twbs/bootstrap/blob/main/LICENSE)
    * --------------------------------------------------------------------------
    */
+
 
   /**
    * Constants
@@ -2489,9 +2503,8 @@
       this._queueCallback(() => this._hideModal(), this._element, this._isAnimated());
     }
     dispose() {
-      for (const htmlElement of [window, this._dialog]) {
-        EventHandler.off(htmlElement, EVENT_KEY$4);
-      }
+      EventHandler.off(window, EVENT_KEY$4);
+      EventHandler.off(this._dialog, EVENT_KEY$4);
       this._backdrop.dispose();
       this._focustrap.deactivate();
       super.dispose();
@@ -2692,6 +2705,7 @@
    * Licensed under MIT (https://github.com/twbs/bootstrap/blob/main/LICENSE)
    * --------------------------------------------------------------------------
    */
+
 
   /**
    * Constants
@@ -2923,34 +2937,8 @@
    * --------------------------------------------------------------------------
    */
 
-  const uriAttributes = new Set(['background', 'cite', 'href', 'itemtype', 'longdesc', 'poster', 'src', 'xlink:href']);
+  // js-docs-start allow-list
   const ARIA_ATTRIBUTE_PATTERN = /^aria-[\w-]*$/i;
-
-  /**
-   * A pattern that recognizes a commonly useful subset of URLs that are safe.
-   *
-   * Shout-out to Angular https://github.com/angular/angular/blob/12.2.x/packages/core/src/sanitization/url_sanitizer.ts
-   */
-  const SAFE_URL_PATTERN = /^(?:(?:https?|mailto|ftp|tel|file|sms):|[^#&/:?]*(?:[#/?]|$))/i;
-
-  /**
-   * A pattern that matches safe data URLs. Only matches image, video and audio types.
-   *
-   * Shout-out to Angular https://github.com/angular/angular/blob/12.2.x/packages/core/src/sanitization/url_sanitizer.ts
-   */
-  const DATA_URL_PATTERN = /^data:(?:image\/(?:bmp|gif|jpeg|jpg|png|tiff|webp)|video\/(?:mpeg|mp4|ogg|webm)|audio\/(?:mp3|oga|ogg|opus));base64,[\d+/a-z]+=*$/i;
-  const allowedAttribute = (attribute, allowedAttributeList) => {
-    const attributeName = attribute.nodeName.toLowerCase();
-    if (allowedAttributeList.includes(attributeName)) {
-      if (uriAttributes.has(attributeName)) {
-        return Boolean(SAFE_URL_PATTERN.test(attribute.nodeValue) || DATA_URL_PATTERN.test(attribute.nodeValue));
-      }
-      return true;
-    }
-
-    // Check if a regular expression validates the attribute.
-    return allowedAttributeList.filter(attributeRegex => attributeRegex instanceof RegExp).some(regex => regex.test(attributeName));
-  };
   const DefaultAllowlist = {
     // Global attributes allowed on any supplied element below.
     '*': ['class', 'dir', 'id', 'lang', 'role', ARIA_ATTRIBUTE_PATTERN],
@@ -2983,6 +2971,30 @@
     strong: [],
     u: [],
     ul: []
+  };
+  // js-docs-end allow-list
+
+  const uriAttributes = new Set(['background', 'cite', 'href', 'itemtype', 'longdesc', 'poster', 'src', 'xlink:href']);
+
+  /**
+   * A pattern that recognizes URLs that are safe wrt. XSS in URL navigation
+   * contexts.
+   *
+   * Shout-out to Angular https://github.com/angular/angular/blob/15.2.8/packages/core/src/sanitization/url_sanitizer.ts#L38
+   */
+  // eslint-disable-next-line unicorn/better-regex
+  const SAFE_URL_PATTERN = /^(?!javascript:)(?:[a-z0-9+.-]+:|[^&:/?#]*(?:[/?#]|$))/i;
+  const allowedAttribute = (attribute, allowedAttributeList) => {
+    const attributeName = attribute.nodeName.toLowerCase();
+    if (allowedAttributeList.includes(attributeName)) {
+      if (uriAttributes.has(attributeName)) {
+        return Boolean(SAFE_URL_PATTERN.test(attribute.nodeValue));
+      }
+      return true;
+    }
+
+    // Check if a regular expression validates the attribute.
+    return allowedAttributeList.filter(attributeRegex => attributeRegex instanceof RegExp).some(regex => regex.test(attributeName));
   };
   function sanitizeHtml(unsafeHtml, allowList, sanitizeFunction) {
     if (!unsafeHtml.length) {
@@ -3017,6 +3029,7 @@
    * Licensed under MIT (https://github.com/twbs/bootstrap/blob/main/LICENSE)
    * --------------------------------------------------------------------------
    */
+
 
   /**
    * Constants
@@ -3153,6 +3166,7 @@
    * --------------------------------------------------------------------------
    */
 
+
   /**
    * Constants
    */
@@ -3195,7 +3209,7 @@
     delay: 0,
     fallbackPlacements: ['top', 'right', 'bottom', 'left'],
     html: false,
-    offset: [0, 0],
+    offset: [0, 6],
     placement: 'top',
     popperConfig: null,
     sanitize: true,
@@ -3308,7 +3322,7 @@
         return;
       }
 
-      // todo v6 remove this OR make it optional
+      // TODO: v6 remove this or make it optional
       this._disposePopper();
       const tip = this._getTipElement();
       this._element.setAttribute('aria-describedby', tip.getAttribute('id'));
@@ -3394,12 +3408,12 @@
     _createTipElement(content) {
       const tip = this._getTemplateFactory(content).toHtml();
 
-      // todo: remove this check on v6
+      // TODO: remove this check in v6
       if (!tip) {
         return null;
       }
       tip.classList.remove(CLASS_NAME_FADE$2, CLASS_NAME_SHOW$2);
-      // todo: on v6 the following can be achieved with CSS only
+      // TODO: v6 the following can be achieved with CSS only
       tip.classList.add(`bs-${this.constructor.NAME}-auto`);
       const tipId = getUID(this.constructor.NAME).toString();
       tip.setAttribute('id', tipId);
@@ -3664,6 +3678,7 @@
    * --------------------------------------------------------------------------
    */
 
+
   /**
    * Constants
    */
@@ -3743,6 +3758,7 @@
    * Licensed under MIT (https://github.com/twbs/bootstrap/blob/main/LICENSE)
    * --------------------------------------------------------------------------
    */
+
 
   /**
    * Constants
@@ -3922,11 +3938,11 @@
         if (!anchor.hash || isDisabled(anchor)) {
           continue;
         }
-        const observableSection = SelectorEngine.findOne(anchor.hash, this._element);
+        const observableSection = SelectorEngine.findOne(decodeURI(anchor.hash), this._element);
 
         // ensure that the observableSection exists & is visible
         if (isVisible(observableSection)) {
-          this._targetLinks.set(anchor.hash, anchor);
+          this._targetLinks.set(decodeURI(anchor.hash), anchor);
           this._observableSections.set(anchor.hash, observableSection);
         }
       }
@@ -4003,6 +4019,7 @@
    * --------------------------------------------------------------------------
    */
 
+
   /**
    * Constants
    */
@@ -4021,17 +4038,19 @@
   const ARROW_RIGHT_KEY = 'ArrowRight';
   const ARROW_UP_KEY = 'ArrowUp';
   const ARROW_DOWN_KEY = 'ArrowDown';
+  const HOME_KEY = 'Home';
+  const END_KEY = 'End';
   const CLASS_NAME_ACTIVE = 'active';
   const CLASS_NAME_FADE$1 = 'fade';
   const CLASS_NAME_SHOW$1 = 'show';
   const CLASS_DROPDOWN = 'dropdown';
   const SELECTOR_DROPDOWN_TOGGLE = '.dropdown-toggle';
   const SELECTOR_DROPDOWN_MENU = '.dropdown-menu';
-  const NOT_SELECTOR_DROPDOWN_TOGGLE = ':not(.dropdown-toggle)';
+  const NOT_SELECTOR_DROPDOWN_TOGGLE = `:not(${SELECTOR_DROPDOWN_TOGGLE})`;
   const SELECTOR_TAB_PANEL = '.list-group, .nav, [role="tablist"]';
   const SELECTOR_OUTER = '.nav-item, .list-group-item';
   const SELECTOR_INNER = `.nav-link${NOT_SELECTOR_DROPDOWN_TOGGLE}, .list-group-item${NOT_SELECTOR_DROPDOWN_TOGGLE}, [role="tab"]${NOT_SELECTOR_DROPDOWN_TOGGLE}`;
-  const SELECTOR_DATA_TOGGLE = '[data-bs-toggle="tab"], [data-bs-toggle="pill"], [data-bs-toggle="list"]'; // todo:v6: could be only `tab`
+  const SELECTOR_DATA_TOGGLE = '[data-bs-toggle="tab"], [data-bs-toggle="pill"], [data-bs-toggle="list"]'; // TODO: could only be `tab` in v6
   const SELECTOR_INNER_ELEM = `${SELECTOR_INNER}, ${SELECTOR_DATA_TOGGLE}`;
   const SELECTOR_DATA_TOGGLE_ACTIVE = `.${CLASS_NAME_ACTIVE}[data-bs-toggle="tab"], .${CLASS_NAME_ACTIVE}[data-bs-toggle="pill"], .${CLASS_NAME_ACTIVE}[data-bs-toggle="list"]`;
 
@@ -4045,7 +4064,7 @@
       this._parent = this._element.closest(SELECTOR_TAB_PANEL);
       if (!this._parent) {
         return;
-        // todo: should Throw exception on v6
+        // TODO: should throw exception in v6
         // throw new TypeError(`${element.outerHTML} has not a valid parent ${SELECTOR_INNER_ELEM}`)
       }
 
@@ -4127,13 +4146,19 @@
       this._queueCallback(complete, element, element.classList.contains(CLASS_NAME_FADE$1));
     }
     _keydown(event) {
-      if (![ARROW_LEFT_KEY, ARROW_RIGHT_KEY, ARROW_UP_KEY, ARROW_DOWN_KEY].includes(event.key)) {
+      if (![ARROW_LEFT_KEY, ARROW_RIGHT_KEY, ARROW_UP_KEY, ARROW_DOWN_KEY, HOME_KEY, END_KEY].includes(event.key)) {
         return;
       }
       event.stopPropagation(); // stopPropagation/preventDefault both added to support up/down keys without scrolling the page
       event.preventDefault();
-      const isNext = [ARROW_RIGHT_KEY, ARROW_DOWN_KEY].includes(event.key);
-      const nextActiveElement = getNextActiveElement(this._getChildren().filter(element => !isDisabled(element)), event.target, isNext, true);
+      const children = this._getChildren().filter(element => !isDisabled(element));
+      let nextActiveElement;
+      if ([HOME_KEY, END_KEY].includes(event.key)) {
+        nextActiveElement = children[event.key === HOME_KEY ? 0 : children.length - 1];
+      } else {
+        const isNext = [ARROW_RIGHT_KEY, ARROW_DOWN_KEY].includes(event.key);
+        nextActiveElement = getNextActiveElement(children, event.target, isNext, true);
+      }
       if (nextActiveElement) {
         nextActiveElement.focus({
           preventScroll: true
@@ -4263,6 +4288,7 @@
    * Licensed under MIT (https://github.com/twbs/bootstrap/blob/main/LICENSE)
    * --------------------------------------------------------------------------
    */
+
 
   /**
    * Constants
@@ -4446,6 +4472,7 @@
    * Licensed under MIT (https://github.com/twbs/bootstrap/blob/main/LICENSE)
    * --------------------------------------------------------------------------
    */
+
   const index_umd = {
     Alert,
     Button,

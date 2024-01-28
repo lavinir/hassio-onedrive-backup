@@ -80,7 +80,9 @@ namespace hassio_onedrive_backup.Hass
                     { BackupStateAttribute.LastLocalBackupDate, LastLocalBackupDate?.ToString(DateTimeHelper.DateTimeFormat) },
                     { BackupStateAttribute.LastOnedriveBackupDate, LastOnedriveBackupDate?.ToString(DateTimeHelper.DateTimeFormat) },
                     { BackupStateAttribute.BackupsInHomeAssistant, BackupsInHomeAssistant.ToString() },
-                    { BackupStateAttribute.BackupsInOnedrive, BackupsInOnedrive.ToString() },
+					{ BackupStateAttribute.BackupsInOnedrive, BackupsInOnedrive.ToString() },
+					{ BackupStateAttribute.LocalRetainedBackupCount, RetainedLocalBackups.ToString() },
+					{ BackupStateAttribute.OneDriveRetainedBackupCount, RetainedOneDriveBackups.ToString() },
 					{ BackupStateAttribute.UploadPercentage, UploadPercentage == null ? null : $"{UploadPercentage}%" },
 					{ BackupStateAttribute.UploadSpeed, UploadSpeed== null ? null : $"{UploadSpeed} KB/s" },
                     { BackupStateAttribute.DownloadPercentage, DownloadPercentage == null ? null : $"{DownloadPercentage}%" }
@@ -103,11 +105,15 @@ namespace hassio_onedrive_backup.Hass
 
             public const string LastOnedriveBackupDate = "Last OneDrive backup date";
 
+            public const string LocalRetainedBackupCount = "Number of local backups marked to retain indefinitely";
+
             public const string BackupsInHomeAssistant = "Backups in Home Assistant";
 
             public const string BackupsInOnedrive = "Backups in OneDrive";
 
-            public const string UploadPercentage = "Current backup upload percentage";
+			public const string OneDriveRetainedBackupCount = "Number of OneDrive backups marked to retain indefinitely";
+
+			public const string UploadPercentage = "Current backup upload percentage";
 
             public const string DownloadPercentage = "Backup download percentage";
 

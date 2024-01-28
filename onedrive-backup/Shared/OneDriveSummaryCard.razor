@@ -2,6 +2,7 @@
 @using hassio_onedrive_backup.Graph;
 @using hassio_onedrive_backup.Hass;
 @using hassio_onedrive_backup;
+@using onedrive_backup.Contracts;
 @inject IJSRuntime JS
 @inject AddonOptions AddonOptions
 @inject HassOnedriveEntityState HassOnedriveEntityState
@@ -9,6 +10,7 @@
 @inject HassOnedriveFileSyncEntityState HassOnedriveFileSyncEntityState
 @inject Orchestrator Orchestrator
 @inject IGraphHelper GraphHelper
+@inject BackupAdditionalData BackupAdditionalData;
 
 <div class="card mb-3 w-100 @(AddonOptions.DarkMode ? "text-white bg-secondary": "text-dark bg-light")" style="min-width: 16rem">
 	<div class="card-header @(AddonOptions.DarkMode ? "text-light" : "text-dark") ">
@@ -62,7 +64,7 @@
 				else
 				{
 					<div class="progress">
-						<div class="progress-bar @FreeSpaceColor" role="progressbar" style="width: @(OneDriveUsedSpacePercentage)%" aria-valuenow="@OneDriveUsedSpacePercentage" data-bs-toggle="tooltip" title=@(OneDriveUsedSpace.ToString("N2") + " GB / " + (HassOnedriveFreeSpaceEntityState.FreeSpaceGB ?? 0).ToString("N2") + " GB" ) aria-valuemin="0" aria-valuemax="100">Used: @(OneDriveUsedSpacePercentage)%</div>
+						<div class="progress-bar @FreeSpaceColor" role="progressbar" style="width: @(OneDriveUsedSpacePercentage)%;transition-duration:300ms;" aria-valuenow="@OneDriveUsedSpacePercentage" data-bs-toggle="tooltip" title=@(OneDriveUsedSpace.ToString("N2") + " GB / " + (HassOnedriveFreeSpaceEntityState.FreeSpaceGB ?? 0).ToString("N2") + " GB" ) aria-valuemin="0" aria-valuemax="100">Used: @(OneDriveUsedSpacePercentage)%</div>
 					</div>
 				}
 			</div>
@@ -72,8 +74,13 @@
 				<span class="card-text">Local Backups</span>
 			</div>
 			<div class="col">
-				<div class="progress">
-					<div class="progress-bar bg-primary" role="progressbar" style="width: @(LocalBackupsPercentage)%" aria-valuenow="@LocalBackupsPercentage" aria-valuemin="0" aria-valuemax="@AddonOptions.MaxLocalBackups">@HassOnedriveEntityState.BackupsInHomeAssistant / @AddonOptions.MaxLocalBackups (@LocalBackupsSpace)</div>
+				<div class="progress-stacked">
+					<div class="progress" role="progressbar" aria-label="retained" aria-valuenow="@LocalRetainedBackupsPercentage" aria-valuemin="0" aria-valuemax="100" style="width: @(LocalRetainedBackupsPercentage)%;transition-duration:300ms;">
+						<div class="progress-bar bg-info">@HassOnedriveEntityState.RetainedLocalBackups</div>
+					</div>
+					<div class="progress" role="progressbar" aria-valuenow="@LocalBackupsPercentage" aria-label="backups" aria-valuemin="0" aria-valuemax="100" style="width: @(LocalBackupsPercentage)%;transition-duration:300ms;">
+						<div class="progress-bar bg-primary">@HassOnedriveEntityState.BackupsInHomeAssistant / @AddonOptions.MaxLocalBackups (Total Size: @LocalBackupsSpace)</div>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -82,8 +89,13 @@
 				<span class="card-text">OneDrive Backups</span>
 			</div>
 			<div class="col">
-				<div class="progress">
-					<div class="progress-bar bg-primary" role="progressbar" style="width: @(OneDriveBackupsPercentage)%" aria-valuenow="@OneDriveBackupsPercentage" aria-valuemin="0" aria-valuemax="@AddonOptions.MaxOnedriveBackups">@HassOnedriveEntityState.BackupsInOnedrive / @AddonOptions.MaxOnedriveBackups (@OneDriveBackupsSpace)</div>
+				<div class="progress-stacked">
+					<div class="progress" role="progressbar" style="width: @(OneDriveRetainedBackupsPercentage)%;transition-duration:300ms;" aria-valuenow="@OneDriveRetainedBackupsPercentage" aria-valuemin="0" aria-valuemax="100">
+						<div class="progress-bar bg-info">@HassOnedriveEntityState.RetainedOneDriveBackups (Retained)</div>
+					</div>
+					<div class="progress" role="progressbar" style="width: @(OneDriveBackupsPercentage)%;transition-duration:300ms;" aria-valuenow="@OneDriveBackupsPercentage" aria-valuemin="0" aria-valuemax="100">
+						<div class="progress-bar bg-primary">@HassOnedriveEntityState.BackupsInOnedrive / @AddonOptions.MaxOnedriveBackups (Total Size: @OneDriveBackupsSpace)</div>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -164,9 +176,13 @@
 
 	private int OneDriveUsedSpacePercentage => (int)((OneDriveUsedSpace / (HassOnedriveFreeSpaceEntityState.TotalSpaceGB ?? 1)) * 100);
 
-	private int LocalBackupsPercentage => (int)((HassOnedriveEntityState.BackupsInHomeAssistant / (double)AddonOptions.MaxLocalBackups) * 100);
+	private int LocalBackupsPercentage => (int)((HassOnedriveEntityState.BackupsInHomeAssistant / ((double)AddonOptions.MaxLocalBackups + HassOnedriveEntityState.RetainedLocalBackups)) * 100);
 
-	private int OneDriveBackupsPercentage => (int)((HassOnedriveEntityState.BackupsInOnedrive / (double)AddonOptions.MaxOnedriveBackups) * 100);
+	private int OneDriveBackupsPercentage => (int)((HassOnedriveEntityState.BackupsInOnedrive / ((double)AddonOptions.MaxOnedriveBackups + HassOnedriveEntityState.RetainedOneDriveBackups)) * 100);
+
+	private int LocalRetainedBackupsPercentage => (int)((HassOnedriveEntityState.RetainedLocalBackups / ((double)AddonOptions.MaxLocalBackups + HassOnedriveEntityState.RetainedLocalBackups)) * 100);
+
+	private int OneDriveRetainedBackupsPercentage => (int)((HassOnedriveEntityState.RetainedOneDriveBackups / ((double)AddonOptions.MaxOnedriveBackups + HassOnedriveEntityState.RetainedOneDriveBackups)) * 100);
 
 	private string BackupUploadSpeed => ViewHelpers.GetSpeedDisplayText(HassOnedriveEntityState.UploadSpeed);
 
@@ -180,8 +196,8 @@
 
 	private string FreeSpaceColor => OneDriveUsedSpacePercentage > 90 ? "bg-danger" : "bg-primary";
 
-	private string LocalBackupsSpace 
-	{ 
+	private string LocalBackupsSpace
+	{
 		get
 		{
 			float totalSize = Orchestrator.BackupManager.LocalBackups?.Sum(backup => backup.Size) ?? 0;
@@ -190,7 +206,7 @@
 				return $"{totalSize:0.00}MB";
 			}
 
-			return $"{totalSize:0.00}GB";
+			return $"{(totalSize / 1000):0.00}GB";
 		}
 	}
 
@@ -204,7 +220,7 @@
 				return $"{totalSize:0.00}MB";
 			}
 
-			return $"{totalSize:0.00}GB";
+			return $"{(totalSize / 1000):0.00}GB";
 		}
 	}
 
@@ -284,7 +300,7 @@
 	{
 		refreshingData = true;
 		TriggerStateChanged();
-		await Orchestrator.BackupManager.RefreshBackupData();
+		await Orchestrator.BackupManager.RefreshBackupsAndUpdateHassEntity();
 		refreshingData = false;
 		TriggerStateChanged();
 	}

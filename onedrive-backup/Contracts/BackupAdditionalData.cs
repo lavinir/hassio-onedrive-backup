@@ -23,9 +23,9 @@ namespace onedrive_backup.Contracts
             return (backup != null && backup.RetainOneDrive);
         }
 
-        public int PruneAdditionalBackupData(params string[] slugs)
+        public int PruneAdditionalBackupData(params string[] existingSlugs)
         {
-            return Backups.RemoveAll(backup => slugs.Contains(backup.Slug));
+            return Backups.RemoveAll(backup => !existingSlugs.Contains(backup.Slug));
         }
 
         public void UpdateRetainLocally(string slug, bool retain)

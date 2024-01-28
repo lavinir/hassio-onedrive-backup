@@ -1,5 +1,6 @@
 using hassio_onedrive_backup.Contracts;
 using hassio_onedrive_backup.Graph;
+using Kusto.Cloud.Platform.Utils;
 using Microsoft.Extensions.Logging;
 using Microsoft.Graph;
 using Microsoft.Graph.Models;
@@ -338,7 +339,7 @@ namespace hassio_onedrive_backup.Hass
             string? tempBackupFilePath = null;
             try
             {
-                double backupSizeGB = backup.Size / Math.Pow(10, 9);
+                double backupSizeGB = backup.Size / 1000;
                 _logger.LogVerbose($"Backup size to upload: {backupSizeGB.ToString("0.00")}GB");
                 if (_hassOneDriveFreeSpaceEntityState!.FreeSpaceGB != null && _hassOneDriveFreeSpaceEntityState.FreeSpaceGB < backupSizeGB)
                 {
@@ -511,13 +512,6 @@ namespace hassio_onedrive_backup.Hass
             _allowedHours = TimeRangeHelper.GetAllowedHours(allowedHours);
         }
 
-        public async Task RefreshBackupData()
-        {
-            var getLocalBackupsTask = RefreshLocalBackups();
-            var getOneDriveBackupTasks = GetOnlineBackupsAsync(_addonOptions.InstanceName);
-            await Task.WhenAll(getLocalBackupsTask, getOneDriveBackupTasks);
-        }
-
         public async Task<List<OnedriveBackup>> GetOnlineBackupsAsync(string? instanceName)
         {
             var onlineBackups = (await _graphHelper.GetItemsInAppFolderAsync()).Select(CheckIfFileIsBackup).ToList();
@@ -533,10 +527,12 @@ namespace hassio_onedrive_backup.Hass
 			return onlineBackups;
         }
 
-        private async Task RefreshBackupsAndUpdateHassEntity()
+        public async Task RefreshBackupsAndUpdateHassEntity()
         {
-            _ = await RefreshLocalBackups();
-            _ = await GetOnlineBackupsAsync(_addonOptions.InstanceName);
+            var localBackups = await RefreshLocalBackups();
+            var onedriveBackups = await GetOnlineBackupsAsync(_addonOptions.InstanceName);
+            var existingSlugs = localBackups.Select(backup => backup.Slug).Union(onedriveBackups.Select(backup => backup.Slug)).ToArrayIfNotAlready();
+            _backupAdditionalData.PruneAdditionalBackupData(existingSlugs);
         }
 
         private OnedriveBackup? CheckIfFileIsBackup(DriveItem item)
