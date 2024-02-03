@@ -75,6 +75,9 @@ configuration:
   enable_anonymous_telemetry:
     name: Enable Anonymous Telemetry
     description: Sends anonymous telemetry once a day containing data about which features are enabled in the addon. This helps focus development on relevant features and improve the addon.
+  enable_anonymous_error_reporting:
+    name: Enable Anonymous Error Reporting
+    description: Sends anonymous error messages (with exceptions) to help identify issues with the addon
   ignore_allowed_hours_for_file_sync:
     name: Ignore allowed hours for File Sync
     description: File syncing is always enabled regardless of the "Allowed Hours" time window for backups

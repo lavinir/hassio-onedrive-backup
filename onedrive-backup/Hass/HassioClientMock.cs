@@ -3,6 +3,7 @@ using hassio_onedrive_backup.Hass.Events;
 using Newtonsoft.Json;
 using onedrive_backup;
 using onedrive_backup.Contracts;
+using onedrive_backup.Telemetry;
 using System.Diagnostics;
 using System.Net.Http;
 using static hassio_onedrive_backup.Contracts.HassAddonsResponse;
@@ -12,10 +13,15 @@ namespace hassio_onedrive_backup.Hass
 {
 	internal class HassioClientMock : IHassioClient
     {
+        private readonly TelemetryManager _telemetryManager;
+
         private List<Backup> _backups = new();
-		
         private IDateTimeProvider _dateTimeProvider;
 
+        public HassioClientMock(TelemetryManager telemetryManager)
+        {
+            _telemetryManager = telemetryManager;
+        }
 
 		public Task<bool> CreateBackupAsync(string backupName, DateTime timeStamp, bool appendTimestamp = true, bool compressed = true, string? password = null, IEnumerable<string>? folders = null, IEnumerable<string>? addons = null)
         {

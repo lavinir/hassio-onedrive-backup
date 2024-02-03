@@ -19,7 +19,7 @@
                 @**************Add Badges*****************@
                 @if (Backup.Type != null)
                 {
-                    <span class="badge rounded-pill m-1 @BackupTypeColor" data-bs-toggle="tooltip" data-bs-title="Backup is @Backup.Type">@Backup.Type</span>
+                    <span class="badge rounded-pill m-1 @BackupTypeColor" data-bs-toggle="tooltip" data-bs-title="Backup is @Backup.Type">@char.ToUpper(@Backup.Type[0])@Backup.Type.Substring(1)</span>
                 }
                 @if (Backup.Location == BackupModel.BackupLocation.OneDrive || Backup.Location == BackupModel.BackupLocation.Both)
                 {

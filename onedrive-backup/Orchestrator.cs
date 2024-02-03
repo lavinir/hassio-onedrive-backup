@@ -73,7 +73,7 @@ namespace hassio_onedrive_backup
                     if (_addonOptions.EnableAnonymousTelemetry && DateTime.UtcNow - lastTelemetrySend > TimeSpan.FromHours(24))
                     {
                         _logger.LogVerbose($"Sending Telemetry");
-                        await _telemetryManager.SendConfig(_addonOptions);
+                        _telemetryManager!.SendConfig();
                         lastTelemetrySend = DateTime.UtcNow;
                     }
 
@@ -93,7 +93,7 @@ namespace hassio_onedrive_backup
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError($"Unexpected error. {ex}");
+                    _logger.LogError($"Unexpected error. {ex}", ex, _telemetryManager);
                 }
 
                 _logger.LogVerbose("Backup Interval Completed.");

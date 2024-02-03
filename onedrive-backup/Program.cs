@@ -35,17 +35,18 @@ namespace hassio_onedrive_backup
 				_baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
 
 #if DEBUG
-				IHassioClient hassIoClient = new HassioClientMock();
 				var addonOptions = AddonOptionsManager.ReadOptions(logger);
-
+                var telemetryManager = new TelemetryManager(logger, addonOptions);
+				// telemetryManager.SendError("Test ERROR", new Exception("Test Exception"));
+                IHassioClient hassIoClient = new HassioClientMock(telemetryManager);
 #else
-
-            Directory.SetCurrentDirectory(addonDirectory);
-            var addonOptions = AddonOptionsManager.ReadOptions(logger);
-            string supervisorToken = Environment.GetEnvironmentVariable("SUPERVISOR_TOKEN")!;
-            IHassioClient hassIoClient = new HassioClient(supervisorToken, addonOptions.HassAPITimeoutMinutes, logger);
+				Directory.SetCurrentDirectory(addonDirectory);
+				var addonOptions = AddonOptionsManager.ReadOptions(logger);
+				var telemetryManager = new TelemetryManager(logger, addonOptions);
+				string supervisorToken = Environment.GetEnvironmentVariable("SUPERVISOR_TOKEN")!;
+				IHassioClient hassIoClient = new HassioClient(supervisorToken, addonOptions.HassAPITimeoutMinutes, logger, telemetryManager);
 #endif
-				logger.SetLogLevel(addonOptions.LogLevel);
+                logger.SetLogLevel(addonOptions.LogLevel);
 				string timeZoneId = await hassIoClient.GetTimeZoneAsync();
 				var dateTimeProvider = new DateTimeHelper(timeZoneId);
 				logger.SetDateTimeProvider(dateTimeProvider);
@@ -70,14 +71,14 @@ namespace hassio_onedrive_backup
 				builder.Services.AddSingleton<IHassioClient>(hassIoClient);
 				builder.Services.AddSingleton(backupAdditionalData);
 
-				IGraphHelper graphHelper = new GraphHelper(scopes,clientId, dateTimeProvider, logger);
+				IGraphHelper graphHelper = new GraphHelper(scopes,clientId, dateTimeProvider, logger, telemetryManager);
 				builder.Services.AddSingleton<IGraphHelper>(graphHelper);
 				builder.Services.AddSingleton<HassOnedriveEntityState>();
 				builder.Services.AddSingleton<HassOnedriveFileSyncEntityState>();
 				builder.Services.AddSingleton<HassOnedriveFreeSpaceEntityState>();
 				builder.Services.AddSingleton<Orchestrator>();
 				builder.Services.AddSingleton<SettingsFields>();
-				builder.Services.AddSingleton<TelemetryManager>();
+				builder.Services.AddSingleton<TelemetryManager>(telemetryManager);
 				builder.WebHost.UseUrls("http://*:8099");
 
 				if (!builder.Environment.IsDevelopment())

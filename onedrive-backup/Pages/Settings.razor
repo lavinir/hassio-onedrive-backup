@@ -44,6 +44,13 @@
             </label>
         </div>
 
+        <div class="mb-3 form-switch">
+            <label class="form-check-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.enable_anonymous_error_reporting.description">
+                <input type="checkbox" class="form-check-input" role="switch" id="@SettingsReader.Settings.enable_anonymous_error_reporting.name" @bind="newOptions.EnableAnonymousErrorReporting">
+                @SettingsReader.Settings.enable_anonymous_error_reporting.name
+            </label>
+        </div>
+
         <div class="mb-3">
             <label class="form-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.log_level.description">@SettingsReader.Settings.log_level.name</label>
             <div class="form-check form-check-inline">

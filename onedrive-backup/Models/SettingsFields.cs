@@ -58,9 +58,10 @@ namespace onedrive_backup.Models
             public FieldData ignore_allowed_hours_for_file_sync { get; set; }
 
             public FieldData dark_mode { get; set; }
-        }
+			public FieldData enable_anonymous_error_reporting { get; set; }
+		}
 
-        public record class FieldData
+		public record class FieldData
         {
             public string name { get; set; }
 

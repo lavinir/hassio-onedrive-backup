@@ -10,6 +10,7 @@ using onedrive_backup.Contracts;
 using onedrive_backup.Extensions;
 using onedrive_backup.Graph;
 using onedrive_backup.Hass;
+using onedrive_backup.Telemetry;
 using System.Collections;
 using System.Globalization;
 using static hassio_onedrive_backup.Contracts.HassAddonsResponse;
@@ -26,6 +27,7 @@ namespace hassio_onedrive_backup.Hass
 		private readonly ConsoleLogger _logger;
 		private readonly IDateTimeProvider _dateTimeProvider;
         private readonly HassOnedriveFreeSpaceEntityState? _hassOneDriveFreeSpaceEntityState;
+        private readonly TelemetryManager? _telemetryManager;
         private readonly BackupAdditionalData _backupAdditionalData;
         private AddonOptions _addonOptions;
         private IGraphHelper _graphHelper;
@@ -48,6 +50,7 @@ namespace hassio_onedrive_backup.Hass
             _dateTimeProvider = serviceProvider.GetService<IDateTimeProvider>();
             _backupAdditionalData = serviceProvider.GetService<BackupAdditionalData>();
             _hassOneDriveFreeSpaceEntityState = serviceProvider.GetService<HassOnedriveFreeSpaceEntityState>();
+            _telemetryManager = serviceProvider.GetService<TelemetryManager>();
             UpdateAllowedHours(_addonOptions.BackupAllowedHours);
         }
 
@@ -376,7 +379,7 @@ namespace hassio_onedrive_backup.Hass
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error uploading backup: {ex}");
+                _logger.LogError($"Error uploading backup: {ex}", ex, _telemetryManager);
                 return false;
             }
             finally
@@ -420,7 +423,7 @@ namespace hassio_onedrive_backup.Hass
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error fetching backup {onlineBackup.FileName} from Onedrive to Home Assistant. {ex}");
+                _logger.LogError($"Error fetching backup {onlineBackup.FileName} from Onedrive to Home Assistant. {ex}", ex, _telemetryManager);
                 return false;
             }
             finally

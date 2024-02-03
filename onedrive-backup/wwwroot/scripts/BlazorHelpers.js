@@ -7,7 +7,7 @@ function addTooltips() {
     const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
 }
 
-function refreshTooltipContent(elements) {
+function refreshTooltipContent(...elements) {
     elements.forEach(elementId => {
         const element = document.getElementById(elementId);
         const tooltip = bootstrap.Tooltip.getInstance(element);

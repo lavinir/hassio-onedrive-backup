@@ -13,6 +13,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using File = System.IO.File;
 using DriveUpload = Microsoft.Graph.Drives.Item.Items.Item.CreateUploadSession;
+using onedrive_backup.Telemetry;
 
 namespace hassio_onedrive_backup.Graph
 {
@@ -25,6 +26,7 @@ namespace hassio_onedrive_backup.Graph
         private const int ChunkSize = (320 * 1024) * 10;
         private readonly IDateTimeProvider _dateTimeProvider;
         private readonly ConsoleLogger _logger;
+        private readonly TelemetryManager _telemetryManager;
         private DeviceCodeCredential? _deviceCodeCredential;
         protected GraphServiceClient? _userClient;
         private IEnumerable<string> _scopes;
@@ -40,12 +42,14 @@ namespace hassio_onedrive_backup.Graph
             string clientId,
             IDateTimeProvider dateTimeProvider,
             ConsoleLogger logger,
+            TelemetryManager telemetryManager,
             string persistentDataPath = "")
         {
             _scopes = scopes;
             _clientId = clientId;
             _dateTimeProvider = dateTimeProvider;
             _logger = logger;
+            _telemetryManager = telemetryManager;
             _persistentDataPath = persistentDataPath;
         }
 
@@ -109,7 +113,7 @@ namespace hassio_onedrive_backup.Graph
             }
             catch (ODataError oe)
             {
-                _logger.LogError($"{oe.Error.Code}: {oe.Error.Message}");
+                _logger.LogError($"{oe.Error.Code}: {oe.Error.Message}", oe, _telemetryManager);
                 return null;
             }
 
@@ -144,7 +148,7 @@ namespace hassio_onedrive_backup.Graph
         {
             if (File.Exists(filePath) == false)
             {
-                _logger.LogError($"File {filePath} not found");
+                _logger.LogError($"File {filePath} not found", telemetryManager: _telemetryManager);                
                 return false;
             }
 
@@ -215,7 +219,7 @@ namespace hassio_onedrive_backup.Graph
                 }
                 catch (ServiceException ex)
                 {
-                    _logger.LogError($"Error uploading: {ex}");
+                    _logger.LogError($"Error uploading: {ex}", ex, _telemetryManager);
                     return false;
                 }
             }
@@ -248,7 +252,7 @@ namespace hassio_onedrive_backup.Graph
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error getting free space: {ex}");
+                _logger.LogError($"Error getting free space: {ex}", ex, _telemetryManager);
                 return null;
             }
         }
@@ -276,7 +280,7 @@ namespace hassio_onedrive_backup.Graph
                 {
                     if (attempt >= DownloadRetryCount)
                     {
-                        _logger.LogError($"Failed downloading file {fileName}. {ex}");
+                        _logger.LogError($"Failed downloading file {fileName}. {ex}", ex, _telemetryManager);
                         progressCallback?.Invoke(null);
                         return null;
                     }
