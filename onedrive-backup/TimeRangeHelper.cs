@@ -53,7 +53,7 @@ namespace hassio_onedrive_backup
 
             for (int i = 1; i < 24; i++)
             {
-                target.AddHours(1);
+                target = target.AddHours(1);
                 if (allowedHours[target.Hour])
                 {
                     return target;
