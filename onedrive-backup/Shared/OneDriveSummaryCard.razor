@@ -192,9 +192,22 @@
 
 	private DateTime? LastBackupDate => HassOnedriveEntityState.LastLocalBackupDate > HassOnedriveEntityState.LastOnedriveBackupDate ? HassOnedriveEntityState.LastLocalBackupDate : HassOnedriveEntityState.LastOnedriveBackupDate;
 
-	private DateTime? NextBackupDate => LastBackupDate.HasValue ? LastBackupDate.Value.AddDays(AddonOptions.BackupIntervalDays) : null;
+	private DateTime? NextBackupDate
+	{
+		get
+		{
+			DateTime? targetDate = LastBackupDate.HasValue ? LastBackupDate.Value.AddDays(AddonOptions.BackupIntervalDays) : null;			
+			if (targetDate == null)
+			{
+				return null;
+			}
 
-	private string FreeSpaceColor => OneDriveUsedSpacePercentage > 90 ? "bg-danger" : "bg-primary";
+			targetDate = TimeRangeHelper.GetClosestAllowedTimeSlot(targetDate.Value, AddonOptions.BackupAllowedHours);
+			return targetDate;
+		}
+	}
+
+    private string FreeSpaceColor => OneDriveUsedSpacePercentage > 90 ? "bg-danger" : "bg-primary";
 
 	private string LocalBackupsSpace
 	{

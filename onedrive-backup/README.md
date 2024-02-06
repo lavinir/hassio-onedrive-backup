@@ -9,6 +9,7 @@ Simple OneDrive integration for seamless Home Assistant Backups to the cloud.
 - Dedicated Web UI
 - Additional File Sync to OneDrive
 - Supports standard backup retention / Generational backup mode
+- Retain backups indefinitely 
 - Supports multiple Home Assistant instances
 - Supports Home Assistant Persistent Notifications 
 - Supports Home Assistant Events

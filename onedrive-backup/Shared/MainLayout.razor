@@ -69,6 +69,12 @@
                 await Task.Delay(1000);
                 await JS.InvokeVoidAsync("showSettingsPopover");
             }
+
+            if (LocalStorage.CheckAndMarkFlag(LocalStorage.Flag.ReleaseNotes_2_3) == false)
+            {
+                await Task.Delay(1000);
+                await JS.InvokeVoidAsync("showReleaseNotes");
+            }
         }
     }
 

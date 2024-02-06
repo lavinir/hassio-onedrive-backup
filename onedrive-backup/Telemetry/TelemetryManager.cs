@@ -92,6 +92,7 @@ namespace onedrive_backup.Telemetry
                 };
 
                 _telemetryClient.TrackEvent(telemetryMsg);
+                // _telemetryClient.Flush();
 
             }
             catch (Exception e)

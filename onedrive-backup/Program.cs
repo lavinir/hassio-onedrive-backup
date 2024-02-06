@@ -37,7 +37,6 @@ namespace hassio_onedrive_backup
 #if DEBUG
 				var addonOptions = AddonOptionsManager.ReadOptions(logger);
                 var telemetryManager = new TelemetryManager(logger, addonOptions);
-				// telemetryManager.SendError("Test ERROR", new Exception("Test Exception"));
                 IHassioClient hassIoClient = new HassioClientMock(telemetryManager);
 #else
 				Directory.SetCurrentDirectory(addonDirectory);

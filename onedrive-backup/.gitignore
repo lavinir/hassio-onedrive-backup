@@ -236,3 +236,4 @@ record.auth*
 .clientId
 settings.json
 additionalBackupData.json
+.*

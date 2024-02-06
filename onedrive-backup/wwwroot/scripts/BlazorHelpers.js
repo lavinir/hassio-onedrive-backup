@@ -40,6 +40,14 @@ function initSettingsPopover() {
     })
 }
 
+function showReleaseNotes() {
+    var rnModal = new bootstrap.Modal(document.getElementById('rnotesModal'), {
+        keyboard: false
+    })
+
+    rnModal.show();
+}
+
 function showSettingsPopover() {
     settingsPopover.show();
 }
