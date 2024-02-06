@@ -59,7 +59,8 @@ namespace onedrive_backup.Telemetry
                         { nameof(AddonOptions.IgnoreAllowedHoursForFileSync), options.IgnoreAllowedHoursForFileSync.ToString() },
                         { nameof(AddonOptions.AddonVersion), AddonOptions.AddonVersion },
                         { nameof(AddonOptions.NotifyOnError), options.NotifyOnError.ToString() },
-                        { nameof(AddonOptions.DarkMode), options.DarkMode.ToString() }
+                        { nameof(AddonOptions.DarkMode), options.DarkMode.ToString() },
+                        { nameof(AddonOptions.EnableAnonymousErrorReporting), options.EnableAnonymousErrorReporting.ToString() }
                     }
                 };
 
@@ -92,7 +93,7 @@ namespace onedrive_backup.Telemetry
                 };
 
                 _telemetryClient.TrackEvent(telemetryMsg);
-                // _telemetryClient.Flush();
+                _telemetryClient.Flush();
 
             }
             catch (Exception e)
