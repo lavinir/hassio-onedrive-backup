@@ -1,4 +1,4 @@
-## v2.3 [Febuary ? 2024]
+## v2.3 [Febuary 7th 2024]
 ### 🆕 Added  
 * Added ability to retain backups indefinitely
 * New details in overview page - Total backup sizes, next backup date
