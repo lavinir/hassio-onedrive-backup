@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace hassio_onedrive_backup.Hass
 {
-    internal class HassOnedriveFreeSpaceEntityState : INotifyPropertyChanged
+    public class HassOnedriveFreeSpaceEntityState : INotifyPropertyChanged
     {
         private const string OneDrive_FreeSpace_Entity_ID = "sensor.onedrivefreespace";
         private IHassioClient? _hassioClient;

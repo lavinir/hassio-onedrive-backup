@@ -33,5 +33,9 @@ namespace onedrive_backup.Models
             OneDrive,
             Both
         }
+
+        public bool RetainLocal { get; set; }
+
+        public bool RetainOneDrive { get; set; }
     }
 }

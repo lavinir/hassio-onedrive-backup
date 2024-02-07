@@ -2,27 +2,18 @@
 using hassio_onedrive_backup.Hass;
 using Moq;
 using onedrive_backup.Graph;
-using onedrive_backup.Hass;
-using onedrive_backup;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using test.onedrive_backup.Mocks;
 using hassio_onedrive_backup.Graph;
-using Newtonsoft.Json;
 using hassio_onedrive_backup;
 using hassio_onedrive_backup.Sync;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Graph;
 using onedrive_backup.Sync;
-using System.IO;
+using Microsoft.Graph.Models;
 
 namespace test.onedrive_backup
 {
-	[TestClass]
+    [TestClass]
 	public class FileSyncTests
 	{
 		private Mock<IServiceProvider> _serviceProviderMock;
@@ -111,9 +102,9 @@ namespace test.onedrive_backup
 							{"remotePath",  GetRemotePath(filePath)}
 						},
 						Size = fileInfo.Length,
-						File = new Microsoft.Graph.File()
+						File = new FileObject()
 						{
-							Hashes = new Microsoft.Graph.Hashes
+							Hashes = new Hashes
 							{
 								Sha256Hash = fileHash
 							},

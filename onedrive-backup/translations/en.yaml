@@ -60,7 +60,7 @@ configuration:
     name: File Sync Paths
     description: >
                 This allows you to specify a list of paths for the addon to sync to OneDrive so you can for example sync your **Media** folder to OneDrive and exclude it from the Backups allowing you to save storage space (as this will only be stored once). Files are stored under a new directory called "FileSync" under the App Folder root. Source folder structure is maintained under this folder.
-                Sync (sub)folders supported must be under one of the following roots: /config, /ssl, /share, /media, /addons
+                Sync (sub)folders supported must be under one of the following roots: /config, /ssl, /share, /media, /addons, /addon_configs, /homeassistant
                 You can specify an array of items here containing "path" and "recursive".
                 See documentation for full usage details.
   file_sync_remove_deleted: 
@@ -75,6 +75,9 @@ configuration:
   enable_anonymous_telemetry:
     name: Enable Anonymous Telemetry
     description: Sends anonymous telemetry once a day containing data about which features are enabled in the addon. This helps focus development on relevant features and improve the addon.
+  enable_anonymous_error_reporting:
+    name: Enable Anonymous Error Reporting
+    description: Sends anonymous error messages (with exceptions) to help identify issues with the addon
   ignore_allowed_hours_for_file_sync:
     name: Ignore allowed hours for File Sync
     description: File syncing is always enabled regardless of the "Allowed Hours" time window for backups

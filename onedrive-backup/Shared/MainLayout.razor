@@ -14,7 +14,7 @@
             <strong>Not logged in!</strong> To sign in to OneDrive, navigate to <a href="@GraphHelper.AuthUrl" class="alert-link" target="_blank">@GraphHelper.AuthUrl</a> and enter the code <i>
                 @GraphHelper.AuthCode
             </i>
-            <button type="button" class="btn btn-sm m-1 btn-light" @onclick="CopyCodeToClipboard"><span class="oi oi-clipboard" title="Copy code to clipboard"></span></button> to authenticate.
+            <button type="button" class="btn btn-sm m-1 btn-light" @onclick="CopyCodeToClipboard"><span class="bi bi-clipboard-check" title="Copy code to clipboard"></span></button> to authenticate.
         </div>
     }
 
@@ -68,6 +68,12 @@
             {
                 await Task.Delay(1000);
                 await JS.InvokeVoidAsync("showSettingsPopover");
+            }
+
+            if (LocalStorage.CheckAndMarkFlag(LocalStorage.Flag.ReleaseNotes_2_3) == false)
+            {
+                await Task.Delay(1000);
+                await JS.InvokeVoidAsync("showReleaseNotes");
             }
         }
     }

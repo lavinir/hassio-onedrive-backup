@@ -43,6 +43,26 @@ namespace hassio_onedrive_backup
             return allowedHours;
         }
 
+        public static DateTime? GetClosestAllowedTimeSlot(DateTime target, string? allowedHoursStr)
+        {
+            var allowedHours = GetAllowedHours(allowedHoursStr);
+            if (allowedHours == null || allowedHours[target.Hour])
+            {
+                return target;
+            }
+
+            for (int i = 1; i < 24; i++)
+            {
+                target = target.AddHours(1);
+                if (allowedHours[target.Hour])
+                {
+                    return target;
+                }
+            }
+
+            return null;
+        }
+
         public static string ToAllowedHoursText(this BitArray bitArray) 
         {
             var sb = new StringBuilder();

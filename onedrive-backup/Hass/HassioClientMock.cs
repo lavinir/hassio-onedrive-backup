@@ -3,6 +3,7 @@ using hassio_onedrive_backup.Hass.Events;
 using Newtonsoft.Json;
 using onedrive_backup;
 using onedrive_backup.Contracts;
+using onedrive_backup.Telemetry;
 using System.Diagnostics;
 using System.Net.Http;
 using static hassio_onedrive_backup.Contracts.HassAddonsResponse;
@@ -12,50 +13,15 @@ namespace hassio_onedrive_backup.Hass
 {
 	internal class HassioClientMock : IHassioClient
     {
-        private List<Backup> _backups = new List<Backup>
-        {
-            new Backup
-            {
-                Compressed = true,
-                Date = DateTime.Now.AddDays(-10),
-                Name = "Mock1",
-                Protected = false,
-                Size = 1,
-                Slug = "Mock1",
-                Type = "partial",
-                Content = new Content
-                {
-                    Addons = new string[]
-                    {
-                        "Addon1", "Addon2"
-                    }
-                }
-            },
-            new Backup
-            {
-                Compressed = true,
-                Date = DateTime.Now.AddDays(-1),
-                Name = "Mock2",
-                Protected = false,
-                Size = 2,
-                Slug = "Mock2",
-                Type = "full",
-                Content = new Content
-                {
-                    Addons = new string[]
-                    {
-                        "Addon1", "Addon2"
-                    },
-                    Folders = new string[]
-                    {
-                        "Folder1"
-                    }
-                }
-            }
-        };
-		
+        private readonly TelemetryManager _telemetryManager;
+
+        private List<Backup> _backups = new();
         private IDateTimeProvider _dateTimeProvider;
 
+        public HassioClientMock(TelemetryManager telemetryManager)
+        {
+            _telemetryManager = telemetryManager;
+        }
 
 		public Task<bool> CreateBackupAsync(string backupName, DateTime timeStamp, bool appendTimestamp = true, bool compressed = true, string? password = null, IEnumerable<string>? folders = null, IEnumerable<string>? addons = null)
         {
@@ -91,7 +57,7 @@ namespace hassio_onedrive_backup.Hass
             string backupFile = $"./{backupSlug}.tar";
             
             // 15MB File
-            byte[] data = new byte[100 * 1024 * 1024];
+            byte[] data = new byte[10 * 1024 * 1024];
             new Random().NextBytes(data);
             File.WriteAllBytes(backupFile, data); 
             return Task.FromResult(backupFile);

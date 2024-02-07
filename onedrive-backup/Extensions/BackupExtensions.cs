@@ -12,7 +12,7 @@ namespace onedrive_backup.Extensions
 {
     public static class BackupExtensions
     {
-        public static BackupModel ToBackupModel(this Backup backup, HassContext hassContext)
+        public static BackupModel ToBackupModel(this Backup backup, HassContext hassContext, BackupAdditionalData backupAdditionalData)
         {
             return new BackupModel
             {
@@ -24,11 +24,13 @@ namespace onedrive_backup.Extensions
                 IsProtected = backup.Protected,
                 Location = BackupModel.BackupLocation.Local,
                 Addons = backup.Content?.Addons?.Select(slug => new Addon { Slug = slug, Name = GetAddonNameFromSlug(hassContext.Addons, slug) }).ToList() ?? Enumerable.Empty<Addon>(),
-                Folders = backup.Content?.Folders ?? Enumerable.Empty<string>()
+                Folders = backup.Content?.Folders ?? Enumerable.Empty<string>(),
+                RetainLocal = backupAdditionalData.IsRetainedLocally(backup.Slug),
+                RetainOneDrive = backupAdditionalData.IsRetainedOneDrive(backup.Slug)
             };
         }
 
-		public static BackupModel ToBackupModel(this OnedriveBackup onedriveBackup, HassContext hassContext)
+		public static BackupModel ToBackupModel(this OnedriveBackup onedriveBackup, HassContext hassContext, BackupAdditionalData backupAdditionalData)
         {
             return new BackupModel
             {
@@ -40,8 +42,10 @@ namespace onedrive_backup.Extensions
                 IsProtected = onedriveBackup.IsProtected,
                 Location = BackupModel.BackupLocation.OneDrive,
                 Addons = onedriveBackup.Addons?.Select(slug => new Addon { Slug = slug, Name = GetAddonNameFromSlug(hassContext.Addons, slug) }) ?? Enumerable.Empty<Addon>(),
-                Folders = onedriveBackup.Folders ?? Enumerable.Empty<string>()
-			};
+                Folders = onedriveBackup.Folders ?? Enumerable.Empty<string>(),
+                RetainLocal = backupAdditionalData.IsRetainedLocally(onedriveBackup.Slug),
+                RetainOneDrive = backupAdditionalData.IsRetainedOneDrive(onedriveBackup.Slug)
+            };
         } 
 
         public static OnedriveBackup ToOneDriveBackup(this BackupModel backupModel)
@@ -118,15 +122,6 @@ namespace onedrive_backup.Extensions
                 {
                     ret.Add(weeklyBackup);
 				}
-                //else
-                //{
-                //    var weekCutoffDate = DateTimeHelper.GetStartDateByWeekAndYear(year, week, firstDayOfWeek);
-                //    var nextCandidateBackup = backups.OrderByDescending(b => b.BackupDate).FirstOrDefault(b => b.BackupDate <= weekCutoffDate);
-                //    if (nextCandidateBackup != null)
-                //    {
-                //        ret.Add(nextCandidateBackup);
-                //    }
-                //}
 			}
 
             return ret.Distinct().ToList();
@@ -163,15 +158,6 @@ namespace onedrive_backup.Extensions
 				{
                     ret.Add(monthlyBackup);
 				}
-    //            else
-    //            {
-    //                var cutoffDate = new DateTime(year, month, 1);
-				//	var nextCandidateBackup = backups.OrderByDescending(b => b.BackupDate).FirstOrDefault(b => b.BackupDate >= cutoffDate);
-				//	if (nextCandidateBackup != null)
-				//	{
-    //                    ret.Add(nextCandidateBackup);
-				//	}
-				//}
 			}
 
             return ret.Distinct().ToList();
@@ -200,21 +186,22 @@ namespace onedrive_backup.Extensions
 				{
                     ret.Add(yearlyBackup);
 				}
-				//else
-				//{
-				//	var cutoffDate = new DateTime(currentYear, 1, 1);
-				//	var nextCandidateBackup = backups.OrderByDescending(b => b.BackupDate).FirstOrDefault(b => b.BackupDate >= cutoffDate);
-				//	if (nextCandidateBackup != null)
-				//	{
-    //                    ret.Add(nextCandidateBackup);
-				//	}
-				//}
 			}
 
             return ret.Distinct().ToList();
 		}
 
-		private static string GetAddonNameFromSlug(IEnumerable<Addon> addons, string slug)
+        public static bool IsRetainedLocally(this IBackup backup, BackupAdditionalData additionalData) 
+        {
+            return additionalData.IsRetainedLocally(backup.Slug);
+        }
+
+        public static bool IsRetainedOneDrive(this IBackup backup, BackupAdditionalData additionalData)
+        {
+            return additionalData.IsRetainedOneDrive(backup.Slug);
+        }
+
+        private static string GetAddonNameFromSlug(IEnumerable<Addon> addons, string slug)
 		{
 			string name = addons.FirstOrDefault(addon => addon.Slug.Equals(slug, StringComparison.OrdinalIgnoreCase))?.Name;
 			return name ?? string.Empty;

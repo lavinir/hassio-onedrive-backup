@@ -1,4 +1,5 @@
 ﻿using onedrive_backup;
+using onedrive_backup.Telemetry;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,6 +16,12 @@ namespace hassio_onedrive_backup
 		public void LogError(string msg)
         {
             WriteLog(LogLevel.Error, msg);
+        }
+
+        public void LogError(string msg, Exception ex = null, TelemetryManager telemetryManager = null)
+        {            
+            WriteLog(LogLevel.Error, msg);
+            telemetryManager?.SendError(msg, ex);
         }
 
         public void LogWarning(string msg)

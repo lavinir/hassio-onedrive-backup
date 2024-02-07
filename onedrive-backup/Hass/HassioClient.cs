@@ -4,6 +4,7 @@ using hassio_onedrive_backup.Storage;
 using Newtonsoft.Json;
 using onedrive_backup;
 using onedrive_backup.Contracts;
+using onedrive_backup.Telemetry;
 using System.Globalization;
 using System.Net.Http.Headers;
 using System.Text;
@@ -19,15 +20,17 @@ namespace hassio_onedrive_backup.Hass
         private const string Hass_Base_Uri_Str = "http://supervisor/core/api";
 		private readonly string _token;
 		private readonly ConsoleLogger _logger;
-		private HttpClient _httpClient;
+        private readonly TelemetryManager _telemetryManager;
+        private HttpClient _httpClient;
 
-		public HassioClient(string token, int hassioTimeout, ConsoleLogger logger) 
+		public HassioClient(string token, int hassioTimeout, ConsoleLogger logger, TelemetryManager telemetryManager) 
         {
             _token = token;
             _httpClient = new HttpClient();
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             _httpClient.Timeout = TimeSpan.FromMinutes(hassioTimeout);
-            _logger = logger; 
+            _logger = logger;
+            _telemetryManager = telemetryManager;
         }
 
         public void UpdateTimeoutValue(int timeoutMinutes)
@@ -51,7 +54,7 @@ namespace hassio_onedrive_backup.Hass
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error deleting backup {backup.Slug}. {ex}");
+                _logger.LogError($"Error deleting backup {backup.Slug}. {ex}", ex, _telemetryManager);
                 return false;
             }
 
@@ -130,13 +133,13 @@ namespace hassio_onedrive_backup.Hass
             {
                 if (tce.InnerException is TimeoutException)
                 {
-                    _logger.LogError($"Backup request timed out (Increase the Hass API timeout in settings to fix). {tce}");
+                    _logger.LogError($"Backup request timed out (Increase the Hass API timeout in settings to fix). {tce}", tce, _telemetryManager);
                     return false;
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Failed creating new backup. {ex}");
+                _logger.LogError($"Failed creating new backup. {ex}", ex, _telemetryManager);
                 return false;
             }
                      
@@ -156,7 +159,7 @@ namespace hassio_onedrive_backup.Hass
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error uploading backup to Home Assistant. {ex}");
+                _logger.LogError($"Error uploading backup to Home Assistant. {ex}", ex, _telemetryManager);
                 return false;
             }
 
@@ -179,7 +182,7 @@ namespace hassio_onedrive_backup.Hass
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Failed sending persistent notification. {ex}");
+                _logger.LogError($"Failed sending persistent notification. {ex}", ex, _telemetryManager);
             }
         }
 

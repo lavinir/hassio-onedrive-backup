@@ -1,3 +1,14 @@
+## v2.3 [Febuary 7th 2024]
+### 🆕 Added  
+* Added ability to retain backups indefinitely
+* New details in overview page - Total backup sizes, next backup date
+* Updated folder support for File Sync - /homeassistant, /addon_configs
+* New optional Error reporting (opt in)
+* Upgraded core libraries (Azure.Identity, Microsoft.Graph, Bootstrap)
+### 🐞 Fixed
+* If not enough space is available in OneDrive, the addon will no longer attempt to upload the backup and fail repeatedly. 
+* Addons in partial backups were only refreshed on addon start (if another addon was installed after the addon has started it would not appear in a partial backup)
+
 ## v2.2.4 [November 10th 2023]
 ### 🐞 Fixed
 * Allowed hours requires restart - Fixed a bug where changing the allowed hours wouldn't take effect until addon was restarted.

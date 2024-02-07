@@ -10,6 +10,7 @@ This addon enables easy Home Assistant backup creation and sync to OneDrive.
 - Syncs backups to OneDrive **(Personal Account only. OneDrive for business not currently supported)**
 - Additional File Sync to OneDrive
 - Supports standard backup retention / Generational backup mode
+- Retain backups indefinitely 
 - Supports multiple Home Assistant instances
 - Supports Home Assistant Persistent Notifications 
 - Supports Home Assistant Events
@@ -135,6 +136,9 @@ This allows you to specify a list of paths for the addon to sync to OneDrive so 
 > * /share
 > * /media
 > * /addons
+> * /addon_configs
+> * /homeassistant
+
 
 **Example**: 
 
@@ -176,6 +180,10 @@ A random Guid is generated when you run your addon for the first time (not persi
 * Ignore Allowed Hours for File Sync Enabled Flag
 * Addon Version
 * Notify On Error Enabled Flag
+* Error Reporting Enabled Flag
+
+### Enable Anonymous Error Reporting
+Sends anonymous error messages (with exceptions) to help identify issues with the addon
 
 ### Dark Mode
 Use Dark mode for Addon UI
@@ -184,6 +192,11 @@ Use Dark mode for Addon UI
 The add-on has specific permissions to a single folder in your OneDrive known as the **App Folder**. (More details can be found in the [Security and Privacy](#security-and-privacy) section.)
 
 The App Folder for the add-on is mapped to : <kbd>**[onedriveroot]/Apps/hassio-onedrive-backup**</kbd>
+
+## Retaining Backups Indefinitely (Prevent Deletion)
+You can choose to 'pin' specific backups so that they stop counting against the set backup quotas and are never deleted by the addon. This can be set individually for both local and OneDrive through
+dedicated buttons in the main Dashboard for each backup. 
+> Note - As any 'retained' backup will not count towards your maximum backup quota you could for example, have a maximum of 3 local backups set but chose to retain 2 Local backups. The addon will ignore the retained backups for the quota and will store a maximum of 3 addtional local backups
 
 ## OneDrive free space Sensor
 The add-on creates a native Home Assistant Sensor entity <kbd>sensor.onedrivefreespace</kbd> that will show you the amount of free space in your OneDrive account.

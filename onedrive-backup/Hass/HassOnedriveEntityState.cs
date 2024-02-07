@@ -9,6 +9,8 @@ namespace hassio_onedrive_backup.Hass
         private const string OneDrive_Backup_Entity_ID = "sensor.onedrivebackup";
         private IHassioClient? _hassioClient;
         private BackupState state;
+        private bool _isSyncing = false;
+
         private List<JsonConverter> entityStateConverters = new List<JsonConverter>
         {
             new StringEnumConverter()
@@ -49,20 +51,38 @@ namespace hassio_onedrive_backup.Hass
 
         public int? DownloadPercentage { get; set; }
 
+        public int RetainedLocalBackups { get; set; }
+
+        public int RetainedOneDriveBackups { get; set; }
+
         // KB/s
         public int? UploadSpeed { get; set; }
+
+        public async Task SyncStart()
+        {
+            _isSyncing = true;
+            await UpdateBackupEntityInHass();
+        }
+
+        public async Task SyncEnd()
+        {
+            _isSyncing = false;
+            await UpdateBackupEntityInHass();
+        }
 
         public async Task UpdateBackupEntityInHass()
         {
             var payload = new
             {
-                state = State,
+                state = _isSyncing ? BackupState.Syncing : State,
                 attributes = new Dictionary<string, string?>
                 {
                     { BackupStateAttribute.LastLocalBackupDate, LastLocalBackupDate?.ToString(DateTimeHelper.DateTimeFormat) },
                     { BackupStateAttribute.LastOnedriveBackupDate, LastOnedriveBackupDate?.ToString(DateTimeHelper.DateTimeFormat) },
                     { BackupStateAttribute.BackupsInHomeAssistant, BackupsInHomeAssistant.ToString() },
-                    { BackupStateAttribute.BackupsInOnedrive, BackupsInOnedrive.ToString() },
+					{ BackupStateAttribute.BackupsInOnedrive, BackupsInOnedrive.ToString() },
+					{ BackupStateAttribute.LocalRetainedBackupCount, RetainedLocalBackups.ToString() },
+					{ BackupStateAttribute.OneDriveRetainedBackupCount, RetainedOneDriveBackups.ToString() },
 					{ BackupStateAttribute.UploadPercentage, UploadPercentage == null ? null : $"{UploadPercentage}%" },
 					{ BackupStateAttribute.UploadSpeed, UploadSpeed== null ? null : $"{UploadSpeed} KB/s" },
                     { BackupStateAttribute.DownloadPercentage, DownloadPercentage == null ? null : $"{DownloadPercentage}%" }
@@ -85,11 +105,15 @@ namespace hassio_onedrive_backup.Hass
 
             public const string LastOnedriveBackupDate = "Last OneDrive backup date";
 
+            public const string LocalRetainedBackupCount = "Number of local backups marked to retain indefinitely";
+
             public const string BackupsInHomeAssistant = "Backups in Home Assistant";
 
             public const string BackupsInOnedrive = "Backups in OneDrive";
 
-            public const string UploadPercentage = "Current backup upload percentage";
+			public const string OneDriveRetainedBackupCount = "Number of OneDrive backups marked to retain indefinitely";
+
+			public const string UploadPercentage = "Current backup upload percentage";
 
             public const string DownloadPercentage = "Backup download percentage";
 

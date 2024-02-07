@@ -2,6 +2,7 @@
 @using hassio_onedrive_backup.Contracts;
 @using hassio_onedrive_backup.Graph;
 @using hassio_onedrive_backup;
+@using onedrive_backup.Contracts;
 @using onedrive_backup.Extensions;
 @using onedrive_backup.Hass;
 @using onedrive_backup.Models;
@@ -10,6 +11,7 @@
 @inject Orchestrator Orchestrator;
 @inject HassContext HassContext;
 @inject AddonOptions AddonOptions
+@inject BackupAdditionalData BackupAdditionalData;
 
 <div class="pt-3 @(AddonOptions.DarkMode ? "body-dark-mode": "body-light-mode")" style="height:100vh;">
 <div class="container">
@@ -46,8 +48,8 @@
     private List<BackupModel> GetBackupModels()
     {
         var ret = new List<BackupModel>();
-        var _localBackups = Orchestrator.BackupManager.LocalBackups?.Select(backup => backup.ToBackupModel(HassContext)) ?? Enumerable.Empty<BackupModel>();
-        var _onedriveBackups = Orchestrator.BackupManager.OnlineBackups?.Select(backup => backup.ToBackupModel(HassContext)) ?? Enumerable.Empty<BackupModel>();
+        var _localBackups = Orchestrator.BackupManager.LocalBackups?.Select(backup => backup.ToBackupModel(HassContext, BackupAdditionalData)) ?? Enumerable.Empty<BackupModel>();
+        var _onedriveBackups = Orchestrator.BackupManager.OnlineBackups?.Select(backup => backup.ToBackupModel(HassContext, BackupAdditionalData)) ?? Enumerable.Empty<BackupModel>();
 
         ret.AddRange(_onedriveBackups);
         foreach (var localBackup in _localBackups)

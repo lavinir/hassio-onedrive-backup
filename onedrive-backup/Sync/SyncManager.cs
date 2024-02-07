@@ -3,6 +3,7 @@ using hassio_onedrive_backup.Graph;
 using hassio_onedrive_backup.Hass;
 using Microsoft.Extensions.FileSystemGlobbing;
 using Microsoft.Graph;
+using Microsoft.Graph.Models;
 using onedrive_backup;
 using onedrive_backup.Extensions;
 using onedrive_backup.Graph;
@@ -10,6 +11,7 @@ using onedrive_backup.Sync;
 using System.Collections;
 using System.Diagnostics;
 using System.Security.Cryptography;
+using static hassio_onedrive_backup.Contracts.HassBackupsResponse;
 
 namespace hassio_onedrive_backup.Sync
 {
@@ -17,7 +19,8 @@ namespace hassio_onedrive_backup.Sync
     {
         public const string OneDriveFileSyncRootDir = "FileSync";
 		private readonly ConsoleLogger _logger;
-		private readonly IDateTimeProvider _dateTimeProvider;
+        private readonly HassOnedriveFreeSpaceEntityState? _hassOneDriveFreeSpaceEntityState;
+        private readonly IDateTimeProvider _dateTimeProvider;
 		private AddonOptions _addonOptions;
         private IGraphHelper _graphHelper;
         private BitArray _allowedHours;
@@ -32,6 +35,7 @@ namespace hassio_onedrive_backup.Sync
             _graphHelper = serviceProvider.GetService<IGraphHelper>();
             _hassEntityState = serviceProvider.GetService<HassOnedriveFileSyncEntityState>();
             _environment = serviceProvider.GetService<IWebHostEnvironment>();
+            _hassOneDriveFreeSpaceEntityState = serviceProvider.GetService<HassOnedriveFreeSpaceEntityState>();
             _transferSpeedHelper = transferSpeedHelper;
             _allowedHours = allowedHours;
             _fileMatcher = new();
@@ -136,7 +140,16 @@ namespace hassio_onedrive_backup.Sync
 				_logger.LogVerbose($"File: {fileInfo.FullName} up to date. No sync required");
 				return;
             }
-            
+
+            double fileSizeGB = fileInfo.Length / Math.Pow(10, 9);
+            _logger.LogVerbose($"File size to upload: {fileSizeGB.ToString("0.00")}GB");
+            if (_hassOneDriveFreeSpaceEntityState!.FreeSpaceGB != null && _hassOneDriveFreeSpaceEntityState.FreeSpaceGB < fileSizeGB)
+            {
+                _logger.LogError($"Not enough free space to upload file ({fileInfo.Name}). (Required: {fileSizeGB.ToString("0.00")}GB. Available: {(double)_hassOneDriveFreeSpaceEntityState.FreeSpaceGB:0.00}GB");
+                return;
+            }
+
+
             _logger.LogInfo($"File {path} out of sync. Starting Upload");
             var uploadSuccessful = await _graphHelper.UploadFileAsync(
                 path, 

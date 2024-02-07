@@ -9,7 +9,7 @@ namespace hassio_onedrive_backup.Contracts
 {
     public class AddonOptions : IEqualityComparer<AddonOptions>
     {
-        public const string AddonVersion = "2.2.4";
+        public const string AddonVersion = "2.3";
 
         public event Action OnOptionsChanged;
 
@@ -85,6 +85,9 @@ namespace hassio_onedrive_backup.Contracts
 
         [JsonProperty("enable_anonymous_telemetry")]
         public bool EnableAnonymousTelemetry { get; set; } = false;
+
+		[JsonProperty("enable_anonymous_error_reporting")]
+		public bool EnableAnonymousErrorReporting { get; set; } = false;
 
 		[JsonProperty("ignore_allowed_hours_for_file_sync")]
 		public bool IgnoreAllowedHoursForFileSync { get; set; } = false;

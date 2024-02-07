@@ -1,9 +1,19 @@
-﻿namespace hassio_onedrive_backup.Storage
+﻿using onedrive_backup.Contracts;
+using System.Text.Json;
+
+namespace hassio_onedrive_backup.Storage
 {
     internal class LocalStorage
     {
         public const string TempFolder = "../tmp";
         private const string oldTempFolder = "./tmp";
+
+#if DEBUG
+        private const string configFilePath = "./additionalBackupData.json";
+#else
+        private const string configFilePath = "/config/additionalBackupData.json";
+#endif
+
         private static HashSet<Flag> setFlags = new();
 
         public static void InitializeTempStorage(ConsoleLogger logger)
@@ -30,6 +40,36 @@
             Directory.CreateDirectory(TempFolder);
         }
 
+        public async static Task StoreBackupData(BackupAdditionalData additionalData)
+        {
+            if (additionalData == null)
+            {
+                return;
+            }
+
+            await File.WriteAllTextAsync(configFilePath, JsonSerializer.Serialize(additionalData));
+        }
+
+        public async static Task<BackupAdditionalData?> LoadBackupAdditionalData()
+        {
+            try
+            {
+                if (File.Exists(configFilePath) == false)
+                {
+                    return null;
+                }
+
+                var rawData = await File.ReadAllTextAsync(configFilePath);
+                BackupAdditionalData backupAdditionalData = JsonSerializer.Deserialize<BackupAdditionalData>(rawData)!;
+                return backupAdditionalData;
+
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
         public static bool CheckAndMarkFlag(Flag flag)
         {
             string fileName = $"./.{flag}";
@@ -46,6 +86,7 @@
         public enum Flag
         {
             NativeSettings,
+            ReleaseNotes_2_3,
         }
     }
 }
