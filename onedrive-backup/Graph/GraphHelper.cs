@@ -261,20 +261,36 @@ namespace hassio_onedrive_backup.Graph
         {
             var drive = await _userClient.Me.Drive.GetAsync();
 
-            var itemStream = await _userClient.Drives[drive.Id].Special["approot"].WithUrl(fileName).Content.GetAsync();
+            var driveItem = await _userClient.Me.Drive.GetAsync();
+            var appFolder = await _userClient.Drives[driveItem.Id].Special["approot"].GetAsync();
+            var item = await _userClient.Drives[driveItem?.Id]
+                .Items[appFolder.Id]
+                .ItemWithPath(fileName)
+                .GetAsync();
+
+            //var itemStream = await _userClient.Drives[drive.Id].Special["approot"].WithUrl(fileName).Content.GetAsync();
+            var itemStream = await _userClient.Drives[driveItem?.Id]
+                .Items[appFolder.Id]
+                .ItemWithPath(fileName)
+                .Content
+                .GetAsync();
+
+            
             var fileInfo = new FileInfo($"{LocalStorage.TempFolder}/{fileName}");
             using var fileStream = File.Create(fileInfo.FullName);
 
             long totalBytesDownloaded = 0;
             int attempt = 1;
-            while (totalBytesDownloaded < itemStream.Length)
+            int bytesRead = 1;
+
+            while (totalBytesDownloaded < item.Size && bytesRead > 0)
             {
                 try
                 {
                     var buffer = new byte[ChunkSize];
-                    int bytesRead = await itemStream.ReadAsync(buffer, 0, ChunkSize);
+                    bytesRead = await itemStream.ReadAsync(buffer, 0, ChunkSize);
                     totalBytesDownloaded += bytesRead;
-                    progressCallback?.Invoke((int)(totalBytesDownloaded * 100 / itemStream.Length));
+                    progressCallback?.Invoke((int)(totalBytesDownloaded * 100 / item.Size));
                 }
                 catch (Exception ex)
                 {

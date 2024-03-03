@@ -94,6 +94,10 @@ namespace hassio_onedrive_backup
                 catch (Exception ex)
                 {
                     _logger.LogError($"Unexpected error. {ex}", ex, _telemetryManager);
+                    if (_addonOptions.NotifyOnError)
+                    {
+                        await _hassIoClient.SendPersistentNotificationAsync("Unexpected Failure in OneDrive Backup Addon. Check Addon logs for more details");
+                    }
                 }
 
                 _logger.LogVerbose("Backup Interval Completed.");

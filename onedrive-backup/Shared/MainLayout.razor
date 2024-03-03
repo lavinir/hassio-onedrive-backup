@@ -63,14 +63,7 @@
     {
         if (firstRender)
         {
-            await JS.InvokeVoidAsync("initSettingsPopover");
-            if (LocalStorage.CheckAndMarkFlag(LocalStorage.Flag.NativeSettings) == false)
-            {
-                await Task.Delay(1000);
-                await JS.InvokeVoidAsync("showSettingsPopover");
-            }
-
-            if (LocalStorage.CheckAndMarkFlag(LocalStorage.Flag.ReleaseNotes_2_3) == false)
+            if (LocalStorage.CheckAndMarkFlag(LocalStorage.Flag.ReleaseNotes_2_3_1) == false)
             {
                 await Task.Delay(1000);
                 await JS.InvokeVoidAsync("showReleaseNotes");

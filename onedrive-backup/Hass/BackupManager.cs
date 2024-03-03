@@ -218,15 +218,15 @@ namespace hassio_onedrive_backup.Hass
 
 				if (localBackupsToRemove.Any())
                 {
-                    //_hassEntityState.State = HassOnedriveEntityState.BackupState.Syncing;
-                    //await _hassEntityState.UpdateBackupEntityInHass();
                     await _hassEntityState.SyncStart();
 					_logger.LogInfo($"Removing {numOfLocalBackupsToRemove} local backups");
 					foreach (var localBackup in localBackupsToRemove)
 					{
+                        _logger.LogVerbose($"Deleting local backup: {localBackup.Slug}");
 						bool deleteSuccess = await _hassIoClient.DeleteBackupAsync(localBackup);
 						if (deleteSuccess == false)
 						{
+                            _logger.LogError($"Error removing local backup: {localBackup.Slug}");   
 							await _hassIoClient.PublishEventAsync(Events.OneDriveEvents.LocalBackupDeleteFailed);
 							if (_addonOptions.NotifyOnError)
 							{

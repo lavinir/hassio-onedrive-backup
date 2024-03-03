@@ -79,7 +79,7 @@
 						<div id="local-retained-pb" class="progress-bar bg-info" data-bs-toggle="tooltip" title="The number of Local backups retained indefinitely (never deleted)">@HassOnedriveEntityState.RetainedLocalBackups (Retained)</div>
 					</div>
 					<div class="progress" role="progressbar" aria-valuenow="@LocalBackupsPercentage" aria-label="backups" aria-valuemin="0" aria-valuemax="100" style="width: @(LocalBackupsPercentage)%;transition-duration:300ms;">
-						<div id="local-pb" class="progress-bar bg-primary" data-bs-toggle="tooltip" title="The number of Local Backups our of the maximum defined.">@HassOnedriveEntityState.BackupsInHomeAssistant / @AddonOptions.MaxLocalBackups (Total Size: @LocalBackupsSpace)</div>
+						<div id="local-pb" class="progress-bar bg-primary" data-bs-toggle="tooltip" title="The number of Local Backups out of the maximum defined.">@HassOnedriveEntityState.BackupsInHomeAssistant / @AddonOptions.MaxLocalBackups (Total Size: @LocalBackupsSpace)</div>
 					</div>
 				</div>
 			</div>
@@ -94,7 +94,7 @@
 						<div id="onedrive-retained-pb" class="progress-bar bg-info" data-bs-toggle="tooltip" title="The number of OneDrive backups retained indefinitely (never deleted)">@HassOnedriveEntityState.RetainedOneDriveBackups (Retained)</div>
 					</div>
 					<div class="progress" role="progressbar" style="width: @(OneDriveBackupsPercentage)%;transition-duration:300ms;" aria-valuenow="@OneDriveBackupsPercentage" aria-valuemin="0" aria-valuemax="100">
-						<div id="onedrive-pb" class="progress-bar bg-primary" data-bs-toggle="tooltip" title="The number of OneDrive Backups our of the maximum defined.">@HassOnedriveEntityState.BackupsInOnedrive / @AddonOptions.MaxOnedriveBackups (Total Size: @OneDriveBackupsSpace)</div>
+						<div id="onedrive-pb" class="progress-bar bg-primary" data-bs-toggle="tooltip" title="The number of OneDrive Backups out of the maximum defined.">@HassOnedriveEntityState.BackupsInOnedrive / @AddonOptions.MaxOnedriveBackups (Total Size: @OneDriveBackupsSpace)</div>
 					</div>
 				</div>
 			</div>

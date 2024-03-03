@@ -85,8 +85,7 @@ namespace hassio_onedrive_backup.Storage
 
         public enum Flag
         {
-            NativeSettings,
-            ReleaseNotes_2_3,
+            ReleaseNotes_2_3_1,
         }
     }
 }

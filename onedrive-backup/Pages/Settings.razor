@@ -264,7 +264,6 @@
         {
             await JS.InvokeVoidAsync("addTooltips");
             await JS.InvokeVoidAsync("addToasts");
-            await JS.InvokeVoidAsync("hideSettingsPopover");
         }
 
         if (string.IsNullOrWhiteSpace(newOptions.SyncPaths.LastOrDefault()) == false || newOptions.SyncPaths.Any() == false)
