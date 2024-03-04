@@ -3,6 +3,7 @@ using hassio_onedrive_backup.Graph;
 using hassio_onedrive_backup.Hass;
 using hassio_onedrive_backup.Sync;
 using onedrive_backup;
+using onedrive_backup.Contracts;
 using onedrive_backup.Graph;
 using onedrive_backup.Telemetry;
 using System.Collections;
@@ -96,7 +97,7 @@ namespace hassio_onedrive_backup
                     _logger.LogError($"Unexpected error. {ex}", ex, _telemetryManager);
                     if (_addonOptions.NotifyOnError)
                     {
-                        await _hassIoClient.SendPersistentNotificationAsync("Unexpected Failure in OneDrive Backup Addon. Check Addon logs for more details");
+                        await _hassIoClient.SendPersistentNotificationAsync("Unexpected Failure in OneDrive Backup Addon. Check Addon logs for more details", PersistantNotificationIds.Unexpected);
                     }
                 }
 

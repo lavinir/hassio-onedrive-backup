@@ -166,18 +166,23 @@ namespace hassio_onedrive_backup.Hass
             return true;
         }
 
-        public async Task SendPersistentNotificationAsync(string message)
+        public async Task SendPersistentNotificationAsync(string message, string? notificationId = null)
         {
             try
             {
-                Uri uri = new Uri(Hass_Base_Uri_Str + "/services/notify/persistent_notification");
+                Uri uri = new Uri(Hass_Base_Uri_Str + "/services/persistent_notification/create");
                 var payload = new
                 {
                     message = message,
-                    title = "hassio-onedrive-backup"
+                    title = "hassio-onedrive-backup",
+                    notification_id = notificationId
                 };
 
-                string payloadStr = JsonConvert.SerializeObject(payload);
+                string payloadStr = JsonConvert.SerializeObject(payload, new JsonSerializerSettings
+                {
+                    NullValueHandling = NullValueHandling.Ignore
+                });
+
                 await _httpClient.PostAsync(uri, new StringContent(payloadStr, Encoding.UTF8, "application/json"));
             }
             catch (Exception ex)

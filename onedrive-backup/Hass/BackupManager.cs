@@ -33,7 +33,9 @@ namespace hassio_onedrive_backup.Hass
         private IGraphHelper _graphHelper;
         private IHassioClient _hassIoClient;
 		private BitArray _allowedHours;
-		protected bool _isExecuting = false;
+        private bool sentStalePersistentNotification = false;
+        protected bool _isExecuting = false;
+
 
         public List<Backup> LocalBackups { get; private set; }
         public List<OnedriveBackup> OnlineBackups { get; private set; }
@@ -185,7 +187,7 @@ namespace hassio_onedrive_backup.Hass
                             await _hassIoClient.PublishEventAsync(Events.OneDriveEvents.OneDriveBackupDeleteFailed);
                             if (_addonOptions.NotifyOnError)
                             {
-                                await _hassIoClient.SendPersistentNotificationAsync("Failed deleting old backup from OneDrive. Check Addon logs for more details");
+                                await _hassIoClient.SendPersistentNotificationAsync("Failed deleting old backup from OneDrive. Check Addon logs for more details", PersistantNotificationIds.OneDriveDelete);
                             }
                         }
                     }
@@ -230,7 +232,7 @@ namespace hassio_onedrive_backup.Hass
 							await _hassIoClient.PublishEventAsync(Events.OneDriveEvents.LocalBackupDeleteFailed);
 							if (_addonOptions.NotifyOnError)
 							{
-								await _hassIoClient.SendPersistentNotificationAsync("Error Deleting Local Backup. Check Addon logs for more details");
+								await _hassIoClient.SendPersistentNotificationAsync("Error Deleting Local Backup. Check Addon logs for more details", PersistantNotificationIds.LocalDelete);
 							}
 						}
 					}
@@ -239,6 +241,10 @@ namespace hassio_onedrive_backup.Hass
 
                 await _hassEntityState.SyncEnd();
 				await RefreshBackupsAndUpdateHassEntity();
+                if (_hassEntityState.State == HassOnedriveEntityState.BackupState.Stale )
+                {
+
+                }
 
             }
             finally
@@ -326,7 +332,7 @@ namespace hassio_onedrive_backup.Hass
 				await _hassIoClient.PublishEventAsync(Events.OneDriveEvents.BackupCreateFailed);
 				if (_addonOptions.NotifyOnError)
 				{
-					await _hassIoClient.SendPersistentNotificationAsync("Failed creating local backup. Check Addon logs for more details");
+					await _hassIoClient.SendPersistentNotificationAsync("Failed creating local backup. Check Addon logs for more details", PersistantNotificationIds.BackupCreate);
 				}
 			}
             else
@@ -373,7 +379,7 @@ namespace hassio_onedrive_backup.Hass
                     await _hassIoClient.PublishEventAsync(Events.OneDriveEvents.BackupUploadFailed);
                     if (_addonOptions.NotifyOnError)
                     {
-                        await _hassIoClient.SendPersistentNotificationAsync("Failed uploading backup to onedrive. Check Addon logs for more details");
+                        await _hassIoClient.SendPersistentNotificationAsync("Failed uploading backup to onedrive. Check Addon logs for more details", PersistantNotificationIds.BackupUpload);
                     }
                 }
             }

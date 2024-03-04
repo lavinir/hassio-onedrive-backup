@@ -10,7 +10,7 @@ namespace hassio_onedrive_backup.Hass
     {
         Task<List<Backup>> GetBackupsAsync(Predicate<Backup> filter);
 
-        Task SendPersistentNotificationAsync(string message);
+        Task SendPersistentNotificationAsync(string message, string? notificationId = null);
 
         Task<bool> CreateBackupAsync(string backupName, DateTime timeStamp, bool appendTimestamp = true, bool compressed = true, string? password = null, IEnumerable<string>? folders = null, IEnumerable<string>? addons = null);
 

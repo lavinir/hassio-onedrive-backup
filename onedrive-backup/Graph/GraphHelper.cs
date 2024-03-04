@@ -289,6 +289,7 @@ namespace hassio_onedrive_backup.Graph
                 {
                     var buffer = new byte[ChunkSize];
                     bytesRead = await itemStream.ReadAsync(buffer, 0, ChunkSize);
+                    await fileStream.WriteAsync(buffer, 0, bytesRead);
                     totalBytesDownloaded += bytesRead;
                     progressCallback?.Invoke((int)(totalBytesDownloaded * 100 / item.Size));
                 }
