@@ -1,3 +1,10 @@
+## v.2.3.1 []
+### 🆕 Added  
+* Added more persistent notifications for alerting on errors and improved overall behavior of persistant notifications
+### 🐞 Fixed
+* Issue downloading a backup from OneDrive to HomeAssistant
+
+
 ## v2.3 [Febuary 7th 2024]
 ### 🆕 Added  
 * Added ability to retain backups indefinitely
