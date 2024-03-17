@@ -193,6 +193,7 @@
             TriggerStateChanged();
 
         });
+
         uploading = false;
         transferSpeed = 0;
         await Orchestrator.BackupManager.GetOnlineBackupsAsync(AddonOptions.InstanceName);
@@ -217,9 +218,10 @@
         downloading = true;
         downloadPercent = 0;
         var onedriveBackup = Backup.ToOneDriveBackup();
-        await Orchestrator.BackupManager.DownloadBackupFromOneDrive(onedriveBackup, updateHassEntityState: false, progressCallback: (prog) =>
+        await Orchestrator.BackupManager.DownloadBackupFromOneDrive(onedriveBackup, updateHassEntityState: false, progressCallback: (prog, speed) =>
         {
             downloadPercent = prog ?? 0;
+            transferSpeed = speed ?? 0;
             TriggerStateChanged();
         });
 

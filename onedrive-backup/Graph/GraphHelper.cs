@@ -171,10 +171,10 @@ namespace hassio_onedrive_backup.Graph
                 });
 
             // todo: allow settings this in advanced configuration
-            int maxSlizeSize = ChunkSize;
+            int maxSliceSize = ChunkSize;
             long totalFileLength = fileStream.Length;
-            var fileUploadTask = new LargeFileUploadTask<DriveItem>(uploadSession, fileStream, maxSlizeSize);
-            var lastShownPercentageHolder = new UploadProgressHolder();
+            var fileUploadTask = new LargeFileUploadTask<DriveItem>(uploadSession, fileStream, maxSliceSize);
+            var lastShownPercentageHolder = new TransferProgressHolder();
             IProgress<long> progress = new Progress<long>(async prog =>
             {
                 (double delayMS, double speed) = transferSpeedHelper.MarkAndCalcThrottle(prog);
@@ -257,7 +257,7 @@ namespace hassio_onedrive_backup.Graph
             }
         }
 
-        public async Task<string?> DownloadFileAsync(string fileName, Action<int?>? progressCallback)
+        public async Task<string?> DownloadFileAsync(string fileName, TransferSpeedHelper transferSpeedHelper, Action<int, int>? progressCallback)
         {
             var drive = await _userClient.Me.Drive.GetAsync();
 
@@ -268,7 +268,7 @@ namespace hassio_onedrive_backup.Graph
                 .ItemWithPath(fileName)
                 .GetAsync();
 
-            //var itemStream = await _userClient.Drives[drive.Id].Special["approot"].WithUrl(fileName).Content.GetAsync();
+            transferSpeedHelper.Start();
             var itemStream = await _userClient.Drives[driveItem?.Id]
                 .Items[appFolder.Id]
                 .ItemWithPath(fileName)
@@ -282,7 +282,7 @@ namespace hassio_onedrive_backup.Graph
             long totalBytesDownloaded = 0;
             int attempt = 1;
             int bytesRead = 1;
-
+            var lastShownPercentageHolder = new TransferProgressHolder();
             while (totalBytesDownloaded < item.Size && bytesRead > 0)
             {
                 try
@@ -291,14 +291,23 @@ namespace hassio_onedrive_backup.Graph
                     bytesRead = await itemStream.ReadAsync(buffer, 0, ChunkSize);
                     await fileStream.WriteAsync(buffer, 0, bytesRead);
                     totalBytesDownloaded += bytesRead;
-                    progressCallback?.Invoke((int)(totalBytesDownloaded * 100 / item.Size));
+                    (double delay, double speed) = transferSpeedHelper.MarkAndCalcThrottle(totalBytesDownloaded);
+                    double percentage = Math.Round((totalBytesDownloaded / (double)item.Size), 2) * 100;
+                    if (percentage - lastShownPercentageHolder.Percentage >= 10 || percentage == 100)
+                    {
+                        _logger.LogVerbose($"Downloaded {percentage}%");
+                        lastShownPercentageHolder.Percentage = percentage;
+                    }
+
+                    progressCallback?.Invoke((int)percentage, (int)speed);
                 }
                 catch (Exception ex)
                 {
                     if (attempt >= DownloadRetryCount)
                     {
                         _logger.LogError($"Failed downloading file {fileName}. {ex}", ex, _telemetryManager);
-                        progressCallback?.Invoke(null);
+                        progressCallback?.Invoke(0, 0);
+                        transferSpeedHelper.Reset();
                         return null;
                     }
 
@@ -306,7 +315,8 @@ namespace hassio_onedrive_backup.Graph
                 }
             }
 
-            progressCallback?.Invoke(null);
+            progressCallback?.Invoke(0, 0);
+            transferSpeedHelper.Reset();
             _logger.LogInfo($"{fileName} downloaded successfully");
             return fileInfo.FullName;
         }
@@ -375,7 +385,7 @@ namespace hassio_onedrive_backup.Graph
             return (url, code);
         }
 
-        private class UploadProgressHolder
+        private class TransferProgressHolder
         {
             public double Percentage { get; set; } = 0;
         }

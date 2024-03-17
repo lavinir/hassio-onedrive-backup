@@ -14,8 +14,7 @@ namespace test.onedrive_backup.Mocks
 	public class BackupManagerMock : BackupManager
 	{		
 		public BackupManagerMock(
-			IServiceProvider serviceProvider, 
-			TransferSpeedHelper? transferSpeedHelper) : base(serviceProvider, transferSpeedHelper)
+			IServiceProvider serviceProvider) : base(serviceProvider)
 		{
 			
 		}
