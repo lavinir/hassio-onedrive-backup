@@ -298,8 +298,10 @@ namespace hassio_onedrive_backup.Graph
                         _logger.LogVerbose($"Downloaded {percentage}%");
                         lastShownPercentageHolder.Percentage = percentage;
                     }
-
-                    progressCallback?.Invoke((int)percentage, (int)speed);
+                    if (percentage - lastShownPercentageHolder.Percentage >= 5 || percentage == 100)
+                    {
+                        progressCallback?.Invoke((int)percentage, (int)speed);
+                    }
                 }
                 catch (Exception ex)
                 {

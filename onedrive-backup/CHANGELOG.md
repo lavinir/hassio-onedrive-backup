@@ -1,9 +1,11 @@
-## v.2.3.1 []
+## v2.3.1 [March 19th 2024]
+### ❗Important
+Upgrade to Version 2.3 included updates to authentication libraries which caused some connection resets with OneDrive. Please make sure that you have a working connection post upgrade. For troubleshooting please refer to [this link]("https://github.com/lavinir/hassio-onedrive-backup/issues/174")
 ### 🆕 Added  
 * Added more persistent notifications for alerting on errors and improved overall behavior of persistant notifications
 ### 🐞 Fixed
 * Issue downloading a backup from OneDrive to HomeAssistant
-
+* Minor UI fixes
 
 ## v2.3 [Febuary 7th 2024]
 ### 🆕 Added  
