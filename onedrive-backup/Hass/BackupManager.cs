@@ -32,7 +32,6 @@ namespace hassio_onedrive_backup.Hass
         private IGraphHelper _graphHelper;
         private IHassioClient _hassIoClient;
 		private BitArray _allowedHours;
-        private bool sentStalePersistentNotification = false;
         protected bool _isExecuting = false;
 
 
