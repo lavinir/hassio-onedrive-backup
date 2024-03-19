@@ -31,29 +31,12 @@ function showSaveToast() {
     saveToast.show();
 }
 
-function initSettingsPopover() {
-    settingsPopover = new bootstrap.Popover(document.querySelector('#settingsNav'), {
-        container: "body",
-        placement: "bottom",
-        content: "Configuration is now done in the Settings tab",
-        trigger: "manual"
-    })
-}
-
 function showReleaseNotes() {
     var rnModal = new bootstrap.Modal(document.getElementById('rnotesModal'), {
         keyboard: false
     })
 
     rnModal.show();
-}
-
-function showSettingsPopover() {
-    settingsPopover.show();
-}
-
-function hideSettingsPopover() {
-    settingsPopover.hide();
 }
 
 function copyToClipboard(txt) {

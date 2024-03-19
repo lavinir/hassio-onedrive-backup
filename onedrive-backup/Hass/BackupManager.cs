@@ -22,7 +22,6 @@ namespace hassio_onedrive_backup.Hass
     {
 		private const int InstanceNameMaxLength = 20;
 		private readonly HassOnedriveEntityState _hassEntityState;
-        private readonly TransferSpeedHelper? _transferSpeedHelper;
         private readonly HassContext _hassContext;
 		private readonly ConsoleLogger _logger;
 		private readonly IDateTimeProvider _dateTimeProvider;
@@ -33,18 +32,18 @@ namespace hassio_onedrive_backup.Hass
         private IGraphHelper _graphHelper;
         private IHassioClient _hassIoClient;
 		private BitArray _allowedHours;
-		protected bool _isExecuting = false;
+        protected bool _isExecuting = false;
+
 
         public List<Backup> LocalBackups { get; private set; }
         public List<OnedriveBackup> OnlineBackups { get; private set; }
 
-        public BackupManager(IServiceProvider serviceProvider, TransferSpeedHelper? transferSpeedHelper)
+        public BackupManager(IServiceProvider serviceProvider)
         {
             _addonOptions = serviceProvider.GetService<AddonOptions>();
             _graphHelper = serviceProvider.GetService<IGraphHelper>();
             _hassIoClient = serviceProvider.GetService<IHassioClient>();
             _hassEntityState = serviceProvider.GetService<HassOnedriveEntityState>();
-            _transferSpeedHelper = transferSpeedHelper;
             _hassContext = serviceProvider.GetService<HassContext>();
             _logger = serviceProvider.GetService<ConsoleLogger>();
             _dateTimeProvider = serviceProvider.GetService<IDateTimeProvider>();
@@ -185,7 +184,7 @@ namespace hassio_onedrive_backup.Hass
                             await _hassIoClient.PublishEventAsync(Events.OneDriveEvents.OneDriveBackupDeleteFailed);
                             if (_addonOptions.NotifyOnError)
                             {
-                                await _hassIoClient.SendPersistentNotificationAsync("Failed deleting old backup from OneDrive. Check Addon logs for more details");
+                                await _hassIoClient.SendPersistentNotificationAsync("Failed deleting old backup from OneDrive. Check Addon logs for more details", PersistantNotificationIds.OneDriveDelete);
                             }
                         }
                     }
@@ -218,19 +217,19 @@ namespace hassio_onedrive_backup.Hass
 
 				if (localBackupsToRemove.Any())
                 {
-                    //_hassEntityState.State = HassOnedriveEntityState.BackupState.Syncing;
-                    //await _hassEntityState.UpdateBackupEntityInHass();
                     await _hassEntityState.SyncStart();
 					_logger.LogInfo($"Removing {numOfLocalBackupsToRemove} local backups");
 					foreach (var localBackup in localBackupsToRemove)
 					{
+                        _logger.LogVerbose($"Deleting local backup: {localBackup.Slug}");
 						bool deleteSuccess = await _hassIoClient.DeleteBackupAsync(localBackup);
 						if (deleteSuccess == false)
 						{
+                            _logger.LogError($"Error removing local backup: {localBackup.Slug}");   
 							await _hassIoClient.PublishEventAsync(Events.OneDriveEvents.LocalBackupDeleteFailed);
 							if (_addonOptions.NotifyOnError)
 							{
-								await _hassIoClient.SendPersistentNotificationAsync("Error Deleting Local Backup. Check Addon logs for more details");
+								await _hassIoClient.SendPersistentNotificationAsync("Error Deleting Local Backup. Check Addon logs for more details", PersistantNotificationIds.LocalDelete);
 							}
 						}
 					}
@@ -239,6 +238,10 @@ namespace hassio_onedrive_backup.Hass
 
                 await _hassEntityState.SyncEnd();
 				await RefreshBackupsAndUpdateHassEntity();
+                if (_hassEntityState.State == HassOnedriveEntityState.BackupState.Stale )
+                {
+
+                }
 
             }
             finally
@@ -326,7 +329,7 @@ namespace hassio_onedrive_backup.Hass
 				await _hassIoClient.PublishEventAsync(Events.OneDriveEvents.BackupCreateFailed);
 				if (_addonOptions.NotifyOnError)
 				{
-					await _hassIoClient.SendPersistentNotificationAsync("Failed creating local backup. Check Addon logs for more details");
+					await _hassIoClient.SendPersistentNotificationAsync("Failed creating local backup. Check Addon logs for more details", PersistantNotificationIds.BackupCreate);
 				}
 			}
             else
@@ -354,7 +357,7 @@ namespace hassio_onedrive_backup.Hass
                 string? instanceSuffix = _addonOptions.InstanceName == null ? null : $".{_addonOptions.InstanceName.Substring(0, Math.Min(InstanceNameMaxLength, _addonOptions.InstanceName.Length))}";
                 string destinationFileName = $"{backup.Name}{instanceSuffix}.tar";
                 tempBackupFilePath = await _hassIoClient.DownloadBackupAsync(backup.Slug);
-                var uploadSuccessful = await _graphHelper.UploadFileAsync(tempBackupFilePath, backup.Date, _addonOptions.InstanceName, _transferSpeedHelper, destinationFileName,
+                var uploadSuccessful = await _graphHelper.UploadFileAsync(tempBackupFilePath, backup.Date, _addonOptions.InstanceName, new TransferSpeedHelper(null), destinationFileName,
                     async (prog, speed) =>
                     {
                         if (updateHassEntityState)
@@ -373,7 +376,7 @@ namespace hassio_onedrive_backup.Hass
                     await _hassIoClient.PublishEventAsync(Events.OneDriveEvents.BackupUploadFailed);
                     if (_addonOptions.NotifyOnError)
                     {
-                        await _hassIoClient.SendPersistentNotificationAsync("Failed uploading backup to onedrive. Check Addon logs for more details");
+                        await _hassIoClient.SendPersistentNotificationAsync("Failed uploading backup to onedrive. Check Addon logs for more details", PersistantNotificationIds.BackupUpload);
                     }
                 }
             }
@@ -394,13 +397,13 @@ namespace hassio_onedrive_backup.Hass
             return true;
         }
 
-        public async Task<bool> DownloadBackupFromOneDrive(OnedriveBackup onlineBackup, Action<int?>? progressCallback = null, bool updateHassEntityState = true)
+        public async Task<bool> DownloadBackupFromOneDrive(OnedriveBackup onlineBackup, Action<int?, int?>? progressCallback = null, bool updateHassEntityState = true)
 		{
             string? backupFile = null;
             try
             {
                 _logger.LogInfo($"Downloading backup {onlineBackup.FileName}");
-                backupFile = await _graphHelper.DownloadFileAsync(onlineBackup.FileName, async (prog) =>
+                backupFile = await _graphHelper.DownloadFileAsync(onlineBackup.FileName, new TransferSpeedHelper(null), async (prog, speed) =>
                 {
 					if (updateHassEntityState)
 					{
@@ -408,7 +411,7 @@ namespace hassio_onedrive_backup.Hass
 						await _hassEntityState.UpdateBackupEntityInHass();
 					}
 
-					progressCallback?.Invoke(prog);
+					progressCallback?.Invoke(prog, speed);
 				});
 
                 if (backupFile == null)

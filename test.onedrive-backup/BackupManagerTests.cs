@@ -63,8 +63,7 @@ namespace hassio_onedrive_backup.Tests
 			_serviceProviderMock.Setup(provider => provider.GetService(typeof(ConsoleLogger))).Returns(consoleLogger);
 
 			_backupManager = new BackupManagerMock(
-				_serviceProviderMock.Object,
-				_transferSpeedHelperMock.Object);
+				_serviceProviderMock.Object);
 		}
 
 

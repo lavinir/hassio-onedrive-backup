@@ -3,6 +3,7 @@ using hassio_onedrive_backup.Graph;
 using hassio_onedrive_backup.Hass;
 using hassio_onedrive_backup.Sync;
 using onedrive_backup;
+using onedrive_backup.Contracts;
 using onedrive_backup.Graph;
 using onedrive_backup.Telemetry;
 using System.Collections;
@@ -34,7 +35,7 @@ namespace hassio_onedrive_backup
             _telemetryManager = serviceProvider.GetService<TelemetryManager>();
             _logger = serviceProvider.GetService<ConsoleLogger>();
             _allowedBackupHours = TimeRangeHelper.GetAllowedHours(_addonOptions.BackupAllowedHours);
-            BackupManager = new BackupManager(_serviceProvider, new TransferSpeedHelper(null));
+            BackupManager = new BackupManager(_serviceProvider);
             _addonOptions.OnOptionsChanged += OnOptionsChanged;
         }
 
@@ -94,6 +95,10 @@ namespace hassio_onedrive_backup
                 catch (Exception ex)
                 {
                     _logger.LogError($"Unexpected error. {ex}", ex, _telemetryManager);
+                    if (_addonOptions.NotifyOnError)
+                    {
+                        await _hassIoClient.SendPersistentNotificationAsync("Unexpected Failure in OneDrive Backup Addon. Check Addon logs for more details", PersistantNotificationIds.Unexpected);
+                    }
                 }
 
                 _logger.LogVerbose("Backup Interval Completed.");
