@@ -1,3 +1,8 @@
+## v2.3.2 [November 18th 2024]
+### 🐞 Fixed
+* Authentication issue
+* Continous backup upload / delete loop in certain edge cases with Generational Backups enabled
+
 ## v2.3.1 [March 19th 2024]
 ### ❗Important
 Upgrade to Version 2.3 included updates to authentication libraries which caused some connection resets with OneDrive. Please make sure that you have a working connection post upgrade. For troubleshooting please refer to [this link]("https://github.com/lavinir/hassio-onedrive-backup/issues/174")

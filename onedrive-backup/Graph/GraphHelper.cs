@@ -14,6 +14,7 @@ using System.Text.RegularExpressions;
 using File = System.IO.File;
 using DriveUpload = Microsoft.Graph.Drives.Item.Items.Item.CreateUploadSession;
 using onedrive_backup.Telemetry;
+using Azure.Core.Diagnostics;
 
 namespace hassio_onedrive_backup.Graph
 {
@@ -51,6 +52,8 @@ namespace hassio_onedrive_backup.Graph
             _logger = logger;
             _telemetryManager = telemetryManager;
             _persistentDataPath = persistentDataPath;
+
+            // AzureEventSourceListener.CreateConsoleLogger();
         }
 
         public bool? IsAuthenticated
@@ -330,7 +333,7 @@ namespace hassio_onedrive_backup.Graph
             {
                 ClientId = _clientId,
                 DeviceCodeCallback = DeviceCodeBallBackPrompt,
-                TenantId = "common",
+                TenantId = "consumers",
                 AuthenticationRecord = authRecord,
                 TokenCachePersistenceOptions = new TokenCachePersistenceOptions
                 {
