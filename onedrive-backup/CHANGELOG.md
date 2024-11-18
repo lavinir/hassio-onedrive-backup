@@ -6,10 +6,6 @@ The OneDrive Entra App was created as a Multi Tenant app (to enable future Busin
 * Authentication / Permissions issue 
 * Continous backup upload / delete loop in certain edge cases with Generational Backups enabled
 
-### 🗑️ Removed
-* Free Space Sensor - Turns out getting the Available free space in OneDrive requires Read All permissions on the OneDrive account. I didn't notice this was happening with my account but this prompts additional consent when the App makes the API call. Unfortunately having The app run with these extended permissions is something I wasn't willing to do since the beginning and regretably I've removed this feature currently. For those of you that have granted the additional consent, you can go and remove it from [here]("https://account.live.com/consent/Manage")
-
-
 ## v2.3.1 [March 19th 2024]
 ### ❗Important
 Upgrade to Version 2.3 included updates to authentication libraries which caused some connection resets with OneDrive. Please make sure that you have a working connection post upgrade. For troubleshooting please refer to [this link]("https://github.com/lavinir/hassio-onedrive-backup/issues/174")
