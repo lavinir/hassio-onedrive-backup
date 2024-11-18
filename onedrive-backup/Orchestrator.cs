@@ -14,7 +14,7 @@ namespace hassio_onedrive_backup
     {
         private readonly IHassioClient _hassIoClient;
         private readonly IDateTimeProvider _dateTimeProvider;
-        //private readonly HassOnedriveFreeSpaceEntityState? _hassOnedriveFreeSpaceEntityState;
+        private readonly HassOnedriveFreeSpaceEntityState? _hassOnedriveFreeSpaceEntityState;
         private readonly TelemetryManager? _telemetryManager;
         private readonly ConsoleLogger _logger;
         private readonly IGraphHelper _graphHelper;
@@ -31,7 +31,7 @@ namespace hassio_onedrive_backup
             _graphHelper = serviceProvider.GetService<IGraphHelper>();
             _hassIoClient = serviceProvider.GetService<IHassioClient>();
             _dateTimeProvider = serviceProvider.GetService<IDateTimeProvider>();
-            //_hassOnedriveFreeSpaceEntityState = serviceProvider.GetService<HassOnedriveFreeSpaceEntityState>();
+            _hassOnedriveFreeSpaceEntityState = serviceProvider.GetService<HassOnedriveFreeSpaceEntityState>();
             _telemetryManager = serviceProvider.GetService<TelemetryManager>();
             _logger = serviceProvider.GetService<ConsoleLogger>();
             _allowedBackupHours = TimeRangeHelper.GetAllowedHours(_addonOptions.BackupAllowedHours);
@@ -82,11 +82,11 @@ namespace hassio_onedrive_backup
                     // await _graphHelper.GetAndCacheUserTokenAsync();
 
                     // Update OneDrive Freespace Sensor
-                    //var oneDriveSpace = await _graphHelper.GetFreeSpaceInGB();
-                    //if (oneDriveSpace != null)
-                    //{
-                    //    await _hassOnedriveFreeSpaceEntityState.UpdateOneDriveFreespaceSensorInHass(oneDriveSpace);
-                    //}
+                    var oneDriveSpace = await _graphHelper.GetFreeSpaceInGB();
+                    if (oneDriveSpace != null)
+                    {
+                        await _hassOnedriveFreeSpaceEntityState.UpdateOneDriveFreespaceSensorInHass(oneDriveSpace);
+                    }
 
                     _logger.LogVerbose("Checking backups");
 

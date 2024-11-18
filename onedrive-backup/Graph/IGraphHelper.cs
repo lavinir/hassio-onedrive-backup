@@ -26,7 +26,7 @@ namespace hassio_onedrive_backup.Graph
 
         Task<string?> DownloadFileAsync(string fileName, TransferSpeedHelper transferSpeedHelper, Action<int, int>? progressCallback);
 
-        //Task<OneDriveFreeSpaceData> GetFreeSpaceInGB();
+        Task<OneDriveFreeSpaceData> GetFreeSpaceInGB();
     }
 
     public delegate void AuthStatusChanged();

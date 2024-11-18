@@ -74,7 +74,7 @@ namespace hassio_onedrive_backup
 				builder.Services.AddSingleton<IGraphHelper>(graphHelper);
 				builder.Services.AddSingleton<HassOnedriveEntityState>();
 				builder.Services.AddSingleton<HassOnedriveFileSyncEntityState>();
-				//builder.Services.AddSingleton<HassOnedriveFreeSpaceEntityState>();
+				builder.Services.AddSingleton<HassOnedriveFreeSpaceEntityState>();
 				builder.Services.AddSingleton<Orchestrator>();
 				builder.Services.AddSingleton<SettingsFields>();
 				builder.Services.AddSingleton<TelemetryManager>(telemetryManager);

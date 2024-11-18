@@ -6,7 +6,7 @@
 @inject IJSRuntime JS
 @inject AddonOptions AddonOptions
 @inject HassOnedriveEntityState HassOnedriveEntityState
-@* @inject HassOnedriveFreeSpaceEntityState HassOnedriveFreeSpaceEntityState *@
+@inject HassOnedriveFreeSpaceEntityState HassOnedriveFreeSpaceEntityState
 @inject HassOnedriveFileSyncEntityState HassOnedriveFileSyncEntityState
 @inject Orchestrator Orchestrator
 @inject IGraphHelper GraphHelper
@@ -50,7 +50,7 @@
 		</div>
 	</div>
 	<div class="card-body  @(AddonOptions.DarkMode ? "bg-dark text-white" : "bg-light text-body")">
-@* 		<div class="row">
+		<div class="row">
 			<div class="col">
 				<span class="card-text">OneDrive Storage</span>
 			</div>
@@ -69,7 +69,7 @@
 				}
 			</div>
 		</div>
- *@		<div class="row">
+		<div class="row">
 			<div class="col">
 				<span class="card-text">Local Backups</span>
 			</div>
@@ -174,7 +174,7 @@
 
 	private bool refreshingData = false;
 
-	// private int OneDriveUsedSpacePercentage => (int)Math.Round(((OneDriveUsedSpace / (HassOnedriveFreeSpaceEntityState.TotalSpaceGB ?? 1)) * 100));
+	private int OneDriveUsedSpacePercentage => (int)Math.Round(((OneDriveUsedSpace / (HassOnedriveFreeSpaceEntityState.TotalSpaceGB ?? 1)) * 100));
 
 	private int LocalBackupsPercentage => (int)Math.Round(((HassOnedriveEntityState.BackupsInHomeAssistant / ((double)AddonOptions.MaxLocalBackups + HassOnedriveEntityState.RetainedLocalBackups)) * 100));
 
@@ -188,7 +188,7 @@
 
 	private string FileUploadSpeed => ViewHelpers.GetSpeedDisplayText(HassOnedriveFileSyncEntityState.UploadSpeed);
 
-	// private double OneDriveUsedSpace => ((HassOnedriveFreeSpaceEntityState.TotalSpaceGB ?? 0) - (HassOnedriveFreeSpaceEntityState.FreeSpaceGB ?? 0));
+	private double OneDriveUsedSpace => ((HassOnedriveFreeSpaceEntityState.TotalSpaceGB ?? 0) - (HassOnedriveFreeSpaceEntityState.FreeSpaceGB ?? 0));
 
 	private DateTime? LastBackupDate => HassOnedriveEntityState.LastLocalBackupDate > HassOnedriveEntityState.LastOnedriveBackupDate ? HassOnedriveEntityState.LastLocalBackupDate : HassOnedriveEntityState.LastOnedriveBackupDate;
 
@@ -207,7 +207,7 @@
 		}
 	}
 
-    // private string FreeSpaceColor => OneDriveUsedSpacePercentage > 90 ? "bg-danger" : "bg-primary";
+    private string FreeSpaceColor => OneDriveUsedSpacePercentage > 90 ? "bg-danger" : "bg-primary";
 
 	private string LocalBackupsSpace
 	{
@@ -284,7 +284,7 @@
 	protected override void OnInitialized()
 	{
 		base.OnInitialized();
-		// HassOnedriveFreeSpaceEntityState.PropertyChanged += TriggerStateChanged;
+		HassOnedriveFreeSpaceEntityState.PropertyChanged += TriggerStateChanged;
 		HassOnedriveEntityState.PropertyChanged += TriggerStateChanged;
 		HassOnedriveFileSyncEntityState.PropertyChanged += TriggerStateChanged;
 		AddonOptions.OnOptionsChanged += TriggerStateChanged;

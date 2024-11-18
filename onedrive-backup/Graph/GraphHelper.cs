@@ -85,10 +85,15 @@ namespace hassio_onedrive_backup.Graph
 
             if (GetAuthenticationRecordFromCredential(_deviceCodeCredential) == null)
             {
+                _logger.LogVerbose("Missing Auth Record in Device Credential");
                 var context = new TokenRequestContext(_scopes.ToArray());
                 // var response = await _deviceCodeCredential.GetTokenAsync(context);
                 var authRecord = await _deviceCodeCredential.AuthenticateAsync(context);
                 await PersistAuthenticationRecordAsync(authRecord);
+            }
+            else
+            {
+                _logger.LogVerbose("Token Cache exists. Skipping Auth");
             }
 
             IsAuthenticated = true;
@@ -100,6 +105,7 @@ namespace hassio_onedrive_backup.Graph
             try
             {
                 var driveItem = await _userClient.Me.Drive.GetAsync();
+                IsAuthenticated = true;
                 var appFolder = await _userClient.Drives[driveItem.Id].Special["approot"].GetAsync();
                 DriveItem? item;
 
@@ -244,26 +250,27 @@ namespace hassio_onedrive_backup.Graph
             return sanitizedFileName;
         }
 
-        //public async Task<OneDriveFreeSpaceData> GetFreeSpaceInGB()
-        //{
-        //    try
-        //    {
-        //        var drive = await _userClient.Me.Drive.GetAsync();
-        //        double? totalSpace = drive.Quota.Total == null ? null : drive.Quota.Total.Value / (double)Math.Pow(1024, 3);
-        //        double? freeSpace = drive.Quota.Remaining == null ? null : drive.Quota.Remaining.Value / (double)Math.Pow(1024, 3);
-        //        return new OneDriveFreeSpaceData
-        //        {
-        //            FreeSpace = freeSpace,
-        //            TotalSpace = totalSpace
-        //        };
+        public async Task<OneDriveFreeSpaceData> GetFreeSpaceInGB()
+        {
+            try
+            {
+                var drive = await _userClient.Me.Drive.GetAsync();
+                IsAuthenticated = true;
+                double? totalSpace = drive.Quota.Total == null ? null : drive.Quota.Total.Value / (double)Math.Pow(1024, 3);
+                double? freeSpace = drive.Quota.Remaining == null ? null : drive.Quota.Remaining.Value / (double)Math.Pow(1024, 3);
+                return new OneDriveFreeSpaceData
+                {
+                    FreeSpace = freeSpace,
+                    TotalSpace = totalSpace
+                };
 
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError($"Error getting free space: {ex}", ex, _telemetryManager);
-        //        return null;
-        //    }
-        //}
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error getting free space: {ex}", ex, _telemetryManager);
+                return null;
+            }
+        }
 
         public async Task<string?> DownloadFileAsync(string fileName, TransferSpeedHelper transferSpeedHelper, Action<int, int>? progressCallback)
         {
@@ -370,7 +377,7 @@ namespace hassio_onedrive_backup.Graph
         {
             if (File.Exists(PersistentAuthRecordFullPath) == false)
             {
-                _logger.LogWarning("Token cache is empty");
+                _logger.LogVerbose("Auth Record not found on disk");
                 return null;
             }
 

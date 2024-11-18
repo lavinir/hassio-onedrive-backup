@@ -22,7 +22,7 @@ namespace hassio_onedrive_backup.Hass
         private readonly HassContext _hassContext;
 		private readonly ConsoleLogger _logger;
 		private readonly IDateTimeProvider _dateTimeProvider;
-        //private readonly HassOnedriveFreeSpaceEntityState? _hassOneDriveFreeSpaceEntityState;
+        private readonly HassOnedriveFreeSpaceEntityState? _hassOneDriveFreeSpaceEntityState;
         private readonly TelemetryManager? _telemetryManager;
         private readonly BackupAdditionalData _backupAdditionalData;
         private AddonOptions _addonOptions;
@@ -45,7 +45,7 @@ namespace hassio_onedrive_backup.Hass
             _logger = serviceProvider.GetService<ConsoleLogger>();
             _dateTimeProvider = serviceProvider.GetService<IDateTimeProvider>();
             _backupAdditionalData = serviceProvider.GetService<BackupAdditionalData>();
-            //_hassOneDriveFreeSpaceEntityState = serviceProvider.GetService<HassOnedriveFreeSpaceEntityState>();
+            _hassOneDriveFreeSpaceEntityState = serviceProvider.GetService<HassOnedriveFreeSpaceEntityState>();
             _telemetryManager = serviceProvider.GetService<TelemetryManager>();
             UpdateAllowedHours(_addonOptions.BackupAllowedHours);
         }
@@ -374,11 +374,11 @@ namespace hassio_onedrive_backup.Hass
             {
                 double backupSizeGB = backup.Size / 1000;
                 _logger.LogVerbose($"Backup size to upload: {backupSizeGB.ToString("0.00")}GB");
-                //if (_hassOneDriveFreeSpaceEntityState!.FreeSpaceGB != null && _hassOneDriveFreeSpaceEntityState.FreeSpaceGB < backupSizeGB)
-                //{
-                //    _logger.LogError($"Not enough free space to upload backup ({backup.Slug}). (Required: {backupSizeGB.ToString("0.00")}GB. Available: {((double)_hassOneDriveFreeSpaceEntityState.FreeSpaceGB).ToString("0.00")}GB");
-                //    return false;
-                //}
+                if (_hassOneDriveFreeSpaceEntityState!.FreeSpaceGB != null && _hassOneDriveFreeSpaceEntityState.FreeSpaceGB < backupSizeGB)
+                {
+                    _logger.LogError($"Not enough free space to upload backup ({backup.Slug}). (Required: {backupSizeGB.ToString("0.00")}GB. Available: {((double)_hassOneDriveFreeSpaceEntityState.FreeSpaceGB).ToString("0.00")}GB");
+                    return false;
+                }
 
                 _logger.LogInfo($"Uploading {backup.Name} ({backup.Date})");
                 string? instanceSuffix = _addonOptions.InstanceName == null ? null : $".{_addonOptions.InstanceName.Substring(0, Math.Min(InstanceNameMaxLength, _addonOptions.InstanceName.Length))}";
