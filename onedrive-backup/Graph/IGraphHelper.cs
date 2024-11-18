@@ -14,7 +14,7 @@ namespace hassio_onedrive_backup.Graph
 
         event AuthStatusChanged AuthStatusChangedEventHandler;
 
-        Task<string> GetAndCacheUserTokenAsync();
+        Task GetAndCacheUserTokenAsync();
 
         Task<List<DriveItem>> GetItemsInAppFolderAsync(string subPath = "/");
 

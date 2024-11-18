@@ -71,7 +71,7 @@ namespace hassio_onedrive_backup.Graph
 
         private string PersistentAuthRecordFullPath => Path.Combine(_persistentDataPath, AuthRecordFile);
 
-        public async Task<string> GetAndCacheUserTokenAsync()
+        public async Task GetAndCacheUserTokenAsync()
         {
             if (_deviceCodeCredential == null)
             {
@@ -83,12 +83,16 @@ namespace hassio_onedrive_backup.Graph
 
             _ = _scopes ?? throw new ArgumentNullException("'scopes' cannot be null");
 
-            var context = new TokenRequestContext(_scopes.ToArray());
-            var response = await _deviceCodeCredential.GetTokenAsync(context);
-            await PersistAuthenticationRecordAsync(GetAuthenticationRecordFromCredential());
+            if (GetAuthenticationRecordFromCredential(_deviceCodeCredential) == null)
+            {
+                var context = new TokenRequestContext(_scopes.ToArray());
+                // var response = await _deviceCodeCredential.GetTokenAsync(context);
+                var authRecord = await _deviceCodeCredential.AuthenticateAsync(context);
+                await PersistAuthenticationRecordAsync(authRecord);
+            }
+
             IsAuthenticated = true;
-            await Task.Delay(2000);
-            return response.Token;
+            // return response.Token;
         }
 
         public async Task<DriveItem?> GetItemInAppFolderAsync(string subPath = "/")
@@ -340,18 +344,18 @@ namespace hassio_onedrive_backup.Graph
                 {
                     Name = "hassio-onedrive-backup",
                     UnsafeAllowUnencryptedStorage = true
-                },
+                },                
             };
 
             _deviceCodeCredential = new DeviceCodeCredential(deviceCodeCredOptions);
             _userClient = new GraphServiceClient(_deviceCodeCredential, _scopes);
         }
 
-        private AuthenticationRecord GetAuthenticationRecordFromCredential()
+        private AuthenticationRecord GetAuthenticationRecordFromCredential(DeviceCodeCredential credential)
         {
             var record = typeof(DeviceCodeCredential)
                 .GetProperty("Record", System.Reflection.BindingFlags.NonPublic | BindingFlags.Instance)
-                .GetValue(_deviceCodeCredential) as AuthenticationRecord;
+                .GetValue(credential) as AuthenticationRecord;
 
             return record;
         }

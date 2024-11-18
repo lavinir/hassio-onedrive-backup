@@ -79,7 +79,7 @@ namespace hassio_onedrive_backup
                     }
 
                     // Refresh Graph Token
-                    await _graphHelper.GetAndCacheUserTokenAsync();
+                    // await _graphHelper.GetAndCacheUserTokenAsync();
 
                     // Update OneDrive Freespace Sensor
                     //var oneDriveSpace = await _graphHelper.GetFreeSpaceInGB();
