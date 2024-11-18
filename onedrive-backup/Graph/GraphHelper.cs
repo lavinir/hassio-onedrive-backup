@@ -87,6 +87,7 @@ namespace hassio_onedrive_backup.Graph
             var response = await _deviceCodeCredential.GetTokenAsync(context);
             await PersistAuthenticationRecordAsync(GetAuthenticationRecordFromCredential());
             IsAuthenticated = true;
+            await Task.Delay(2000);
             return response.Token;
         }
 
@@ -239,26 +240,26 @@ namespace hassio_onedrive_backup.Graph
             return sanitizedFileName;
         }
 
-        public async Task<OneDriveFreeSpaceData> GetFreeSpaceInGB()
-        {
-            try
-            {
-                var drive = await _userClient.Me.Drive.GetAsync();
-                double? totalSpace = drive.Quota.Total == null ? null : drive.Quota.Total.Value / (double)Math.Pow(1024, 3);
-                double? freeSpace = drive.Quota.Remaining == null ? null : drive.Quota.Remaining.Value / (double)Math.Pow(1024, 3);
-                return new OneDriveFreeSpaceData
-                {
-                    FreeSpace = freeSpace,
-                    TotalSpace = totalSpace
-                };
+        //public async Task<OneDriveFreeSpaceData> GetFreeSpaceInGB()
+        //{
+        //    try
+        //    {
+        //        var drive = await _userClient.Me.Drive.GetAsync();
+        //        double? totalSpace = drive.Quota.Total == null ? null : drive.Quota.Total.Value / (double)Math.Pow(1024, 3);
+        //        double? freeSpace = drive.Quota.Remaining == null ? null : drive.Quota.Remaining.Value / (double)Math.Pow(1024, 3);
+        //        return new OneDriveFreeSpaceData
+        //        {
+        //            FreeSpace = freeSpace,
+        //            TotalSpace = totalSpace
+        //        };
 
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Error getting free space: {ex}", ex, _telemetryManager);
-                return null;
-            }
-        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError($"Error getting free space: {ex}", ex, _telemetryManager);
+        //        return null;
+        //    }
+        //}
 
         public async Task<string?> DownloadFileAsync(string fileName, TransferSpeedHelper transferSpeedHelper, Action<int, int>? progressCallback)
         {

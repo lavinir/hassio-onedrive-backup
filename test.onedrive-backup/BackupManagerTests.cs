@@ -46,7 +46,7 @@ namespace hassio_onedrive_backup.Tests
 			_transferSpeedHelperMock = new Mock<TransferSpeedHelper>(null);
 			_hassContextMock = new Mock<HassContext>();
 			var backupAdditionalData = new BackupAdditionalData();
-			var hassOneDriveFreeSpaceEntityState = new HassOnedriveFreeSpaceEntityState(_hassIoClientMock.Object);
+			//var hassOneDriveFreeSpaceEntityState = new HassOnedriveFreeSpaceEntityState(_hassIoClientMock.Object);
 
 			_addonOptions = CreateAddonOptions();
 			_serviceProviderMock.Setup(provider => provider.GetService(typeof(IGraphHelper))).Returns(_graphHelperMock.Object);
@@ -56,7 +56,7 @@ namespace hassio_onedrive_backup.Tests
 			_serviceProviderMock.Setup(provider => provider.GetService(typeof(AddonOptions))).Returns(_addonOptions);
 			_serviceProviderMock.Setup(provider => provider.GetService(typeof(IDateTimeProvider))).Returns(_dateTimeProvider);
 			_serviceProviderMock.Setup(provider => provider.GetService(typeof(BackupAdditionalData))).Returns(backupAdditionalData);
-			_serviceProviderMock.Setup(provider => provider.GetService(typeof(HassOnedriveFreeSpaceEntityState))).Returns(hassOneDriveFreeSpaceEntityState);
+			//_serviceProviderMock.Setup(provider => provider.GetService(typeof(HassOnedriveFreeSpaceEntityState))).Returns(hassOneDriveFreeSpaceEntityState);
 
 			var consoleLogger = new ConsoleLogger();
 			consoleLogger.SetDateTimeProvider(_dateTimeProvider);
