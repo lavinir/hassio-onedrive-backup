@@ -30,7 +30,7 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="rnotesModalLabel">Version 2.3.3 Notes</h5>
+                    <h5 class="modal-title" id="rnotesModalLabel">Version 2.3.4 Notes</h5>
                 </div>
                 <div class="modal-body">
                     <h5>❗Important</h5>
@@ -40,6 +40,11 @@
                         <li>Authentication / Permissions issue</li>
                         <li>Continous backup upload / delete loop in certain edge cases with Generational Backups enabled</li>
                     </ul>
+                </div>
+                    <h6>🗑️ Removed</h6>
+                    <ul>
+                        <li>Free Space Sensor - Turns out getting the Available free space in OneDrive requires Read All permissions on the OneDrive account. I didn't notice this was happening with my account but this could prompt for additional consent when the App makes the API call. Unfortunately having The app run with these extended permissions is something I wasn't willing to do since the beginning and regretably I've removed this feature currently.</li>
+                   </ul>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>

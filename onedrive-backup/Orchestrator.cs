@@ -82,11 +82,11 @@ namespace hassio_onedrive_backup
                     // await _graphHelper.GetAndCacheUserTokenAsync();
 
                     // Update OneDrive Freespace Sensor
-                    var oneDriveSpace = await _graphHelper.GetFreeSpaceInGB();
-                    if (oneDriveSpace != null)
-                    {
-                        await _hassOnedriveFreeSpaceEntityState.UpdateOneDriveFreespaceSensorInHass(oneDriveSpace);
-                    }
+                    //var oneDriveSpace = await _graphHelper.GetFreeSpaceInGB();
+                    //if (oneDriveSpace != null)
+                    //{
+                    //    await _hassOnedriveFreeSpaceEntityState.UpdateOneDriveFreespaceSensorInHass(oneDriveSpace);
+                    //}
 
                     _logger.LogVerbose("Checking backups");
 
