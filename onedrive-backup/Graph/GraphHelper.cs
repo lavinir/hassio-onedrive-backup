@@ -21,6 +21,7 @@ namespace hassio_onedrive_backup.Graph
     public class GraphHelper : IGraphHelper
     {
         private const string AuthRecordFile = "record.auth";
+        private const string GraphSpecialAppFolderUrl = "https://graph.microsoft.com/v1.0/me/drive/special/approot";
         private const int UploadRetryCount = 3;
         private const int DownloadRetryCount = 3;
         private const int GraphRequestTimeoutMinutes = 2;
@@ -119,18 +120,18 @@ namespace hassio_onedrive_backup.Graph
         {
             try
             {
-                var driveItem = await _userClient.Me.Drive.GetAsync();
+                string driveId = await GetDriveIdFromAppFolder();
                 IsAuthenticated = true;
-                var appFolder = await _userClient.Drives[driveItem.Id].Special["approot"].GetAsync();
+                var appFolder = await _userClient.Drives[driveId].Special["approot"].GetAsync();
                 DriveItem? item;
 
                 if (subPath == "/")
                 {
-                    item = await _userClient.Drives[driveItem.Id].Items[appFolder.Id].GetAsync(config => config.QueryParameters.Expand = new string[] { "children" });
+                    item = await _userClient.Drives[driveId].Items[appFolder.Id].GetAsync(config => config.QueryParameters.Expand = new string[] { "children" });
                 }
                 else
                 {
-                    item = await _userClient.Drives[driveItem.Id].Items[appFolder.Id].ItemWithPath(subPath).GetAsync(config => config.QueryParameters.Expand = new string[] { "children" });
+                    item = await _userClient.Drives[driveId].Items[appFolder.Id].ItemWithPath(subPath).GetAsync(config => config.QueryParameters.Expand = new string[] { "children" });
                 }
 
                 return item;
@@ -160,9 +161,9 @@ namespace hassio_onedrive_backup.Graph
             try
             {
                 _logger.LogInfo($"Deleting item: {itemPath}");
-                var driveItem = await _userClient.Me.Drive.GetAsync();
-                var appFolder = await _userClient.Drives[driveItem.Id].Special["approot"].GetAsync();
-                await _userClient.Drives[driveItem.Id].Items[appFolder.Id].ItemWithPath(itemPath).DeleteAsync();
+                string driveId = await GetDriveIdFromAppFolder();
+                var appFolder = await _userClient.Drives[driveId].Special["approot"].GetAsync();
+                await _userClient.Drives[driveId].Items[appFolder.Id].ItemWithPath(itemPath).DeleteAsync();
             }
             catch (Exception ex)
             {
@@ -184,10 +185,10 @@ namespace hassio_onedrive_backup.Graph
             using var fileStream = File.OpenRead(filePath);
             destinationFileName = destinationFileName ?? (flatten ? Path.GetFileName(filePath) : filePath);
             string sanitizedDestinationFileName = NormalizeDestinationFileName(destinationFileName);
-            var driveItem = await _userClient.Me.Drive.GetAsync();
-            var appFolder = await _userClient.Drives[driveItem.Id].Special["approot"].GetAsync();
+            string driveId = await GetDriveIdFromAppFolder();
+            var appFolder = await _userClient.Drives[driveId].Special["approot"].GetAsync();
 
-            var uploadSession = await _userClient.Drives[driveItem?.Id]
+            var uploadSession = await _userClient.Drives[driveId]
                 .Items[appFolder.Id]
                 .ItemWithPath(sanitizedDestinationFileName)
                 .CreateUploadSession
@@ -265,25 +266,39 @@ namespace hassio_onedrive_backup.Graph
             return sanitizedFileName;
         }
 
-        public async Task<OneDriveFreeSpaceData> GetFreeSpaceInGB()
+        //public async Task<OneDriveFreeSpaceData> GetFreeSpaceInGB()
+        //{
+        //    try
+        //    {
+        //        var drive = await _userClient.Me.Drive.GetAsync();
+        //        IsAuthenticated = true;
+        //        double? totalSpace = drive.Quota.Total == null ? null : drive.Quota.Total.Value / (double)Math.Pow(1024, 3);
+        //        double? freeSpace = drive.Quota.Remaining == null ? null : drive.Quota.Remaining.Value / (double)Math.Pow(1024, 3);
+        //        return new OneDriveFreeSpaceData
+        //        {
+        //            FreeSpace = freeSpace,
+        //            TotalSpace = totalSpace
+        //        };
+
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError($"Error getting free space: {ex}", ex, _telemetryManager);
+        //        return null;
+        //    }
+        //}
+
+        public async Task<string> GetDriveIdFromAppFolder()
         {
             try
             {
-                var drive = await _userClient.Me.Drive.GetAsync();
-                IsAuthenticated = true;
-                double? totalSpace = drive.Quota.Total == null ? null : drive.Quota.Total.Value / (double)Math.Pow(1024, 3);
-                double? freeSpace = drive.Quota.Remaining == null ? null : drive.Quota.Remaining.Value / (double)Math.Pow(1024, 3);
-                return new OneDriveFreeSpaceData
-                {
-                    FreeSpace = freeSpace,
-                    TotalSpace = totalSpace
-                };
-
+                var resp = await _userClient.Drives.WithUrl("https://graph.microsoft.com/v1.0/me/drive/special/approot").GetAsync();
+                return resp.AdditionalData["id"].ToString().Split("!").First();
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error getting free space: {ex}", ex, _telemetryManager);
-                return null;
+                _logger.LogError("Failed getting Drive Id", ex);
+                throw;
             }
         }
 
@@ -291,15 +306,15 @@ namespace hassio_onedrive_backup.Graph
         {
             var drive = await _userClient.Me.Drive.GetAsync();
 
-            var driveItem = await _userClient.Me.Drive.GetAsync();
-            var appFolder = await _userClient.Drives[driveItem.Id].Special["approot"].GetAsync();
-            var item = await _userClient.Drives[driveItem?.Id]
+            string driveId = await GetDriveIdFromAppFolder();
+            var appFolder = await _userClient.Drives[driveId].Special["approot"].GetAsync();
+            var item = await _userClient.Drives[driveId]
                 .Items[appFolder.Id]
                 .ItemWithPath(fileName)
                 .GetAsync();
 
             transferSpeedHelper.Start();
-            var itemStream = await _userClient.Drives[driveItem?.Id]
+            var itemStream = await _userClient.Drives[driveId]
                 .Items[appFolder.Id]
                 .ItemWithPath(fileName)
                 .Content
