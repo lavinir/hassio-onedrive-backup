@@ -35,6 +35,7 @@ namespace hassio_onedrive_backup.Graph
         private string _persistentDataPath;
         private HttpClient _downloadHttpClient;
         private bool? _isAuthenticated = null;
+        private bool _authRecordSavedInSession = false;
 
         public event AuthStatusChanged? AuthStatusChangedEventHandler;
 
@@ -62,6 +63,12 @@ namespace hassio_onedrive_backup.Graph
             private set
             {
                 _isAuthenticated = value; AuthStatusChangedEventHandler?.Invoke();
+                if (_isAuthenticated != null && _isAuthenticated.Value && _authRecordSavedInSession == false) 
+                {
+                    var authRecord = GetAuthenticationRecordFromCredential(_deviceCodeCredential);
+                    PersistAuthenticationRecordAsync(authRecord);
+                    _authRecordSavedInSession = true;
+                } 
             }
         }
 
@@ -73,30 +80,38 @@ namespace hassio_onedrive_backup.Graph
 
         public async Task GetAndCacheUserTokenAsync()
         {
-            if (_deviceCodeCredential == null)
+            try
             {
-                await InitializeGraphForUserAuthAsync();
+                if (_deviceCodeCredential == null)
+                {
+                    await InitializeGraphForUserAuthAsync();
+                }
+
+                _ = _deviceCodeCredential ??
+                    throw new NullReferenceException("User Auth not Initialized");
+
+                _ = _scopes ?? throw new ArgumentNullException("'scopes' cannot be null");
+
+                if (GetAuthenticationRecordFromCredential(_deviceCodeCredential) == null)
+                {
+                    _logger.LogVerbose("Missing Auth Record in Device Credential");
+                    var context = new TokenRequestContext(_scopes.ToArray());
+                    // var response = await _deviceCodeCredential.GetTokenAsync(context);
+                    //var authRecord = await _deviceCodeCredential.AuthenticateAsync(context);
+                    // await PersistAuthenticationRecordAsync(authRecord);
+                }
+                else
+                {
+                    _logger.LogVerbose("Token Cache exists. Skipping Auth");
+                }
+            }
+            catch (Exception)
+            {
+
+                throw;
             }
 
-            _ = _deviceCodeCredential ??
-                throw new NullReferenceException("User Auth not Initialized");
-
-            _ = _scopes ?? throw new ArgumentNullException("'scopes' cannot be null");
-
-            if (GetAuthenticationRecordFromCredential(_deviceCodeCredential) == null)
-            {
-                _logger.LogVerbose("Missing Auth Record in Device Credential");
-                var context = new TokenRequestContext(_scopes.ToArray());
-                // var response = await _deviceCodeCredential.GetTokenAsync(context);
-                var authRecord = await _deviceCodeCredential.AuthenticateAsync(context);
-                await PersistAuthenticationRecordAsync(authRecord);
-            }
-            else
-            {
-                _logger.LogVerbose("Token Cache exists. Skipping Auth");
-            }
-
-            IsAuthenticated = true;
+            // IsAuthenticated = true;
             // return response.Token;
         }
 
@@ -350,7 +365,7 @@ namespace hassio_onedrive_backup.Graph
                 TokenCachePersistenceOptions = new TokenCachePersistenceOptions
                 {
                     Name = "hassio-onedrive-auth",
-                    UnsafeAllowUnencryptedStorage = true
+                    UnsafeAllowUnencryptedStorage = true                    
                 },                
             };
 
@@ -360,6 +375,11 @@ namespace hassio_onedrive_backup.Graph
 
         private AuthenticationRecord GetAuthenticationRecordFromCredential(DeviceCodeCredential credential)
         {
+            if (credential == null)
+            {
+                return null;
+            }
+
             var record = typeof(DeviceCodeCredential)
                 .GetProperty("Record", System.Reflection.BindingFlags.NonPublic | BindingFlags.Instance)
                 .GetValue(credential) as AuthenticationRecord;
@@ -369,6 +389,11 @@ namespace hassio_onedrive_backup.Graph
 
         private async Task PersistAuthenticationRecordAsync(AuthenticationRecord record)
         {
+            if (record == null)
+            {
+                return;
+            }
+
             using var authRecordStream = new FileStream(PersistentAuthRecordFullPath, FileMode.Create, FileAccess.Write);
             await record.SerializeAsync(authRecordStream);
         }
@@ -381,9 +406,17 @@ namespace hassio_onedrive_backup.Graph
                 return null;
             }
 
-            using var authRecordStream = new FileStream(PersistentAuthRecordFullPath, FileMode.Open, FileAccess.Read);
-            var record = await AuthenticationRecord.DeserializeAsync(authRecordStream);
-            return record;
+            try
+            {
+                using var authRecordStream = new FileStream(PersistentAuthRecordFullPath, FileMode.Open, FileAccess.Read);
+                var record = await AuthenticationRecord.DeserializeAsync(authRecordStream);
+                return record;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error reading Auth Record", ex);
+                return null;
+            }
         }
 
         private Task DeviceCodeBallBackPrompt(DeviceCodeInfo info, CancellationToken ct)
