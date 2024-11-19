@@ -349,7 +349,7 @@ namespace hassio_onedrive_backup.Graph
                 AuthenticationRecord = authRecord,
                 TokenCachePersistenceOptions = new TokenCachePersistenceOptions
                 {
-                    Name = "hassio-onedrive-backup",
+                    Name = "hassio-onedrive-auth",
                     UnsafeAllowUnencryptedStorage = true
                 },                
             };
