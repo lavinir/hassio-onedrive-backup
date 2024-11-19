@@ -53,7 +53,7 @@ namespace hassio_onedrive_backup.Graph
             _telemetryManager = telemetryManager;
             _persistentDataPath = persistentDataPath;
 
-            // AzureEventSourceListener.CreateConsoleLogger();
+            AzureEventSourceListener.CreateConsoleLogger();
         }
 
         public bool? IsAuthenticated
