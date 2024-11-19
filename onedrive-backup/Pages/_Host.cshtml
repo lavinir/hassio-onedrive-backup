@@ -41,6 +41,11 @@
                         <li>Continous backup upload / delete loop in certain edge cases with Generational Backups enabled</li>
                     </ul>
                 </div>
+                    <h6>🗑️ Removed</h6>
+                    <ul>
+                        <li>Free Space Sensor - Turns out getting the Available free space in OneDrive requires Read All permissions on the OneDrive account. I didn't notice this was happening with my account but this could prompt for additional consent when the App makes the API call. Unfortunately having The app run with these extended permissions is something I wasn't willing to do since the beginning and regretably I've removed this feature currently.</li>
+                   </ul>
+                </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
