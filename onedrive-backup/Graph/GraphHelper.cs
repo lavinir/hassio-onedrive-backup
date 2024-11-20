@@ -188,6 +188,24 @@ namespace hassio_onedrive_backup.Graph
             string driveId = await GetDriveIdFromAppFolder();
             var appFolder = await _userClient.Drives[driveId].Special["approot"].GetAsync();
 
+            var uploadSessionRequest = _userClient.Drives[driveId]
+                .Items[appFolder.Id]
+                .ItemWithPath(sanitizedDestinationFileName)
+                .CreateUploadSession
+                .ToPostRequestInformation(new DriveUpload.CreateUploadSessionPostRequestBody()
+                {
+                    Item = new DriveItemUploadableProperties
+                    {
+                        Description = description
+                    }
+                });
+
+            using (var reader = new StreamReader(uploadSessionRequest.Content))
+            {
+                string requestBody = await reader.ReadToEndAsync();
+                _logger.LogVerbose($"UploadSession Request: {uploadSessionRequest.URI}. Body: {requestBody}");
+            }
+
             var uploadSession = await _userClient.Drives[driveId]
                 .Items[appFolder.Id]
                 .ItemWithPath(sanitizedDestinationFileName)

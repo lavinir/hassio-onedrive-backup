@@ -22,7 +22,6 @@ This addon enables easy Home Assistant backup creation and sync to OneDrive.
 [Installation Instructions](#installation-instructions)<br/>
 [Configuration](#configuration)<br/> 
 [Backup Location in OneDrive](#backup-location-in-onedrive)<br/>
-[OneDrive FreeSpace Sensor](#onedrive-free-space-sensor)<br/>
 [Home Assistant Sensor](#home-assistant-backup-sensor)<br/>
 [Events](#events)<br/>
 [Restoring from backup](#restoring-from-backup)<br/>
@@ -197,12 +196,6 @@ The App Folder for the add-on is mapped to : <kbd>**[onedriveroot]/Apps/hassio-o
 You can choose to 'pin' specific backups so that they stop counting against the set backup quotas and are never deleted by the addon. This can be set individually for both local and OneDrive through
 dedicated buttons in the main Dashboard for each backup. 
 > Note - As any 'retained' backup will not count towards your maximum backup quota you could for example, have a maximum of 3 local backups set but chose to retain 2 Local backups. The addon will ignore the retained backups for the quota and will store a maximum of 3 addtional local backups
-
-## OneDrive free space Sensor
-The add-on creates a native Home Assistant Sensor entity <kbd>sensor.onedrivefreespace</kbd> that will show you the amount of free space in your OneDrive account.
-
-![freespace_sensor_snapshot](onedrive-backup/images/sensor_freespace.png)
-
 
 ## Home Assistant backup sensor
 The add-on creates a native Home Assistant Sensor entity <kbd>sensor.onedrivebackup</kbd> which grants visibility to the backup status as well as allows you to create automations on these values as needed.
