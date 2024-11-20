@@ -50,7 +50,7 @@
 		</div>
 	</div>
 	<div class="card-body  @(AddonOptions.DarkMode ? "bg-dark text-white" : "bg-light text-body")">
-		<div class="row">
+@* 		<div class="row">
 			<div class="col">
 				<span class="card-text">OneDrive Storage</span>
 			</div>
@@ -69,7 +69,7 @@
 				}
 			</div>
 		</div>
-		<div class="row">
+ *@		<div class="row">
 			<div class="col">
 				<span class="card-text">Local Backups</span>
 			</div>
@@ -287,8 +287,6 @@
 		HassOnedriveFreeSpaceEntityState.PropertyChanged += TriggerStateChanged;
 		HassOnedriveEntityState.PropertyChanged += TriggerStateChanged;
 		HassOnedriveFileSyncEntityState.PropertyChanged += TriggerStateChanged;
-		// Orchestrator.BackupManager.OneDriveBackupsUpdated += TriggerStateChanged;
-		// Orchestrator.BackupManager.LocalBackupsUpdated += TriggerStateChanged;
 		AddonOptions.OnOptionsChanged += TriggerStateChanged;
 	}
 

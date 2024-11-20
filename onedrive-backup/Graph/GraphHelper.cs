@@ -14,12 +14,14 @@ using System.Text.RegularExpressions;
 using File = System.IO.File;
 using DriveUpload = Microsoft.Graph.Drives.Item.Items.Item.CreateUploadSession;
 using onedrive_backup.Telemetry;
+using Azure.Core.Diagnostics;
 
 namespace hassio_onedrive_backup.Graph
 {
     public class GraphHelper : IGraphHelper
     {
         private const string AuthRecordFile = "record.auth";
+        private const string GraphSpecialAppFolderUrl = "https://graph.microsoft.com/v1.0/me/drive/special/approot";
         private const int UploadRetryCount = 3;
         private const int DownloadRetryCount = 3;
         private const int GraphRequestTimeoutMinutes = 2;
@@ -34,6 +36,7 @@ namespace hassio_onedrive_backup.Graph
         private string _persistentDataPath;
         private HttpClient _downloadHttpClient;
         private bool? _isAuthenticated = null;
+        private bool _authRecordSavedInSession = false;
 
         public event AuthStatusChanged? AuthStatusChangedEventHandler;
 
@@ -51,6 +54,8 @@ namespace hassio_onedrive_backup.Graph
             _logger = logger;
             _telemetryManager = telemetryManager;
             _persistentDataPath = persistentDataPath;
+
+            //AzureEventSourceListener.CreateConsoleLogger();
         }
 
         public bool? IsAuthenticated
@@ -59,6 +64,12 @@ namespace hassio_onedrive_backup.Graph
             private set
             {
                 _isAuthenticated = value; AuthStatusChangedEventHandler?.Invoke();
+                if (_isAuthenticated != null && _isAuthenticated.Value && _authRecordSavedInSession == false) 
+                {
+                    var authRecord = GetAuthenticationRecordFromCredential(_deviceCodeCredential);
+                    PersistAuthenticationRecordAsync(authRecord);
+                    _authRecordSavedInSession = true;
+                } 
             }
         }
 
@@ -68,40 +79,59 @@ namespace hassio_onedrive_backup.Graph
 
         private string PersistentAuthRecordFullPath => Path.Combine(_persistentDataPath, AuthRecordFile);
 
-        public async Task<string> GetAndCacheUserTokenAsync()
+        public async Task GetAndCacheUserTokenAsync()
         {
-            if (_deviceCodeCredential == null)
+            try
             {
-                await InitializeGraphForUserAuthAsync();
+                if (_deviceCodeCredential == null)
+                {
+                    await InitializeGraphForUserAuthAsync();
+                }
+
+                _ = _deviceCodeCredential ??
+                    throw new NullReferenceException("User Auth not Initialized");
+
+                _ = _scopes ?? throw new ArgumentNullException("'scopes' cannot be null");
+
+                if (GetAuthenticationRecordFromCredential(_deviceCodeCredential) == null)
+                {
+                    _logger.LogVerbose("Missing Auth Record in Device Credential");
+                    var context = new TokenRequestContext(_scopes.ToArray());
+                    // var response = await _deviceCodeCredential.GetTokenAsync(context);
+                    //var authRecord = await _deviceCodeCredential.AuthenticateAsync(context);
+                    // await PersistAuthenticationRecordAsync(authRecord);
+                }
+                else
+                {
+                    _logger.LogVerbose("Token Cache exists. Skipping Auth");
+                }
+            }
+            catch (Exception)
+            {
+
+                throw;
             }
 
-            _ = _deviceCodeCredential ??
-                throw new NullReferenceException("User Auth not Initialized");
-
-            _ = _scopes ?? throw new ArgumentNullException("'scopes' cannot be null");
-
-            var context = new TokenRequestContext(_scopes.ToArray());
-            var response = await _deviceCodeCredential.GetTokenAsync(context);
-            await PersistAuthenticationRecordAsync(GetAuthenticationRecordFromCredential());
-            IsAuthenticated = true;
-            return response.Token;
+            // IsAuthenticated = true;
+            // return response.Token;
         }
 
         public async Task<DriveItem?> GetItemInAppFolderAsync(string subPath = "/")
         {
             try
             {
-                var driveItem = await _userClient.Me.Drive.GetAsync();
-                var appFolder = await _userClient.Drives[driveItem.Id].Special["approot"].GetAsync();
+                string driveId = await GetDriveIdFromAppFolder();
+                IsAuthenticated = true;
+                var appFolder = await _userClient.Drives[driveId].Special["approot"].GetAsync();
                 DriveItem? item;
 
                 if (subPath == "/")
                 {
-                    item = await _userClient.Drives[driveItem.Id].Items[appFolder.Id].GetAsync(config => config.QueryParameters.Expand = new string[] { "children" });
+                    item = await _userClient.Drives[driveId].Items[appFolder.Id].GetAsync(config => config.QueryParameters.Expand = new string[] { "children" });
                 }
                 else
                 {
-                    item = await _userClient.Drives[driveItem.Id].Items[appFolder.Id].ItemWithPath(subPath).GetAsync(config => config.QueryParameters.Expand = new string[] { "children" });
+                    item = await _userClient.Drives[driveId].Items[appFolder.Id].ItemWithPath(subPath).GetAsync(config => config.QueryParameters.Expand = new string[] { "children" });
                 }
 
                 return item;
@@ -131,9 +161,9 @@ namespace hassio_onedrive_backup.Graph
             try
             {
                 _logger.LogInfo($"Deleting item: {itemPath}");
-                var driveItem = await _userClient.Me.Drive.GetAsync();
-                var appFolder = await _userClient.Drives[driveItem.Id].Special["approot"].GetAsync();
-                await _userClient.Drives[driveItem.Id].Items[appFolder.Id].ItemWithPath(itemPath).DeleteAsync();
+                string driveId = await GetDriveIdFromAppFolder();
+                var appFolder = await _userClient.Drives[driveId].Special["approot"].GetAsync();
+                await _userClient.Drives[driveId].Items[appFolder.Id].ItemWithPath(itemPath).DeleteAsync();
             }
             catch (Exception ex)
             {
@@ -155,10 +185,28 @@ namespace hassio_onedrive_backup.Graph
             using var fileStream = File.OpenRead(filePath);
             destinationFileName = destinationFileName ?? (flatten ? Path.GetFileName(filePath) : filePath);
             string sanitizedDestinationFileName = NormalizeDestinationFileName(destinationFileName);
-            var driveItem = await _userClient.Me.Drive.GetAsync();
-            var appFolder = await _userClient.Drives[driveItem.Id].Special["approot"].GetAsync();
+            string driveId = await GetDriveIdFromAppFolder();
+            var appFolder = await _userClient.Drives[driveId].Special["approot"].GetAsync();
 
-            var uploadSession = await _userClient.Drives[driveItem?.Id]
+            var uploadSessionRequest = _userClient.Drives[driveId]
+                .Items[appFolder.Id]
+                .ItemWithPath(sanitizedDestinationFileName)
+                .CreateUploadSession
+                .ToPostRequestInformation(new DriveUpload.CreateUploadSessionPostRequestBody()
+                {
+                    Item = new DriveItemUploadableProperties
+                    {
+                        Description = description
+                    }
+                });
+
+            using (var reader = new StreamReader(uploadSessionRequest.Content))
+            {
+                string requestBody = await reader.ReadToEndAsync();
+                _logger.LogVerbose($"UploadSession Request: {uploadSessionRequest.URI}. Body: {requestBody}");
+            }
+
+            var uploadSession = await _userClient.Drives[driveId]
                 .Items[appFolder.Id]
                 .ItemWithPath(sanitizedDestinationFileName)
                 .CreateUploadSession
@@ -236,24 +284,39 @@ namespace hassio_onedrive_backup.Graph
             return sanitizedFileName;
         }
 
-        public async Task<OneDriveFreeSpaceData> GetFreeSpaceInGB()
+        //public async Task<OneDriveFreeSpaceData> GetFreeSpaceInGB()
+        //{
+        //    try
+        //    {
+        //        var drive = await _userClient.Me.Drive.GetAsync();
+        //        IsAuthenticated = true;
+        //        double? totalSpace = drive.Quota.Total == null ? null : drive.Quota.Total.Value / (double)Math.Pow(1024, 3);
+        //        double? freeSpace = drive.Quota.Remaining == null ? null : drive.Quota.Remaining.Value / (double)Math.Pow(1024, 3);
+        //        return new OneDriveFreeSpaceData
+        //        {
+        //            FreeSpace = freeSpace,
+        //            TotalSpace = totalSpace
+        //        };
+
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError($"Error getting free space: {ex}", ex, _telemetryManager);
+        //        return null;
+        //    }
+        //}
+
+        public async Task<string> GetDriveIdFromAppFolder()
         {
             try
             {
-                var drive = await _userClient.Me.Drive.GetAsync();
-                double? totalSpace = drive.Quota.Total == null ? null : drive.Quota.Total.Value / (double)Math.Pow(1024, 3);
-                double? freeSpace = drive.Quota.Remaining == null ? null : drive.Quota.Remaining.Value / (double)Math.Pow(1024, 3);
-                return new OneDriveFreeSpaceData
-                {
-                    FreeSpace = freeSpace,
-                    TotalSpace = totalSpace
-                };
-
+                var resp = await _userClient.Drives.WithUrl("https://graph.microsoft.com/v1.0/me/drive/special/approot").GetAsync();
+                return resp.AdditionalData["id"].ToString().Split("!").First();
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error getting free space: {ex}", ex, _telemetryManager);
-                return null;
+                _logger.LogError("Failed getting Drive Id", ex);
+                throw;
             }
         }
 
@@ -261,15 +324,15 @@ namespace hassio_onedrive_backup.Graph
         {
             var drive = await _userClient.Me.Drive.GetAsync();
 
-            var driveItem = await _userClient.Me.Drive.GetAsync();
-            var appFolder = await _userClient.Drives[driveItem.Id].Special["approot"].GetAsync();
-            var item = await _userClient.Drives[driveItem?.Id]
+            string driveId = await GetDriveIdFromAppFolder();
+            var appFolder = await _userClient.Drives[driveId].Special["approot"].GetAsync();
+            var item = await _userClient.Drives[driveId]
                 .Items[appFolder.Id]
                 .ItemWithPath(fileName)
                 .GetAsync();
 
             transferSpeedHelper.Start();
-            var itemStream = await _userClient.Drives[driveItem?.Id]
+            var itemStream = await _userClient.Drives[driveId]
                 .Items[appFolder.Id]
                 .ItemWithPath(fileName)
                 .Content
@@ -330,30 +393,40 @@ namespace hassio_onedrive_backup.Graph
             {
                 ClientId = _clientId,
                 DeviceCodeCallback = DeviceCodeBallBackPrompt,
-                TenantId = "common",
+                TenantId = "consumers",
                 AuthenticationRecord = authRecord,
                 TokenCachePersistenceOptions = new TokenCachePersistenceOptions
                 {
-                    Name = "hassio-onedrive-backup",
-                    UnsafeAllowUnencryptedStorage = true
-                },
+                    Name = "hassio-onedrive-auth",
+                    UnsafeAllowUnencryptedStorage = true                    
+                },                
             };
 
             _deviceCodeCredential = new DeviceCodeCredential(deviceCodeCredOptions);
             _userClient = new GraphServiceClient(_deviceCodeCredential, _scopes);
         }
 
-        private AuthenticationRecord GetAuthenticationRecordFromCredential()
+        private AuthenticationRecord GetAuthenticationRecordFromCredential(DeviceCodeCredential credential)
         {
+            if (credential == null)
+            {
+                return null;
+            }
+
             var record = typeof(DeviceCodeCredential)
                 .GetProperty("Record", System.Reflection.BindingFlags.NonPublic | BindingFlags.Instance)
-                .GetValue(_deviceCodeCredential) as AuthenticationRecord;
+                .GetValue(credential) as AuthenticationRecord;
 
             return record;
         }
 
         private async Task PersistAuthenticationRecordAsync(AuthenticationRecord record)
         {
+            if (record == null)
+            {
+                return;
+            }
+
             using var authRecordStream = new FileStream(PersistentAuthRecordFullPath, FileMode.Create, FileAccess.Write);
             await record.SerializeAsync(authRecordStream);
         }
@@ -362,13 +435,21 @@ namespace hassio_onedrive_backup.Graph
         {
             if (File.Exists(PersistentAuthRecordFullPath) == false)
             {
-                _logger.LogWarning("Token cache is empty");
+                _logger.LogVerbose("Auth Record not found on disk");
                 return null;
             }
 
-            using var authRecordStream = new FileStream(PersistentAuthRecordFullPath, FileMode.Open, FileAccess.Read);
-            var record = await AuthenticationRecord.DeserializeAsync(authRecordStream);
-            return record;
+            try
+            {
+                using var authRecordStream = new FileStream(PersistentAuthRecordFullPath, FileMode.Open, FileAccess.Read);
+                var record = await AuthenticationRecord.DeserializeAsync(authRecordStream);
+                return record;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error reading Auth Record", ex);
+                return null;
+            }
         }
 
         private Task DeviceCodeBallBackPrompt(DeviceCodeInfo info, CancellationToken ct)

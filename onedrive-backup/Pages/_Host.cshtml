@@ -9,6 +9,7 @@
 
 <!DOCTYPE html>
 <html lang="en" class="container-fluid p-0">
+
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -23,6 +24,7 @@
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <component type="typeof(HeadOutlet)" render-mode="ServerPrerendered" />
 </head>
+
 <body>
     <!--HtmlContentFilterTest-->
     <!-- Release Notes Modal -->
@@ -30,40 +32,41 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="rnotesModalLabel">Version 2.3.1 Notes</h5>
+                    <h5 class="modal-title" id="rnotesModalLabel">Version 2.3.5 Notes</h5>
                 </div>
                 <div class="modal-body">
-                    <p>Important! Upgrade to Version 2.3 included updates to authentication libraries which caused some connection resets with OneDrive. Please make sure that you have a working connection post upgrade. For troubleshooting please refer to <a href="https://github.com/lavinir/hassio-onedrive-backup/issues/174" target="_blank">this issue</a></p>
-                    <h6>🆕 Added</h6>
-                    <ul>
-                        <li>Added more persistent notifications for alerting on errors and improved overall behavior of persistant notifications</li>
-                    </ul>
+                    <h5>❗Important</h5>
+                    <p>The OneDrive Entra App was created as a Multi Tenant app (to enable future Business account
+                        support). Earlier this month due to a new MS policy, these apps required Verified Publishers
+                        (Microsoft Partners) otherwise it will not allow users to grant consent. I've updated the App to
+                        only allow Personal Accounts. This also required code changes. Please make sure authentication
+                        goes through properly after the update and if you have any issues with this please consolidate
+                        them around the <a href="https://github.com/lavinir/hassio-onedrive-backup/issues/247"
+                            target="_blank">opened Github issue</a></p>
+                    <h6>🎉 New Preview Channel</h6>
+                    <p><A> new Preview Channel is Available for the additional to try and test new versions and fixes. See details in the Readme's</A> <a href="https://github.com/lavinir/hassio-onedrive-backup?tab=readme-ov-file#installation-instructions"
+                            target="_blank">Installation Instructions</a></p>
                     <h6>🐞 Fixed</h6>
                     <ul>
-                        <li>Issue downloading a backup from OneDrive to HomeAssistant</li>
-                        <li>Minor UI fixes</li>
+                        <li>Authentication / Permissions issue</li>
+                        <li>Continous backup upload / delete loop in certain edge cases with Generational Backups
+                            enabled</li>
                     </ul>
-                    <h5>Version 2.3</h5>
-                    <p>Welcome to the 2.3 release. I thought it would be interesting to share some statistics from the users who opted in to the optional anonymous telemetry to show how many of you are enabling which features. You can see the results <a href="https://github.com/lavinir/hassio-onedrive-backup/discussions/170" target="_blank">here</a>. It would be great to get better visibility to this as currently I estimate about 2% have this enabled and while I get different requests around File Syncing, according to the existing telemetry only 6% of users actually have this enabled.</p>
-                    <h6>🆕 Added</h6>
+                    <h6>🗑️ Removed</h6>
                     <ul>
-                        <li>Added ability to retain backups indefinitely</li>
-                        <li>New details in overview page - Total backup sizes, next backup date</li>
-                        <li>Updated folder support for File Sync - /homeassistant, /addon_configs</li>
-                        <li>New optional Error reporting (opt in)</li>
-                        <li>Upgraded core libraries (Azure.Identity, Microsoft.Graph, Bootstrap)</li>
+                        <li>Free Space Sensor - Turns out getting the Available free space in OneDrive requires Read All
+                            permissions on the OneDrive account. I didn't notice this was happening with my account but
+                            this could prompt for additional consent when the App makes the API call. Unfortunately
+                            having The app run with these extended permissions is something I wasn't willing to do since
+                            the beginning and regretably I've removed this feature currently.</li>
                     </ul>
-                    <h6>🐞 Fixed</h6>
-                    <ul>
-                        <li>If not enough space is available in OneDrive, the addon will no longer attempt to upload the backup and fail repeatedly.</li>
-                        <li>Addons in partial backups were only refreshed on addon start (if another addon was installed after the addon has started it would not appear in a partial backup)</li>
-                    </ul>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
         </div>
+    </div>
     </div>
     <div id="alertPlaceholder"></div>
     <component type="typeof(App)" render-mode="ServerPrerendered" />
@@ -81,7 +84,7 @@
     <script src="lib/popper.js/umd/popper.min.js"></script>
     <script src="lib/bootstrap/js/bootstrap.min.js"></script>
     <script src="scripts/BlazorHelpers.js"></script>
-    <script src="_framework/blazor.server.js"></script>    
+    <script src="_framework/blazor.server.js"></script>
 </body>
-</html>
 
+</html>

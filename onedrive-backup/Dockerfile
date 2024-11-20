@@ -29,4 +29,3 @@ LABEL \
   io.hass.version="$VERSION" \
   io.hass.type="addon" \
   io.hass.arch="armhf|aarch64|amd64|armv7"
-
