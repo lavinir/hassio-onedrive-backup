@@ -1,3 +1,8 @@
+## v2.3.6 [November 24th 2024]
+### 🐞 Fixed
+* Backups File Upload Failures - I haven't been able to reproduce the Graph errors certain people aria-labelledby experiencing. I gave update on using the File description in OneDrive to store the backup metadata which I'm hoping is what's causing the issue and moved to storing this info locally instead.
+
+
 ## v2.3.5 [November 20th 2024]
 ### ❗Important
 The OneDrive Entra App was created as a Multi Tenant app (to enable future Business account support). Earlier this month due to a new MS policy, these apps required Verified Publishers (Microsoft Partners) otherwise it will not allow users to grant consent. I've updated the App to only allow Personal Accounts. This also required code changes. Please make sure authentication goes through properly after the update and if you have any issues with this please consolidate them around the [opened Github issue]("https://github.com/lavinir/hassio-onedrive-backup/issues/247)
