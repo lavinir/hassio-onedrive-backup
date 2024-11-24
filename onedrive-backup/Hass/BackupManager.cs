@@ -1,5 +1,6 @@
 using hassio_onedrive_backup.Contracts;
 using hassio_onedrive_backup.Graph;
+using hassio_onedrive_backup.Storage;
 using Kusto.Cloud.Platform.Utils;
 using Microsoft.Graph.Models;
 using Newtonsoft.Json;
@@ -11,6 +12,7 @@ using onedrive_backup.Hass;
 using onedrive_backup.Telemetry;
 using System.Collections;
 using System.Globalization;
+using static hassio_onedrive_backup.Contracts.HassAddonsResponse;
 using static hassio_onedrive_backup.Contracts.HassBackupsResponse;
 
 namespace hassio_onedrive_backup.Hass
@@ -162,6 +164,11 @@ namespace hassio_onedrive_backup.Hass
                             {
                                 await _hassIoClient.SendPersistentNotificationAsync("Failed deleting old backup from OneDrive. Check Addon logs for more details", PersistantNotificationIds.OneDriveDelete);
                             }
+                        }
+                        else
+                        {
+                            bool metadataDelted = LocalStorage.DeleteOneDriveBackup(backupToDelete);
+                            _logger.LogWarning($"Failed deleting backup metadata {backupToDelete.Slug}");
                         }
                     }
 
@@ -406,6 +413,30 @@ namespace hassio_onedrive_backup.Hass
                         await _hassIoClient.SendPersistentNotificationAsync("Failed uploading backup to onedrive. Check Addon logs for more details", PersistantNotificationIds.BackupUpload);
                     }
                 }
+                else
+                {
+                    bool savedLocally = await LocalStorage.AddOneDriveBackup(new OnedriveBackup(
+                        backup.Slug,
+                        destinationFileName,
+                        backup.Date,
+                        _addonOptions.InstanceName,
+                        backup.Type,
+                        backup.Protected,
+                        backup.Size,
+                        Enumerable.Empty<string>(),
+                        backup.Content?.Folders ?? Enumerable.Empty<string>()));
+
+                    if (savedLocally)
+                    {
+                        _logger.LogVerbose("Backup metadata saved locally");
+                    }
+                    else
+                    {
+                        _logger.LogError($"Error saving backup metadata locally {backup.Slug}");
+                    }
+                }
+
+
             }
             catch (Exception ex)
             {
@@ -547,7 +578,8 @@ namespace hassio_onedrive_backup.Hass
 
         public async Task<List<OnedriveBackup>> GetOnlineBackupsAsync(string? instanceName)
         {
-            var onlineBackups = (await _graphHelper.GetItemsInAppFolderAsync()).Select(CheckIfFileIsBackup).ToList();
+            var onlineBackupsTasks = (await _graphHelper.GetItemsInAppFolderAsync()).Select(CheckIfFileIsBackup).ToList();
+            var onlineBackups = (await Task.WhenAll(onlineBackupsTasks)).ToList();
             onlineBackups.RemoveAll(item => item == null);
             if (instanceName != "*")
             {
@@ -568,9 +600,9 @@ namespace hassio_onedrive_backup.Hass
             _backupAdditionalData.PruneAdditionalBackupData(existingSlugs);
         }
 
-        private OnedriveBackup? CheckIfFileIsBackup(DriveItem item)
+        private async Task<OnedriveBackup?> CheckIfFileIsBackup(DriveItem item)
         {
-            OnedriveBackup ret = null;
+            OnedriveBackup? ret = null;
             if (item.Folder != null && item.Name.Equals("FileSync"))
             {
                 return ret;
@@ -578,7 +610,12 @@ namespace hassio_onedrive_backup.Hass
 
             try
             {
-                ret = new OnedriveBackup(item.Name, JsonConvert.DeserializeObject<OnedriveItemDescription>(item.Description)!);
+                ret = await LocalStorage.GetOneDriveBackup(item.Name);
+                if (ret == null) 
+                {
+                    _logger.LogVerbose("Attempting to read legacy backup description");
+                    ret = new OnedriveBackup(item.Name, JsonConvert.DeserializeObject<OnedriveItemDescription>(item.Description)!);
+                }
             }
             catch (Exception ex)
             {
