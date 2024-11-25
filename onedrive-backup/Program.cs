@@ -51,7 +51,7 @@ namespace hassio_onedrive_backup
 				logger.SetDateTimeProvider(dateTimeProvider);
 				var builder = WebApplication.CreateBuilder(args);
 				builder.Services.AddSingleton<IDateTimeProvider>(dateTimeProvider);
-				LocalStorage.InitializeTempStorage(logger);
+				LocalStorage.InitializeStorage(logger);
 				var addons = await hassIoClient.GetAddonsAsync(); 
 				logger.LogVerbose($"Detected Addons: {string.Join(",", addons.Select(addon => addon.Slug))}");
 				HassContext hassContext = null;
