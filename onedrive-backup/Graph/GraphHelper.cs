@@ -15,6 +15,7 @@ using File = System.IO.File;
 using DriveUpload = Microsoft.Graph.Drives.Item.Items.Item.CreateUploadSession;
 using onedrive_backup.Telemetry;
 using Azure.Core.Diagnostics;
+using System.Text.Unicode;
 
 namespace hassio_onedrive_backup.Graph
 {
@@ -174,6 +175,24 @@ namespace hassio_onedrive_backup.Graph
             return true;
         }
 
+        private async Task<bool> UploadMetadataFileAsync(string backupFilePath, string content, string driveId, string appFolderId)
+        {
+            try
+            {
+                string filePath = Path.ChangeExtension(backupFilePath, ".aux"); 
+                using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(content)))
+                {
+                    await _userClient.Drives[driveId].Items[appFolderId].ItemWithPath(filePath).Content.PutAsync(stream);
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Exception uploading metadata", ex);
+                return false;
+            }           
+        }
+
         public async Task<bool> UploadFileAsync(string filePath, DateTime date, string? instanceName, TransferSpeedHelper transferSpeedHelper, string? destinationFileName = null, Action<int, int>? progressCallback = null, bool flatten = true, string description = null)
         {
             if (File.Exists(filePath) == false)
@@ -192,13 +211,7 @@ namespace hassio_onedrive_backup.Graph
                 .Items[appFolder.Id]
                 .ItemWithPath(sanitizedDestinationFileName)
                 .CreateUploadSession
-                .ToPostRequestInformation(new DriveUpload.CreateUploadSessionPostRequestBody()
-                {
-                    Item = new DriveItemUploadableProperties
-                    {
-                        Description = description
-                    }
-                });
+                .ToPostRequestInformation(new DriveUpload.CreateUploadSessionPostRequestBody());
 
             using (var reader = new StreamReader(uploadSessionRequest.Content))
             {
@@ -206,17 +219,21 @@ namespace hassio_onedrive_backup.Graph
                 _logger.LogVerbose($"UploadSession Request: {uploadSessionRequest.URI}. Body: {requestBody}");
             }
 
+            //if (string.IsNullOrEmpty(description) == false)
+            //{
+            //    _logger.LogVerbose($"Uploading backup metadata");
+            //    if ((await UploadMetadataFileAsync(sanitizedDestinationFileName, description, driveId, appFolder.Id) == false))
+            //    {
+            //        _logger.LogError("Backup metadata file upload failed. Aborting.");
+            //        return false;
+            //    }
+            //}
+
             var uploadSession = await _userClient.Drives[driveId]
                 .Items[appFolder.Id]
                 .ItemWithPath(sanitizedDestinationFileName)
                 .CreateUploadSession
-                .PostAsync(new DriveUpload.CreateUploadSessionPostRequestBody()
-                {
-                    Item = new DriveItemUploadableProperties
-                    {
-                        Description = description
-                    }
-                });
+                .PostAsync(new DriveUpload.CreateUploadSessionPostRequestBody());
 
             // todo: allow settings this in advanced configuration
             int maxSliceSize = ChunkSize;

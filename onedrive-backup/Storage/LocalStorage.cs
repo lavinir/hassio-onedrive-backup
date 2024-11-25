@@ -1,4 +1,5 @@
-﻿using onedrive_backup.Contracts;
+﻿using hassio_onedrive_backup.Contracts;
+using onedrive_backup.Contracts;
 using System.Text.Json;
 
 namespace hassio_onedrive_backup.Storage
@@ -7,16 +8,19 @@ namespace hassio_onedrive_backup.Storage
     {
         public const string TempFolder = "../tmp";
         private const string oldTempFolder = "./tmp";
+        private const string onlineBackupsDataFolder = "onlineBackupsData";
 
 #if DEBUG
-        private const string configFilePath = "./additionalBackupData.json";
+        private const string configFolder = "./";
+        private static string configFilePath = Path.Combine(configFolder, "additionalBackupData.json");
 #else
-        private const string configFilePath = "/config/additionalBackupData.json";
+        private const string configFolder = "/config/";
+        private static string configFilePath = Path.Combine(configFolder, "additionalBackupData.json");
 #endif
 
         private static HashSet<Flag> setFlags = new();
 
-        public static void InitializeTempStorage(ConsoleLogger logger)
+        public static void InitializeStorage(ConsoleLogger logger)
         {
             // Legacy cleanup
             if (Directory.Exists(oldTempFolder))
@@ -34,6 +38,12 @@ namespace hassio_onedrive_backup.Storage
                 }
 
                 Directory.Delete(TempFolder, true); 
+            }
+
+            string onlineBackupsMetadataFolder = Path.Combine(configFolder, "onlineBackupsData/");
+            if (Directory.Exists(onlineBackupsMetadataFolder) == false)
+            {
+                Directory.CreateDirectory(onlineBackupsMetadataFolder);
             }
 
             // (Re)Create temporary directory
@@ -70,6 +80,50 @@ namespace hassio_onedrive_backup.Storage
             }
         }
 
+        public async static Task<OnedriveBackup?> GetOneDriveBackup(string fileName)
+        {
+            string filePath = Path.Combine(configFolder, onlineBackupsDataFolder, ConvertBackFileNameToMetadataFileName(fileName));
+            try
+            {
+                string serializedData = await File.ReadAllTextAsync(filePath);
+                OnedriveBackup onedriveBackup = JsonSerializer.Deserialize<OnedriveBackup>(serializedData);
+                return onedriveBackup;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        public async static Task<bool> AddOneDriveBackup(OnedriveBackup onedriveBackup)
+        {
+            string filePath = Path.Combine(configFolder, onlineBackupsDataFolder, ConvertBackFileNameToMetadataFileName(onedriveBackup.FileName));
+            try
+            {
+                string serializedData = JsonSerializer.Serialize<OnedriveBackup>(onedriveBackup);
+                await File.WriteAllTextAsync(filePath, serializedData);
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        public static bool DeleteOneDriveBackup(OnedriveBackup onedriveBackup)
+        {
+            string filePath = Path.Combine(configFolder, onlineBackupsDataFolder, ConvertBackFileNameToMetadataFileName(onedriveBackup.FileName));
+            try
+            {
+                File.Delete(filePath);
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
         public static bool CheckAndMarkFlag(Flag flag)
         {
             string fileName = $"./.{flag}";
@@ -85,7 +139,12 @@ namespace hassio_onedrive_backup.Storage
 
         public enum Flag
         {
-            ReleaseNotes_2_3_5,
+            ReleaseNotes_2_3_6,
+        }
+
+        private static string ConvertBackFileNameToMetadataFileName(string fileName)
+        {
+            return Path.ChangeExtension(fileName, ".aux");
         }
     }
 }
