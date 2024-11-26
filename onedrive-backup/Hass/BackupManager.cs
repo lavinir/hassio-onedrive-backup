@@ -12,7 +12,6 @@ using onedrive_backup.Hass;
 using onedrive_backup.Telemetry;
 using System.Collections;
 using System.Globalization;
-using static hassio_onedrive_backup.Contracts.HassAddonsResponse;
 using static hassio_onedrive_backup.Contracts.HassBackupsResponse;
 
 namespace hassio_onedrive_backup.Hass
