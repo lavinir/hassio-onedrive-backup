@@ -1,6 +1,10 @@
+## v2.3.7 [December 8th 2024] (Preview Channel)
+### 🆕 Added  
+* Additional debugging logs
+
 ## v2.3.6 [November 24th 2024]
 ### 🐞 Fixed
-* Backups File Upload Failures - I haven't been able to reproduce the Graph errors certain people aria-labelledby experiencing. I gave update on using the File description in OneDrive to store the backup metadata which I'm hoping is what's causing the issue and moved to storing this info locally instead.
+* Backups File Upload Failures - Removed dependency on OneDrive File descriptions that seem to have been causing many Upload failures for some users. The metadata for the OneDrive Backups will now be stored locally instead
 
 
 ## v2.3.5 [November 20th 2024]
