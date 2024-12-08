@@ -106,14 +106,17 @@ namespace hassio_onedrive_backup.Hass
                 var uploadCandidates = GetBackupsToUploadBasedOnRetentionPolicy(onlineBackupCandiates, onlineBackups);
 
                 // Get Online Backups Candidates that have not yet been uploaded
+                _logger.LogVerbose($"Online Backup Slugs: {string.Join(",", onlineBackups.Select(bckup => bckup.Slug))}");
                 var backupsToUpload = new List<Backup>();
                 foreach (var backupId in uploadCandidates)
                 {
                     if (onlineBackups.Any(ob => ob.Slug == backupId))
                     {
+                        _logger.LogVerbose($"Skpping Upload Candidate: {backupId}. (Already exists)");
                         continue;
                     }
 
+                    _logger.LogVerbose($"Adding Upload Candidate: {backupId}.");
                     backupsToUpload.Add(onlineBackupCandiates.Single(bc => bc.Slug == backupId));
                 }
 
@@ -404,6 +407,7 @@ namespace hassio_onedrive_backup.Hass
 					},
                     description: SerializeBackupDescription(tempBackupFilePath, backup)
                    );
+
                 if (uploadSuccessful == false)
                 {
                     await _hassIoClient.PublishEventAsync(Events.OneDriveEvents.BackupUploadFailed);

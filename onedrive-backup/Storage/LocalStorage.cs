@@ -82,9 +82,9 @@ namespace hassio_onedrive_backup.Storage
 
         public async static Task<OnedriveBackup?> GetOneDriveBackup(string fileName)
         {
-            string filePath = Path.Combine(configFolder, onlineBackupsDataFolder, ConvertBackFileNameToMetadataFileName(fileName));
             try
             {
+                string filePath = Path.Combine(configFolder, onlineBackupsDataFolder, ConvertBackFileNameToMetadataFileName(fileName));
                 string serializedData = await File.ReadAllTextAsync(filePath);
                 OnedriveBackup onedriveBackup = JsonSerializer.Deserialize<OnedriveBackup>(serializedData);
                 return onedriveBackup;
@@ -139,7 +139,7 @@ namespace hassio_onedrive_backup.Storage
 
         public enum Flag
         {
-            ReleaseNotes_2_3_6,
+            ReleaseNotes_2_3_7,
         }
 
         private static string ConvertBackFileNameToMetadataFileName(string fileName)
