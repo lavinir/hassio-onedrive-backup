@@ -128,11 +128,11 @@ namespace hassio_onedrive_backup.Graph
 
                 if (subPath == "/")
                 {
-                    item = await _userClient.Drives[driveId].Items[appFolder.Id].GetAsync(config => config.QueryParameters.Expand = new string[] { "children" });
+                    item = await _userClient.Drives[driveId].Items[appFolder.Id].GetAsync();
                 }
                 else
                 {
-                    item = await _userClient.Drives[driveId].Items[appFolder.Id].ItemWithPath(subPath).GetAsync(config => config.QueryParameters.Expand = new string[] { "children" });
+                    item = await _userClient.Drives[driveId].Items[appFolder.Id].ItemWithPath(subPath).GetAsync();
                 }
 
                 return item;
@@ -147,14 +147,59 @@ namespace hassio_onedrive_backup.Graph
                 _logger.LogError($"{oe.Error.Code}: {oe.Error.Message}", oe, _telemetryManager);
                 return null;
             }
-
-
         }
 
         public async Task<List<DriveItem>?> GetItemsInAppFolderAsync(string subPath = "/")
         {
-            var parent = await GetItemInAppFolderAsync(subPath);
-            return parent?.Children?.ToList();
+            int pageSize = 100;
+            var items = new List<DriveItem>();
+
+            try
+            {
+                string driveId = await GetDriveIdFromAppFolder();
+                IsAuthenticated = true;
+                var appFolder = await _userClient.Drives[driveId].Special["approot"].GetAsync();
+                DriveItemCollectionResponse childrenPage;
+                _logger.LogVerbose($"Fetching OneDrive files in AppFolder{subPath}");
+                if (subPath == "/")
+                {
+                    childrenPage = await _userClient.Drives[driveId].Items[appFolder.Id]
+                        .Children
+                        .GetAsync(config => config.QueryParameters.Top = pageSize); 
+                }
+                else
+                {
+                    childrenPage = await _userClient.Drives[driveId].Items[appFolder.Id]
+                        .ItemWithPath(subPath)
+                        .Children
+                        .GetAsync(config => config.QueryParameters.Top = pageSize); 
+                }
+
+                // Process the first page of items
+                items.AddRange(childrenPage.Value);
+                _logger.LogVerbose($"Fetched {items.Count} out of {childrenPage.OdataCount} items in folder");
+
+                // Handle pagination
+                while (childrenPage.OdataNextLink != null)
+                {
+                    childrenPage = await _userClient.Drives[driveId].Items[appFolder.Id]
+                        .Children
+                        .WithUrl(childrenPage.OdataNextLink)
+                        .GetAsync();
+                    items.AddRange(childrenPage.Value);
+                    _logger.LogVerbose($"Fetched {items.Count} out of {childrenPage.OdataCount} items in folder");
+                }
+            }
+            catch (ODataError oe) when (oe.Error?.Code == "itemNotFound")
+            {
+                _logger.LogInfo($"Item {subPath} not found");
+            }
+            catch (ODataError oe)
+            {
+                _logger.LogError($"{oe.Error.Code}: {oe.Error.Message}", oe, _telemetryManager);
+            }
+
+            return items;
         }
 
         public async Task<bool> DeleteItemFromAppFolderAsync(string itemPath)
