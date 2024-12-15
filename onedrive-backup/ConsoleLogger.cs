@@ -19,8 +19,14 @@ namespace hassio_onedrive_backup
         }
 
         public void LogError(string msg, Exception ex = null, TelemetryManager telemetryManager = null)
-        {            
-            WriteLog(LogLevel.Error, msg);
+        {
+            string formattedMsg = msg;
+            if (ex != null)
+            {
+                formattedMsg += ". " + ex.ToString();
+            }
+
+            WriteLog(LogLevel.Error, formattedMsg);
             telemetryManager?.SendError(msg, ex);
         }
 
