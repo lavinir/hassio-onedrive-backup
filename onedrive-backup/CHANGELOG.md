@@ -1,3 +1,7 @@
+## v2.3.7 [December 8th 2024] (Preview Channel)
+### 🆕 Added  
+* Additional debugging logs
+
 ## v2.3.6 [November 24th 2024]
 ### 🐞 Fixed
 * Backups File Upload Failures - Removed dependency on OneDrive File descriptions that seem to have been causing many Upload failures for some users. The metadata for the OneDrive Backups will now be stored locally instead
