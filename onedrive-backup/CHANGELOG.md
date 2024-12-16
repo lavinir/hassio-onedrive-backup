@@ -1,3 +1,14 @@
+<<<<<<< HEAD
+=======
+## v2.3.8 [December 15th 2024] (Preview Channel)
+### 🐞 Fixed
+* Updated backup file naming in OneDrive to include the backup slug to avoid potential duplicates with upgrade backups
+* Fixed issue when only the first 200 backups are fetched from OneDrive and the rest are ignored, also causing repeated uploads.
+
+### 🆕 Added  
+* Additional debugging logs
+
+>>>>>>> dev
 ## v2.3.7 [December 8th 2024] (Preview Channel)
 ### 🆕 Added  
 * Additional debugging logs

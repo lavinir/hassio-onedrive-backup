@@ -1,4 +1,5 @@
 ﻿using hassio_onedrive_backup.Contracts;
+using Microsoft.Extensions.Logging;
 using onedrive_backup.Contracts;
 using System.Text.Json;
 
@@ -80,17 +81,27 @@ namespace hassio_onedrive_backup.Storage
             }
         }
 
-        public async static Task<OnedriveBackup?> GetOneDriveBackup(string fileName)
+        public async static Task<OnedriveBackup?> GetOneDriveBackup(string fileName, ConsoleLogger logger)
         {
             try
             {
+<<<<<<< HEAD
+=======
+                logger.LogVerbose($"Checking metadata for backup file: {fileName}");
+>>>>>>> dev
                 string filePath = Path.Combine(configFolder, onlineBackupsDataFolder, ConvertBackFileNameToMetadataFileName(fileName));
                 string serializedData = await File.ReadAllTextAsync(filePath);
                 OnedriveBackup onedriveBackup = JsonSerializer.Deserialize<OnedriveBackup>(serializedData);
                 return onedriveBackup;
             }
-            catch (Exception)
+            catch (FileNotFoundException)
             {
+                logger.LogVerbose($"Metadata file for {fileName} not found");
+                return null;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"Error loading metadata for file: {fileName}", ex);
                 return null;
             }
         }
@@ -139,7 +150,11 @@ namespace hassio_onedrive_backup.Storage
 
         public enum Flag
         {
+<<<<<<< HEAD
             ReleaseNotes_2_3_7,
+=======
+            ReleaseNotes_2_3_8,
+>>>>>>> dev
         }
 
         private static string ConvertBackFileNameToMetadataFileName(string fileName)

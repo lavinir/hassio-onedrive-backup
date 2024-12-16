@@ -391,7 +391,7 @@ namespace hassio_onedrive_backup.Hass
 
                 _logger.LogInfo($"Uploading {backup.Name} ({backup.Date})");
                 string? instanceSuffix = _addonOptions.InstanceName == null ? null : $".{_addonOptions.InstanceName.Substring(0, Math.Min(InstanceNameMaxLength, _addonOptions.InstanceName.Length))}";
-                string destinationFileName = $"{backup.Name}{instanceSuffix}.tar";
+                string destinationFileName = $"{backup.Name}_{backup.Slug}{instanceSuffix}.tar";
                 tempBackupFilePath = await _hassIoClient.DownloadBackupAsync(backup.Slug);
                 var uploadSuccessful = await _graphHelper.UploadFileAsync(tempBackupFilePath, backup.Date, _addonOptions.InstanceName, new TransferSpeedHelper(null), destinationFileName,
                     async (prog, speed) =>
@@ -613,7 +613,8 @@ namespace hassio_onedrive_backup.Hass
 
             try
             {
-                ret = await LocalStorage.GetOneDriveBackup(item.Name);
+                _logger.LogVerbose($"Checking if file {item.Name} is known backup");
+                ret = await LocalStorage.GetOneDriveBackup(item.Name, _logger);
                 if (ret == null) 
                 {
                     _logger.LogVerbose("Attempting to read legacy backup description");
