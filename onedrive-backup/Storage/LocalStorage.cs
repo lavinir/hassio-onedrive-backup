@@ -85,10 +85,7 @@ namespace hassio_onedrive_backup.Storage
         {
             try
             {
-<<<<<<< HEAD
-=======
                 logger.LogVerbose($"Checking metadata for backup file: {fileName}");
->>>>>>> dev
                 string filePath = Path.Combine(configFolder, onlineBackupsDataFolder, ConvertBackFileNameToMetadataFileName(fileName));
                 string serializedData = await File.ReadAllTextAsync(filePath);
                 OnedriveBackup onedriveBackup = JsonSerializer.Deserialize<OnedriveBackup>(serializedData);
@@ -150,11 +147,7 @@ namespace hassio_onedrive_backup.Storage
 
         public enum Flag
         {
-<<<<<<< HEAD
-            ReleaseNotes_2_3_7,
-=======
             ReleaseNotes_2_3_8,
->>>>>>> dev
         }
 
         private static string ConvertBackFileNameToMetadataFileName(string fileName)
