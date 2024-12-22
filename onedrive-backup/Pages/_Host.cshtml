@@ -32,23 +32,19 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="rnotesModalLabel">Version 2.3.6 Notes</h5>
+                    <h5 class="modal-title" id="rnotesModalLabel">Version 2.3.8 Notes</h5>
                 </div>
                 <div class="modal-body">
-                    <h5>❗Important Notes from 2.3.5</h5>
-                    <p>The OneDrive Entra App was created as a Multi Tenant app (to enable future Business account
-                        support). Earlier this month due to a new MS policy, these apps required Verified Publishers
-                        (Microsoft Partners) otherwise it will not allow users to grant consent. I've updated the App to
-                        only allow Personal Accounts. This also required code changes. Please make sure authentication
-                        goes through properly after the update and if you have any issues with this please consolidate
-                        them around the <a href="https://github.com/lavinir/hassio-onedrive-backup/issues/247"
-                            target="_blank">opened Github issue</a></p>
                     <h6>🎉 New Preview Channel</h6>
-                    <p><A> new Preview Channel is Available for the additional to try and test new versions and fixes. See details in the Readme's</A> <a href="https://github.com/lavinir/hassio-onedrive-backup?tab=readme-ov-file#installation-instructions"
+                    <p><A>A new Preview Channel is available to try and test new versions and fixes. See details in the Readme's'</A> <a href="https://github.com/lavinir/hassio-onedrive-backup?tab=readme-ov-file#installation-instructions"
                             target="_blank">Installation Instructions</a></p>
                     <h6>🐞 Fixed</h6>
+                        <li>Updated backup file naming in OneDrive to include the backup slug to avoid potential duplicates with upgrade backups</li>>
+                        <li>Fixed issue when only the first 200 backups are fetched from OneDrive and the rest are ignored, also causing repeated uploads.</li>>
+                    <h6>🆕 Added</h6>
                     <ul>
-                        <li>Backups File Upload Failures - Removed dependency on OneDrive File descriptions that seem to have been causing many Upload failures for some users. The metadata for the OneDrive Backups will now be stored locally instead</li>
+                        <li>Additional debugging logs</li>
+                        <li>Updated backup file naming in OneDrive to include the backup slug to avoid potential duplicates with upgrade backups</li>
                     </ul>
                 </div>
             </div>

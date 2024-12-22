@@ -106,14 +106,17 @@ namespace hassio_onedrive_backup.Hass
                 var uploadCandidates = GetBackupsToUploadBasedOnRetentionPolicy(onlineBackupCandiates, onlineBackups);
 
                 // Get Online Backups Candidates that have not yet been uploaded
+                _logger.LogVerbose($"Online Backup Slugs: {string.Join(",", onlineBackups.Select(bckup => bckup.Slug))}");
                 var backupsToUpload = new List<Backup>();
                 foreach (var backupId in uploadCandidates)
                 {
                     if (onlineBackups.Any(ob => ob.Slug == backupId))
                     {
+                        _logger.LogVerbose($"Skpping Upload Candidate: {backupId}. (Already exists)");
                         continue;
                     }
 
+                    _logger.LogVerbose($"Adding Upload Candidate: {backupId}.");
                     backupsToUpload.Add(onlineBackupCandiates.Single(bc => bc.Slug == backupId));
                 }
 
@@ -388,7 +391,7 @@ namespace hassio_onedrive_backup.Hass
 
                 _logger.LogInfo($"Uploading {backup.Name} ({backup.Date})");
                 string? instanceSuffix = _addonOptions.InstanceName == null ? null : $".{_addonOptions.InstanceName.Substring(0, Math.Min(InstanceNameMaxLength, _addonOptions.InstanceName.Length))}";
-                string destinationFileName = $"{backup.Name}{instanceSuffix}.tar";
+                string destinationFileName = $"{backup.Name}_{backup.Slug}{instanceSuffix}.tar";
                 tempBackupFilePath = await _hassIoClient.DownloadBackupAsync(backup.Slug);
                 var uploadSuccessful = await _graphHelper.UploadFileAsync(tempBackupFilePath, backup.Date, _addonOptions.InstanceName, new TransferSpeedHelper(null), destinationFileName,
                     async (prog, speed) =>
@@ -404,6 +407,7 @@ namespace hassio_onedrive_backup.Hass
 					},
                     description: SerializeBackupDescription(tempBackupFilePath, backup)
                    );
+
                 if (uploadSuccessful == false)
                 {
                     await _hassIoClient.PublishEventAsync(Events.OneDriveEvents.BackupUploadFailed);
@@ -609,7 +613,8 @@ namespace hassio_onedrive_backup.Hass
 
             try
             {
-                ret = await LocalStorage.GetOneDriveBackup(item.Name);
+                _logger.LogVerbose($"Checking if file {item.Name} is known backup");
+                ret = await LocalStorage.GetOneDriveBackup(item.Name, _logger);
                 if (ret == null) 
                 {
                     _logger.LogVerbose("Attempting to read legacy backup description");
