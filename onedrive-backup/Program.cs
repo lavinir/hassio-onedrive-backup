@@ -70,7 +70,7 @@ namespace hassio_onedrive_backup
 				builder.Services.AddSingleton<IHassioClient>(hassIoClient);
 				builder.Services.AddSingleton(backupAdditionalData);
 
-				IGraphHelper graphHelper = new GraphHelper(scopes,clientId, dateTimeProvider, logger, telemetryManager);
+				IGraphHelper graphHelper = new GraphHelper(scopes, clientId, dateTimeProvider, logger, telemetryManager);
 				builder.Services.AddSingleton<IGraphHelper>(graphHelper);
 				builder.Services.AddSingleton<HassOnedriveEntityState>();
 				builder.Services.AddSingleton<HassOnedriveFileSyncEntityState>();

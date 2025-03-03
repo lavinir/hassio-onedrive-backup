@@ -623,7 +623,7 @@ namespace hassio_onedrive_backup.Hass
             }
             catch (Exception ex)
             {
-                _logger.LogWarning($"Unrecognized file found in backup folder : {item.Name}");
+                _logger.LogVerbose($"Unrecognized file found in backup folder : {item.Name}");
                 if (string.IsNullOrEmpty(item.Description) == false)
                 {
                     _logger.LogVerbose($"{item.Name} Description: {item.Description}");
