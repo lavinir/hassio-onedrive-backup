@@ -1,15 +1,23 @@
-export interface IBackup {
-  id: number;
+import { ReactElement } from 'react';
+
+export type BackupStatus = 'In Progress' | 'Local' | 'OneDrive' | 'Synced';
+export type SourceType = 'Automated' | 'Manual';
+export type BackupType = 'Partial' | 'Full';
+
+export interface Backup {
+  slug: string;
   name: string;
   date: string;
   size: string;
-  status: 'In Progress' | 'Local' | 'OneDrive' | 'Synced';
-  type: 'Automated' | 'Manual';
-  path: string;
+  status: BackupStatus;
+  source_type: SourceType;
+  backup_type: BackupType;
+  path?: string;
+  retained?: boolean;
 }
 
 export interface IStatusInfo {
-  icon: JSX.Element;
+  icon: ReactElement;
   color: string;
   tooltip: string;
 }

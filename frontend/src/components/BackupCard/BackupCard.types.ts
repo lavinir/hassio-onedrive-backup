@@ -1,5 +1,5 @@
-import { IBackup } from '../../types/backup.types';
+import { Backup } from '../../types/backup.types';
 
 export interface IBackupCardProps {
-  backup: IBackup;
+  backup: Backup;
 }

@@ -15,7 +15,6 @@ import {
 
 const BackupCard: FC<IBackupCardProps> = ({ backup }) => {
   const statusInfo = getStatusInfo(backup.status);
-  const StatusIcon = statusInfo.icon;
 
   return (
     <StyledCard>
@@ -30,7 +29,7 @@ const BackupCard: FC<IBackupCardProps> = ({ backup }) => {
         </CardHeader>
         <StatusContainer title={statusInfo.tooltip}>
           <StatusAvatar sx={{ bgcolor: statusInfo.color }}>
-            <StatusIcon fontSize="small" />
+            {statusInfo.icon}
           </StatusAvatar>
           <Typography variant="body2" color="text.secondary">
             {backup.status}
@@ -46,9 +45,15 @@ const BackupCard: FC<IBackupCardProps> = ({ backup }) => {
             variant="outlined"
           />
           <Chip
-            label={backup.type}
+            label={backup.source_type}
             size="small"
-            color={backup.type === 'Automated' ? 'primary' : 'secondary'}
+            color={backup.source_type === 'Automated' ? 'primary' : 'secondary'}
+          />
+          <Chip
+            label={backup.backup_type}
+            size="small"
+            color="default"
+            variant="outlined"
           />
         </ChipsContainer>
       </CardContent>
