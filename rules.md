@@ -1,0 +1,32 @@
+In frontend, review your changes according to the guidelines below:
+- Use mobile first approach
+- Use styled of emotion using `import styled from '@emotion/styled';`
+- Use MUI for styling
+- Use Emotion for creating custom styles on MUI components
+- Don't use inline styles or sx prop for styling and instead use styled of Emotion
+- Use FC<IProps> for creating new components
+- Start each interface with I for example IComponentProps
+- When creating a new component, use the following file structure:
+  - Component/
+    - Component.tsx
+    - Component.style.ts
+    - Component.types.ts
+    - Component.utils.ts
+    - Component.constants.ts
+    - Component.hooks.ts
+    - Component.queries.ts
+    - Component.mutations.ts
+    - index.ts (To export the component)
+- Use react-query for data fetching
+- Use react-router-dom for routing
+- Use pages folder for new pages
+- Use components folder for new components
+- Use utils folder for new utils
+- Use types folder for new types
+- Use constants folder for new constants
+- Use hooks folder for new hooks
+- Use queries folder for new queries
+- Use mutations folder for new mutations
+- Use api folder for new api calls
+- Use axios to make api calls specifically, an instance.ts file
+- Ignore prettier errors of spaces or line breaks whatever it is
