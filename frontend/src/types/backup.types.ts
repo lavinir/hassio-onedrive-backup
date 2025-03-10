@@ -1,7 +1,7 @@
 import { ReactElement } from 'react';
 
 export type BackupStatus = 'In Progress' | 'Local' | 'OneDrive' | 'Synced';
-export type SourceType = 'Automated' | 'Manual';
+export type SourceType = 'Automated' | 'Manual' | 'External';
 export type BackupType = 'Partial' | 'Full';
 
 export interface Backup {
