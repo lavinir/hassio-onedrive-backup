@@ -1,10 +1,17 @@
 import { FC, useState } from 'react';
-import { CardContent, CardActions, Button, Typography, IconButton } from '@mui/material';
-import { MoreVert as MoreVertIcon } from '@mui/icons-material';
+import { CardContent, CardActions, Button, Typography, IconButton, Menu, MenuItem, ListItemIcon, ListItemText, Divider, Tooltip } from '@mui/material';
+import { 
+  MoreVert as MoreVertIcon,
+  PushPin as PinIcon,
+  PushPinOutlined as UnpinIcon,
+  Info as InfoIcon,
+  CloudOutlined as CloudIcon,
+  Storage as StorageIcon
+} from '@mui/icons-material';
 
 import { IBackupCardProps } from './BackupCard.types';
 import { getStatusInfo } from './BackupCard.utils';
-import { useDeleteBackup, useUploadBackup, useDownloadBackup } from '../../mutations/useBackupMutations';
+import { useDeleteBackup, useUploadBackup, useDownloadBackup, useUpdateBackupRetention } from '../../mutations/useBackupMutations';
 import { useTransferProgress } from '../../hooks/useTransferProgress';
 import ProgressIndicator from '../ProgressIndicator';
 import { 
@@ -14,7 +21,8 @@ import {
   StatusContainer,
   StatusAvatar,
   ChipsContainer,
-  StyledChip
+  StyledChip,
+  RetentionBadge
 } from './BackupCard.style';
 import { Box } from '@mui/material';
 
@@ -23,9 +31,14 @@ const BackupCard: FC<IBackupCardProps> = ({ backup }) => {
   const { mutate: deleteBackup } = useDeleteBackup();
   const { mutate: uploadBackup } = useUploadBackup();
   const { mutate: downloadBackup } = useDownloadBackup();
+  const { mutate: updateRetention } = useUpdateBackupRetention();
   const [action, setAction] = useState<'upload' | 'download' | null>(null);
   const [operationId, setOperationId] = useState<string | null>(null);
   const { progress, isComplete } = useTransferProgress(operationId);
+  
+  // Menu state
+  const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
+  const isMenuOpen = Boolean(menuAnchorEl);
 
   // Reset state when operation completes
   if (isComplete && operationId) {
@@ -67,16 +80,75 @@ const BackupCard: FC<IBackupCardProps> = ({ backup }) => {
     deleteBackup(backup.slug);
   };
 
+  // Menu handlers
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setMenuAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setMenuAnchorEl(null);
+  };
+
+  const handleRetainBackup = () => {
+    updateRetention({ slugId: backup.slug, retain: !backup.retained });
+    handleMenuClose();
+  };
+
+  const handleBackupDetails = () => {
+    // Future implementation for showing backup details
+    console.log(`Show details for backup: ${backup.slug}`);
+    handleMenuClose();
+  };
+
   return (
     <StyledCard>
       <CardContent>
         <CardHeader>
-          <CardTitle variant="h6">
-            {backup.name}
-          </CardTitle>
-          <IconButton size="small">
+          <Box display="flex" alignItems="center">
+            {backup.retained && (
+              <Tooltip title="This backup is retained and won't be automatically deleted">
+                <RetentionBadge>
+                  <PinIcon fontSize="small" />
+                </RetentionBadge>
+              </Tooltip>
+            )}
+            <CardTitle variant="h6">
+              {backup.name}
+            </CardTitle>
+          </Box>
+          <IconButton size="small" onClick={handleMenuOpen} aria-label="backup options">
             <MoreVertIcon />
           </IconButton>
+          <Menu
+            anchorEl={menuAnchorEl}
+            open={isMenuOpen}
+            onClose={handleMenuClose}
+            MenuListProps={{
+              'aria-labelledby': 'backup-options-button',
+            }}
+            anchorOrigin={{
+              vertical: 'bottom',
+              horizontal: 'right',
+            }}
+            transformOrigin={{
+              vertical: 'top',
+              horizontal: 'right',
+            }}
+          >
+            <MenuItem onClick={handleRetainBackup}>
+              <ListItemIcon>
+                {backup.retained ? <UnpinIcon fontSize="small" /> : <PinIcon fontSize="small" />}
+              </ListItemIcon>
+              <ListItemText primary={backup.retained ? 'Remove Retention' : 'Retain Backup'} />
+            </MenuItem>
+            <Divider />
+            <MenuItem onClick={handleBackupDetails}>
+              <ListItemIcon>
+                <InfoIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText primary="Backup Details" />
+            </MenuItem>
+          </Menu>
         </CardHeader>
         <StatusContainer>
           <Box display="flex" alignItems="center" sx={{ flexGrow: 1 }}>
@@ -120,6 +192,15 @@ const BackupCard: FC<IBackupCardProps> = ({ backup }) => {
             color="default"
             variant="outlined"
           />
+          {backup.retained && (
+            <StyledChip
+              label="Retained"
+              size="small"
+              color="success"
+              variant="outlined"
+              icon={<PinIcon fontSize="small" />}
+            />
+          )}
         </ChipsContainer>
         {operationId && action && (
           <Box mt={2}>
@@ -133,6 +214,7 @@ const BackupCard: FC<IBackupCardProps> = ({ backup }) => {
             size="small" 
             onClick={handleUpload}
             disabled={operationId !== null}
+            startIcon={<CloudIcon />}
           >
             Upload
           </Button>
@@ -142,6 +224,7 @@ const BackupCard: FC<IBackupCardProps> = ({ backup }) => {
             size="small" 
             onClick={handleDownload}
             disabled={operationId !== null}
+            startIcon={<StorageIcon />}
           >
             Download
           </Button>

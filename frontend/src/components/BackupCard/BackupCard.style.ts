@@ -1,5 +1,5 @@
 import styled from '@emotion/styled';
-import { Card, Box, Avatar, Typography, Chip } from '@mui/material';
+import { Card, Box, Avatar, Typography, Chip, Theme } from '@mui/material';
 
 export const StyledCard = styled(Card)`
   border-radius: 12px;
@@ -35,8 +35,8 @@ export const StatusAvatar = styled(Avatar)`
   width: 32px;
   height: 32px;
   margin-right: 12px;
-  background-color: ${({ theme }) => 
-    theme.palette.mode === 'dark' 
+  background-color: ${({ theme }: { theme: any }) => 
+    theme.palette?.mode === 'dark' 
       ? 'rgba(255, 255, 255, 0.05)' 
       : 'rgba(0, 0, 0, 0.05)'
   };
@@ -67,5 +67,18 @@ export const StyledChip = styled(Chip)`
 
   &.MuiChip-sizeSmall {
     height: 20px;
+  }
+`;
+
+export const RetentionBadge = styled(Box)`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 8px;
+  color: ${({ theme }: { theme: any }) => theme.palette?.success?.main || 'green'};
+  
+  & > svg {
+    width: 18px;
+    height: 18px;
   }
 `;
