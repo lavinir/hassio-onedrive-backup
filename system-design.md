@@ -30,6 +30,15 @@ Creates a new local backup
 #### Retention Update
 Allows 'pinning' a backup so that it doesn not get removed in the automated retention policy. This takes a backup id and a boolean whether to retain indefintely or not.
 
+#### Check Login Status
+Gets the current OneDrive connection status, returns `{ isLoggedIn: boolean }`
+
+#### Initiate OneDrive Authentication
+Initiates the OAuth flow with OneDrive, returns `{ authUrl: string }` which the frontend uses to redirect the user to OneDrive's login
+
+#### Disconnect OneDrive
+Removes the stored OneDrive credentials and disconnects the app from OneDrive
+
 ## Backup Properties
 slug: the backup id as a string
 name: the backup name

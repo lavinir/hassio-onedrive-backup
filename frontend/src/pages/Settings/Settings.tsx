@@ -8,7 +8,6 @@ import {
   Select,
   MenuItem,
   TextField,
-  Box,
   InputAdornment,
   IconButton,
   List,
@@ -16,6 +15,7 @@ import {
   ListItemText,
   ListItemSecondaryAction,
   CircularProgress,
+  Alert,
 } from '@mui/material';
 import {
   Backup as BackupIcon,
@@ -26,11 +26,13 @@ import {
   Delete as DeleteIcon,
   Visibility as VisibilityIcon,
   VisibilityOff as VisibilityOffIcon,
+  Cloud as CloudIcon,
 } from '@mui/icons-material';
 
 import { ISettingsProps } from './Settings.types';
 import { useSettings } from '../../queries/useSettings';
-import { useUpdateSettings } from '../../mutations/useSettingsMutations';
+import { useLoginStatus } from '../../queries/useLoginStatus';
+import { useUpdateSettings, useOneDriveAuth, useDisconnectOneDrive } from '../../mutations/useSettingsMutations';
 import {
   SettingsContainer,
   SettingsCard,
@@ -47,12 +49,16 @@ import {
   Divider,
   ButtonContainer,
   LoadingContainer,
+  ConnectButton,
 } from './Settings.style';
 import { ISettingsForm } from '../../types/settings.types';
 
 const Settings: FC<ISettingsProps> = () => {
-  const { data: settings, isLoading } = useSettings();
+  const { data: settings, isLoading: isSettingsLoading } = useSettings();
+  const { data: loginStatus, isLoading: isLoginLoading } = useLoginStatus();
   const updateSettings = useUpdateSettings();
+  const oneDriveAuth = useOneDriveAuth();
+  const disconnectOneDrive = useDisconnectOneDrive();
   
   const [showPassword, setShowPassword] = useState(false);
   const [newSyncPath, setNewSyncPath] = useState('');
@@ -171,7 +177,24 @@ const Settings: FC<ISettingsProps> = () => {
     }
   };
 
-  if (isLoading || !settings) {
+  const handleConnect = async () => {
+    try {
+      const { authUrl } = await oneDriveAuth.mutateAsync();
+      window.location.href = authUrl;
+    } catch (error) {
+      console.error('Failed to initiate OneDrive authentication:', error);
+    }
+  };
+
+  const handleDisconnect = async () => {
+    try {
+      await disconnectOneDrive.mutateAsync();
+    } catch (error) {
+      console.error('Failed to disconnect from OneDrive:', error);
+    }
+  };
+
+  if (isSettingsLoading || !settings) {
     return (
       <LoadingContainer>
         <CircularProgress />
@@ -183,17 +206,80 @@ const Settings: FC<ISettingsProps> = () => {
   }
 
   return (
-    <SettingsContainer>
+    <SettingsContainer theme={settings.theme}>
       <Typography variant="h4" component="h1" gutterBottom>
         Settings
       </Typography>
       
       <form onSubmit={handleSubmit}>
+        {/* OneDrive Connection Section */}
+        <SettingsCard>
+          <CardContent>
+            <SectionHeader theme={settings.theme}>
+              <SectionIcon theme={settings.theme}>
+                <CloudIcon />
+              </SectionIcon>
+              <div>
+                <Typography variant="h6">OneDrive Connection</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Manage your OneDrive account connection
+                </Typography>
+              </div>
+            </SectionHeader>
+
+            <FormSection>
+              <FieldRow theme={settings.theme}>
+                <FieldLabel theme={settings.theme}>
+                  <Typography>Connection Status</Typography>
+                  <FieldDescription theme={settings.theme}>
+                    Your OneDrive connection status and controls
+                  </FieldDescription>
+                </FieldLabel>
+                <FieldInput theme={settings.theme}>
+                  {isLoginLoading ? (
+                    <CircularProgress size={20} />
+                  ) : loginStatus?.isLoggedIn ? (
+                    <>
+                      <Alert severity="success">
+                        Connected to OneDrive
+                      </Alert>
+                      <ConnectButton
+                        variant="outlined"
+                        color="primary"
+                        onClick={handleDisconnect}
+                        disabled={disconnectOneDrive.isPending}
+                      >
+                        Disconnect from OneDrive
+                      </ConnectButton>
+                    </>
+                  ) : (
+                    <>
+                      <Alert severity="info">
+                        Not connected to OneDrive. Connect your account to enable backup synchronization.
+                      </Alert>
+                      <ConnectButton
+                        variant="contained"
+                        color="primary"
+                        onClick={handleConnect}
+                        disabled={oneDriveAuth.isPending}
+                      >
+                        Connect OneDrive Account
+                      </ConnectButton>
+                    </>
+                  )}
+                </FieldInput>
+              </FieldRow>
+            </FormSection>
+          </CardContent>
+        </SettingsCard>
+
+        <Divider />
+
         {/* General Settings */}
         <SettingsCard>
           <CardContent>
-            <SectionHeader>
-              <SectionIcon>
+            <SectionHeader theme={settings.theme}>
+              <SectionIcon theme={settings.theme}>
                 <GeneralIcon />
               </SectionIcon>
               <div>
@@ -308,8 +394,8 @@ const Settings: FC<ISettingsProps> = () => {
         {/* Backup Settings */}
         <SettingsCard>
           <CardContent>
-            <SectionHeader>
-              <SectionIcon>
+            <SectionHeader theme={settings.theme}>
+              <SectionIcon theme={settings.theme}>
                 <BackupIcon />
               </SectionIcon>
               <div>
@@ -630,8 +716,8 @@ const Settings: FC<ISettingsProps> = () => {
         {/* File Sync Settings */}
         <SettingsCard>
           <CardContent>
-            <SectionHeader>
-              <SectionIcon>
+            <SectionHeader theme={settings.theme}>
+              <SectionIcon theme={settings.theme}>
                 <FolderIcon />
               </SectionIcon>
               <div>

@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { updateSettings, testOneDriveConnection, resetOneDriveConnection } from '../api/settings';
+import { updateSettings, testOneDriveConnection, resetOneDriveConnection, initiateOneDriveAuth, disconnectOneDrive } from '../api/settings';
 import { ISettingsForm } from '../types/settings.types';
 
 export const useUpdateSettings = () => {
@@ -39,6 +39,28 @@ export const useResetConnection = () => {
     mutationFn: resetOneDriveConnection,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['settings'] });
+    },
+  });
+};
+
+export const useOneDriveAuth = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: initiateOneDriveAuth,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['loginStatus'] });
+    },
+  });
+};
+
+export const useDisconnectOneDrive = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: disconnectOneDrive,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['loginStatus'] });
     },
   });
 };

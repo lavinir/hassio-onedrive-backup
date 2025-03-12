@@ -25,6 +25,7 @@ import {
 import BackupCard from './components/BackupCard'
 import { useBackups } from './queries/useBackups'
 import Settings from './pages/Settings'
+import LoginIndicator from './components/LoginIndicator';
 
 function App() {
   const [refreshing, setRefreshing] = useState(false);
@@ -146,11 +147,12 @@ function App() {
             <Typography variant="h6" component="div" sx={{ flexGrow: 1, cursor: 'pointer' }} onClick={navigateToDashboard}>
               OneDrive Backup Dashboard
             </Typography>
+            <LoginIndicator />
             <IconButton
               color="inherit"
               onClick={toggleColorMode}
               title={mode === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
-              sx={{ mr: 1 }}
+              sx={{ ml: 2, mr: 1 }}
             >
               {mode === 'light' ? <DarkModeIcon /> : <LightModeIcon />}
             </IconButton>

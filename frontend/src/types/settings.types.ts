@@ -1,3 +1,4 @@
+import { Theme } from '@mui/material';
 import { ReactNode } from 'react';
 
 export interface IGeneralSettings {
@@ -46,6 +47,7 @@ export interface ISettingsForm {
   general: IGeneralSettings;
   backup: IBackupSettings;
   fileSync: IFileSyncSettings;
+  theme?: Theme;
 }
 
 export interface ISettingsSection {

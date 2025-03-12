@@ -1,5 +1,10 @@
 import styled from '@emotion/styled';
-import { Box, Card, Paper, Divider as MuiDivider, TextField, Switch, Theme } from '@mui/material';
+import { Box, Card, Paper, Divider as MuiDivider, TextField, Switch, Theme as MuiTheme, Button } from '@mui/material';
+
+// Type for styled components that need theme
+interface ThemeProps {
+  theme?: MuiTheme;
+}
 
 export const SettingsContainer = styled(Box)`
   display: flex;
@@ -23,8 +28,8 @@ export const SectionHeader = styled(Box)`
   align-items: center;
   gap: 16px;
   margin-bottom: 28px;
-  border-bottom: 1px solid ${({ theme }: { theme: Theme }) => 
-    theme.palette.mode === 'dark' 
+  border-bottom: 1px solid ${({ theme }: ThemeProps) => 
+    theme?.palette?.mode === 'dark' 
       ? 'rgba(255, 255, 255, 0.12)' 
       : 'rgba(0, 0, 0, 0.08)'
   };
@@ -38,12 +43,12 @@ export const SectionIcon = styled(Box)`
   width: 48px;
   height: 48px;
   border-radius: 10px;
-  background-color: ${({ theme }: { theme: Theme }) => 
-    theme.palette.mode === 'dark' 
+  background-color: ${({ theme }: ThemeProps) => 
+    theme?.palette?.mode === 'dark' 
       ? 'rgba(255, 255, 255, 0.08)' 
       : 'rgba(0, 0, 0, 0.04)'
   };
-  color: ${({ theme }: { theme: Theme }) => theme.palette.primary.main};
+  color: ${({ theme }: ThemeProps) => theme?.palette?.primary?.main};
 `;
 
 export const FormSection = styled(Box)`
@@ -57,8 +62,8 @@ export const FieldRow = styled(Box)`
   flex-direction: column;
   gap: 12px;
   padding: 12px 0;
-  border-bottom: 1px solid ${({ theme }: { theme: Theme }) => 
-    theme.palette.mode === 'dark' 
+  border-bottom: 1px solid ${({ theme }: ThemeProps) => 
+    theme?.palette?.mode === 'dark' 
       ? 'rgba(255, 255, 255, 0.05)' 
       : 'rgba(0, 0, 0, 0.03)'
   };
@@ -86,7 +91,7 @@ export const FieldLabel = styled(Box)`
 `;
 
 export const FieldDescription = styled(Box)`
-  color: ${({ theme }: { theme: Theme }) => theme.palette.text.secondary};
+  color: ${({ theme }: ThemeProps) => theme?.palette?.text?.secondary};
   font-size: 0.875rem;
   margin-top: 4px;
   max-width: 600px;
@@ -111,8 +116,8 @@ export const FieldInput = styled(Box)`
   
   .MuiList-root {
     padding: 0;
-    background-color: ${({ theme }: { theme: Theme }) => 
-      theme.palette.mode === 'dark' 
+    background-color: ${({ theme }: ThemeProps) => 
+      theme?.palette?.mode === 'dark' 
         ? 'rgba(255, 255, 255, 0.03)' 
         : 'rgba(0, 0, 0, 0.02)'
     };
@@ -122,8 +127,8 @@ export const FieldInput = styled(Box)`
   
   .MuiListItem-root {
     padding: 8px 16px;
-    border-bottom: 1px solid ${({ theme }: { theme: Theme }) => 
-      theme.palette.mode === 'dark' 
+    border-bottom: 1px solid ${({ theme }: ThemeProps) => 
+      theme?.palette?.mode === 'dark' 
         ? 'rgba(255, 255, 255, 0.05)' 
         : 'rgba(0, 0, 0, 0.03)'
     };
@@ -150,8 +155,8 @@ export const StyledTextField = styled(TextField)`
   width: 100%;
   
   .MuiOutlinedInput-root {
-    background-color: ${({ theme }: { theme: Theme }) => 
-      theme.palette.mode === 'dark' 
+    background-color: ${({ theme }: ThemeProps) => 
+      theme?.palette?.mode === 'dark' 
         ? 'rgba(255, 255, 255, 0.05)' 
         : 'rgba(0, 0, 0, 0.02)'
     };
@@ -161,11 +166,11 @@ export const StyledTextField = styled(TextField)`
 
 export const StyledSwitch = styled(Switch)`
   .MuiSwitch-switchBase.Mui-checked {
-    color: ${({ theme }: { theme: Theme }) => theme.palette.primary.main};
+    color: ${({ theme }: ThemeProps) => theme?.palette?.primary?.main};
   }
   
   .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track {
-    background-color: ${({ theme }: { theme: Theme }) => theme.palette.primary.main};
+    background-color: ${({ theme }: ThemeProps) => theme?.palette?.primary?.main};
   }
 `;
 
@@ -199,4 +204,23 @@ export const LoadingContainer = styled(Box)`
   justify-content: center;
   min-height: 400px;
   width: 100%;
+`;
+
+export const ConnectButton = styled(Button)`
+  margin-top: 16px;
+  min-width: 200px;
+`;
+
+export const ConnectionStatusBox = styled(Box)<ThemeProps>`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border-radius: 8px;
+  background-color: ${({ theme }) =>
+    theme?.palette?.mode === 'dark'
+      ? 'rgba(255, 255, 255, 0.05)'
+      : 'rgba(0, 0, 0, 0.03)'
+  };
+  margin-top: 16px;
 `;

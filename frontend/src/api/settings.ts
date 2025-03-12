@@ -19,3 +19,17 @@ export const testOneDriveConnection = async (): Promise<{ success: boolean; mess
 export const resetOneDriveConnection = async (): Promise<void> => {
   await instance.post('/settings/reset-connection');
 };
+
+export const checkLoginStatus = async (): Promise<{ isLoggedIn: boolean }> => {
+  const response = await instance.get('/settings/login-status');
+  return response.data;
+};
+
+export const initiateOneDriveAuth = async (): Promise<{ authUrl: string }> => {
+  const response = await instance.post('/settings/onedrive/auth');
+  return response.data;
+};
+
+export const disconnectOneDrive = async (): Promise<void> => {
+  await instance.post('/settings/onedrive/disconnect');
+};
