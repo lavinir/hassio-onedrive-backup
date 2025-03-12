@@ -52,6 +52,7 @@ import {
   ConnectButton,
 } from './Settings.style';
 import { ISettingsForm } from '../../types/settings.types';
+import DeviceCodeDialog from '../../components/DeviceCodeDialog';
 
 const Settings: FC<ISettingsProps> = () => {
   const { data: settings, isLoading: isSettingsLoading } = useSettings();
@@ -63,6 +64,7 @@ const Settings: FC<ISettingsProps> = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [newSyncPath, setNewSyncPath] = useState('');
   const [newExcludedAddon, setNewExcludedAddon] = useState('');
+  const [deviceCodeData, setDeviceCodeData] = useState<{ verificationUrl: string; userCode: string } | null>(null);
 
   type SettingsSectionKey = keyof ISettingsForm;
 
@@ -179,8 +181,8 @@ const Settings: FC<ISettingsProps> = () => {
 
   const handleConnect = async () => {
     try {
-      const { authUrl } = await oneDriveAuth.mutateAsync();
-      window.location.href = authUrl;
+      const { verificationUrl, userCode } = await oneDriveAuth.mutateAsync();
+      setDeviceCodeData({ verificationUrl, userCode });
     } catch (error) {
       console.error('Failed to initiate OneDrive authentication:', error);
     }
@@ -192,6 +194,10 @@ const Settings: FC<ISettingsProps> = () => {
     } catch (error) {
       console.error('Failed to disconnect from OneDrive:', error);
     }
+  };
+
+  const handleCloseDeviceCodeDialog = () => {
+    setDeviceCodeData(null);
   };
 
   if (isSettingsLoading || !settings) {
@@ -826,6 +832,13 @@ const Settings: FC<ISettingsProps> = () => {
           </Button>
         </ButtonContainer>
       </form>
+
+      <DeviceCodeDialog 
+        open={deviceCodeData !== null}
+        onClose={handleCloseDeviceCodeDialog}
+        verificationUrl={deviceCodeData?.verificationUrl ?? ''}
+        userCode={deviceCodeData?.userCode ?? ''}
+      />
     </SettingsContainer>
   );
 };

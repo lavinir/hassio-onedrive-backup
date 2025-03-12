@@ -27,12 +27,12 @@ export const uploadBackup = async (slugId: string): Promise<string> => {
   return response.data.operationId;
 };
 
-export const triggerBackup = async (isPartial: boolean): Promise<Backup> => {
-  const response = await instance.post('/backups/create', { isPartial });
+export const triggerBackup = async (): Promise<Backup> => {
+  const response = await instance.post('/backups/create');
   return response.data;
 };
 
 export const updateBackupRetention = async (slugId: string, retain: boolean): Promise<Backup> => {
-  const response = await instance.patch(`/backups/${slugId}/retention`, { retain });
+  const response = await instance.post(`/backups/${slugId}/retention`, { retain });
   return response.data;
 };

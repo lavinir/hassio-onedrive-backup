@@ -1,0 +1,12 @@
+{
+  "Version": 1,
+  "Hash": "pWUt5Z9ezmz3X8fC0TLf2iAJTUAljTMQV7mL9uHA68g=",
+  "Source": "HassioOneDriveBackup",
+  "BasePath": "_content/HassioOneDriveBackup",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}

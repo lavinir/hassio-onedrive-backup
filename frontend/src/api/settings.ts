@@ -25,7 +25,7 @@ export const checkLoginStatus = async (): Promise<{ isLoggedIn: boolean }> => {
   return response.data;
 };
 
-export const initiateOneDriveAuth = async (): Promise<{ authUrl: string }> => {
+export const initiateOneDriveAuth = async (): Promise<{ verificationUrl: string; userCode: string }> => {
   const response = await instance.post('/settings/onedrive/auth');
   return response.data;
 };
