@@ -4,13 +4,26 @@ import { ISettingsForm } from '../types/settings.types';
 
 export const useUpdateSettings = () => {
   const queryClient = useQueryClient();
+  const initialData = queryClient.getQueryData<ISettingsForm>(['settings']);
   
-  return useMutation({
-    mutationFn: (settings: ISettingsForm) => updateSettings(settings),
+  const mutation = useMutation({
+    mutationFn: (data: ISettingsForm) => updateSettings(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['settings'] });
     },
   });
+
+  return {
+    ...mutation,
+    data: mutation.data || initialData,
+    setData: (updater: (prev: ISettingsForm | undefined) => ISettingsForm | undefined) => {
+      const currentData = mutation.data || initialData;
+      const newData = updater(currentData);
+      if (newData) {
+        queryClient.setQueryData(['settings'], newData);
+      }
+    }
+  };
 };
 
 export const useTestConnection = () => {
