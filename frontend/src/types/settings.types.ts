@@ -55,3 +55,9 @@ export interface ISettingsSection {
   description?: string;
   icon: ReactNode;
 }
+
+export type OneDriveAuthState = 'NotLoggedIn' | 'LoggingIn' | 'LoggedIn';
+
+export interface ILoginStatus {
+    authState: OneDriveAuthState;
+}

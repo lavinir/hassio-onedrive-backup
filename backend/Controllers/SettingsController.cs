@@ -32,11 +32,10 @@ public class SettingsController : ControllerBase
 
     // OneDrive connection endpoints
     [HttpGet("login-status")]
-    public async Task<ActionResult<IDictionary<string, bool>>> CheckLoginStatus()
+    public async Task<ActionResult<IDictionary<string, string>>> CheckLoginStatus()
     {
-        // Only check if there's an existing valid token without initiating a new auth flow
-        var isLoggedIn = await _authService.IsLoggedInAsync();
-        return Ok(new Dictionary<string, bool> { { "isLoggedIn", isLoggedIn } });
+        var authState = await _authService.IsLoggedInAsync();
+        return Ok(new Dictionary<string, string> { { "authState", authState.ToString() } });
     }
 
     [HttpPost("onedrive/auth")]

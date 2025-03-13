@@ -244,7 +244,11 @@ const Settings: FC<ISettingsProps> = () => {
                 <FieldInput theme={settings.theme}>
                   {isLoginLoading ? (
                     <CircularProgress size={20} />
-                  ) : loginStatus?.isLoggedIn ? (
+                  ) : loginStatus?.authState === 'LoggingIn' ? (
+                    <Alert severity="info" icon={<CircularProgress size={20} />}>
+                      Waiting for OneDrive authorization... Please complete the process in the opened browser window.
+                    </Alert>
+                  ) : loginStatus?.authState === 'LoggedIn' ? (
                     <>
                       <Alert severity="success">
                         Connected to OneDrive
@@ -255,7 +259,14 @@ const Settings: FC<ISettingsProps> = () => {
                         onClick={handleDisconnect}
                         disabled={disconnectOneDrive.isPending}
                       >
-                        Disconnect from OneDrive
+                        {disconnectOneDrive.isPending ? (
+                          <>
+                            <CircularProgress size={20} sx={{ mr: 1 }} />
+                            Disconnecting...
+                          </>
+                        ) : (
+                          'Disconnect from OneDrive'
+                        )}
                       </ConnectButton>
                     </>
                   ) : (
@@ -269,7 +280,14 @@ const Settings: FC<ISettingsProps> = () => {
                         onClick={handleConnect}
                         disabled={oneDriveAuth.isPending}
                       >
-                        Connect OneDrive Account
+                        {oneDriveAuth.isPending ? (
+                          <>
+                            <CircularProgress size={20} sx={{ mr: 1 }} />
+                            Connecting...
+                          </>
+                        ) : (
+                          'Connect OneDrive Account'
+                        )}
                       </ConnectButton>
                     </>
                   )}
