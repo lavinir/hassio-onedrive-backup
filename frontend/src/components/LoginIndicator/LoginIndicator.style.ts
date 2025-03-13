@@ -14,14 +14,16 @@ interface StatusDotProps {
 }
 
 export const StatusDot = styled(Box)<StatusDotProps>`
-  width: 8px;
-  height: 8px;
+  width: 10px; /* Slightly larger */
+  height: 10px; /* Slightly larger */
   border-radius: 50%;
   background-color: ${({ theme, 'data-isloggedin': isLoggedIn, 'data-loggingin': isLoggingIn }) =>
     isLoggingIn === 'true'
       ? theme?.palette?.warning?.main || '#ff9800'
       : isLoggedIn === 'true'
-      ? theme?.palette?.success?.main || '#4caf50' 
+      ? theme?.palette?.mode === 'light' 
+        ? '#4cff4c' /* Bright light green for blue app bar in light mode */
+        : theme?.palette?.success?.main || '#4caf50' 
       : theme?.palette?.error?.main || '#f44336'};
   animation: ${({ 'data-isloggedin': isLoggedIn, 'data-loggingin': isLoggingIn }) =>
     isLoggingIn === 'true'
@@ -29,6 +31,14 @@ export const StatusDot = styled(Box)<StatusDotProps>`
       : isLoggedIn === 'true'
       ? 'none'
       : 'pulse 2s infinite'};
+  border: ${({ 'data-isloggedin': isLoggedIn, theme }) =>
+    isLoggedIn === 'true' && theme?.palette?.mode === 'light'
+      ? '1px solid rgba(0, 0, 0, 0.3)'
+      : 'none'};
+  box-shadow: ${({ 'data-isloggedin': isLoggedIn, theme }) =>
+    isLoggedIn === 'true' && theme?.palette?.mode === 'light'
+      ? '0 0 2px rgba(0, 0, 0, 0.2)'
+      : 'none'};
 
   @keyframes pulse {
     0% {

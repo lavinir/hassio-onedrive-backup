@@ -4,7 +4,10 @@ import { ILoginStatus } from '../types/settings.types';
 
 const getLoginStatus = async (): Promise<ILoginStatus> => {
   const response = await instance.get('/settings/login-status');
-  return { authState: response.data.authState };
+  return { 
+    authState: response.data.authState,
+    userEmail: response.data.userEmail
+  };
 };
 
 export const useLoginStatus = () => {

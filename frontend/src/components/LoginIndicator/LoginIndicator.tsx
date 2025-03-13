@@ -8,25 +8,35 @@ const LoginIndicator: FC<ILoginIndicatorProps> = () => {
   const { data: loginStatus, isLoading } = useLoginStatus();
   const isLoggedIn = loginStatus?.authState === 'LoggedIn';
   const isLoggingIn = loginStatus?.authState === 'LoggingIn';
+  const userEmail = loginStatus?.userEmail;
 
   const tooltipTitle = isLoading 
     ? 'Checking login status...'
     : isLoggingIn
     ? 'OneDrive authorization in progress...'
-    : isLoggedIn 
+    : isLoggedIn && userEmail
+    ? `Connected as ${userEmail}`
+    : isLoggedIn
     ? 'Connected to OneDrive'
     : 'Not connected to OneDrive - Click Settings to connect';
 
   return (
     <Tooltip title={tooltipTitle}>
       <LoginStatusContainer>
-        <StatusDot data-isloggedin={isLoggedIn.toString()} data-loggingIn={isLoggingIn.toString()} />
+        <StatusDot data-isloggedin={isLoggedIn.toString()} data-loggingin={isLoggingIn.toString()} />
         <Typography 
           variant="body2" 
           color="inherit" 
           sx={{ display: { xs: 'none', sm: 'block' } }}
         >
-          {isLoggingIn ? 'Connecting...' : isLoggedIn ? 'Connected' : 'Not Connected'}
+          {isLoggingIn 
+            ? 'Connecting...' 
+            : isLoggedIn && userEmail 
+            ? userEmail
+            : isLoggedIn 
+            ? 'Connected' 
+            : 'Not Connected'
+          }
         </Typography>
       </LoginStatusContainer>
     </Tooltip>

@@ -60,4 +60,5 @@ export type OneDriveAuthState = 'NotLoggedIn' | 'LoggingIn' | 'LoggedIn';
 
 export interface ILoginStatus {
     authState: OneDriveAuthState;
+    userEmail: string;
 }

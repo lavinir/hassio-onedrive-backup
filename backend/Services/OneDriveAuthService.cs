@@ -21,7 +21,7 @@ public class OneDriveAuthService : IOneDriveAuthService
     private bool _authFlowInProgress = false;
     private TaskCompletionSource<(string deviceCode, string verificationUrl, string userCode)>? _currentAuthFlowTcs;
     private DateTime? _lastConnectionTest;
-    private OneDriveAuthState _lastKnownAuthState = OneDriveAuthState.NotLoggedIn;
+    private OneDriveAuthInfo _lastKnownAuthInfo = new() { AuthState = OneDriveAuthState.NotLoggedIn, UserEmail = null };
     
     public OneDriveAuthService(IConfiguration configuration, ILogger<OneDriveAuthService> logger)
     {
@@ -156,19 +156,19 @@ public class OneDriveAuthService : IOneDriveAuthService
         throw new UnauthorizedAccessException("Not authenticated with OneDrive. Please log in first.");
     }
 
-    public async Task<OneDriveAuthState> IsLoggedInAsync()
+    public async Task<OneDriveAuthInfo> IsLoggedInAsync()
     {
         // First check if auth flow is in progress
         if (_authFlowInProgress)
         {
             _logger.LogDebug("IsLoggedInAsync: Auth flow in progress, returning LoggingIn state");
-            return OneDriveAuthState.LoggingIn;
+            return new OneDriveAuthInfo { AuthState = OneDriveAuthState.LoggingIn, UserEmail = null };
         }
         
         // If no client or no auth record, definitely not logged in
         if (_graphClient == null || _authRecord == null)
         {
-            return OneDriveAuthState.NotLoggedIn;
+            return new OneDriveAuthInfo { AuthState = OneDriveAuthState.NotLoggedIn, UserEmail = null };
         }
 
         // Only test the connection if we're in the regular polling interval (every 30s)
@@ -179,17 +179,28 @@ public class OneDriveAuthService : IOneDriveAuthService
         if (!shouldTestConnection)
         {
             // Return the last known state if we tested recently
-            return _lastKnownAuthState;
+            return _lastKnownAuthInfo;
         }
 
         try
         {
-            // Test the connection with a lightweight call
-            await _graphClient.Me.GetAsync();
+            // Test the connection with a lightweight call and get user info
+            var user = await _graphClient.Me.GetAsync(requestConfiguration => {
+                requestConfiguration.QueryParameters.Select = new string[] { "mail", "userPrincipalName" };
+            });
+            
             _logger.LogDebug("IsLoggedInAsync: User is authenticated");
             _lastConnectionTest = DateTime.UtcNow;
-            _lastKnownAuthState = OneDriveAuthState.LoggedIn;
-            return OneDriveAuthState.LoggedIn;
+            
+            // Get the user's email (prefer mail, fallback to userPrincipalName)
+            string? email = user?.Mail ?? user?.UserPrincipalName;
+            
+            _lastKnownAuthInfo = new OneDriveAuthInfo { 
+                AuthState = OneDriveAuthState.LoggedIn, 
+                UserEmail = email 
+            };
+            
+            return _lastKnownAuthInfo;
         }
         catch (Exception ex)
         {
@@ -197,8 +208,8 @@ public class OneDriveAuthService : IOneDriveAuthService
             _graphClient = null;
             _deviceCodeCredential = null;
             _lastConnectionTest = DateTime.UtcNow;
-            _lastKnownAuthState = OneDriveAuthState.NotLoggedIn;
-            return OneDriveAuthState.NotLoggedIn;
+            _lastKnownAuthInfo = new OneDriveAuthInfo { AuthState = OneDriveAuthState.NotLoggedIn, UserEmail = null };
+            return _lastKnownAuthInfo;
         }
     }
 

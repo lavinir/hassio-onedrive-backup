@@ -251,7 +251,9 @@ const Settings: FC<ISettingsProps> = () => {
                   ) : loginStatus?.authState === 'LoggedIn' ? (
                     <>
                       <Alert severity="success">
-                        Connected to OneDrive
+                        {loginStatus.userEmail ? 
+                          `Connected to OneDrive as ${loginStatus.userEmail}` : 
+                          'Connected to OneDrive'}
                       </Alert>
                       <ConnectButton
                         variant="outlined"

@@ -34,8 +34,11 @@ public class SettingsController : ControllerBase
     [HttpGet("login-status")]
     public async Task<ActionResult<IDictionary<string, string>>> CheckLoginStatus()
     {
-        var authState = await _authService.IsLoggedInAsync();
-        return Ok(new Dictionary<string, string> { { "authState", authState.ToString() } });
+        var authInfo = await _authService.IsLoggedInAsync();
+        return Ok(new Dictionary<string, string> { 
+            { "authState", authInfo.AuthState.ToString() },
+            { "userEmail", authInfo.UserEmail ?? "" }
+        });
     }
 
     [HttpPost("onedrive/auth")]
