@@ -34,6 +34,7 @@ public class SettingsController : ControllerBase
     [HttpGet("login-status")]
     public async Task<ActionResult<IDictionary<string, bool>>> CheckLoginStatus()
     {
+        // Only check if there's an existing valid token without initiating a new auth flow
         var isLoggedIn = await _authService.IsLoggedInAsync();
         return Ok(new Dictionary<string, bool> { { "isLoggedIn", isLoggedIn } });
     }
@@ -41,6 +42,7 @@ public class SettingsController : ControllerBase
     [HttpPost("onedrive/auth")]
     public async Task<ActionResult<IDictionary<string, string>>> InitiateAuth()
     {
+        // This is where we explicitly want to initiate a new auth flow
         var (deviceCode, verificationUrl, userCode) = await _authService.InitiateAuthenticationAsync();
         return Ok(new Dictionary<string, string> 
         { 
@@ -50,9 +52,9 @@ public class SettingsController : ControllerBase
     }
 
     [HttpPost("onedrive/disconnect")]
-    public async Task<ActionResult> Disconnect()
+    public ActionResult Disconnect()
     {
-        await _authService.DisconnectAsync();
+        _authService.Disconnect();
         return Ok();
     }
 

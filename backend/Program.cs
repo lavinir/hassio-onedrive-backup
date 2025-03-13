@@ -10,7 +10,7 @@ builder.Services.AddSwaggerGen();
 
 // Register service implementations
 builder.Services.AddScoped<IBackupService, MockBackupService>();
-builder.Services.AddScoped<IOneDriveAuthService, OneDriveAuthService>();
+builder.Services.AddSingleton<IOneDriveAuthService, OneDriveAuthService>(); // Changed to singleton for persistent token storage
 builder.Services.AddScoped<ISettingsService, MockSettingsService>();
 
 var app = builder.Build();

@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="Azure.Core" Version="1.45.0" />
+    <PackageReference Include="Azure.Identity" Version="1.13.2" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="7.0.0" />
     <PackageReference Include="Microsoft.Graph" Version="5.73.0" />
     <PackageReference Include="Microsoft.Identity.Client" Version="4.69.1" />

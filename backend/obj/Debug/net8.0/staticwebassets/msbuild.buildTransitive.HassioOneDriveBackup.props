@@ -1,3 +1,0 @@
-﻿<Project>
-  <Import Project="..\buildMultiTargeting\HassioOneDriveBackup.props" />
-</Project>
