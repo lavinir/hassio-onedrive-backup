@@ -26,6 +26,8 @@ import BackupCard from './components/BackupCard'
 import { useBackups } from './queries/useBackups'
 import Settings from './pages/Settings'
 import LoginIndicator from './components/LoginIndicator';
+import { useTriggerBackup } from './mutations/useBackupMutations';
+import CreateBackupModal from './components/CreateBackupModal';
 
 function App() {
   const [refreshing, setRefreshing] = useState(false);
@@ -33,6 +35,8 @@ function App() {
   const [mode, setMode] = useState<'light' | 'dark'>(prefersDarkMode ? 'dark' : 'light');
   const [currentPage, setCurrentPage] = useState<'dashboard' | 'settings'>('dashboard');
   const { data: backups = [], isLoading, refetch } = useBackups();
+  const createBackupMutation = useTriggerBackup();
+  const [createModalOpen, setCreateModalOpen] = useState(false);
 
   console.log('App render:', { backups, isLoading, mode });  // Debug log
 
@@ -93,6 +97,10 @@ function App() {
     setCurrentPage('dashboard');
   };
 
+  const handleCreateBackup = (backupName: string) => {
+    createBackupMutation.mutate(backupName);
+  };
+
   const renderContent = () => {
     if (currentPage === 'settings') {
       return <Settings />;
@@ -107,6 +115,7 @@ function App() {
           <Button
             variant="contained"
             startIcon={<BackupIcon />}
+            onClick={() => setCreateModalOpen(true)}
           >
             Create Backup
           </Button>
@@ -179,6 +188,11 @@ function App() {
           {renderContent()}
         </Container>
       </Box>
+      <CreateBackupModal 
+        open={createModalOpen}
+        onClose={() => setCreateModalOpen(false)}
+        onConfirm={handleCreateBackup}
+      />
     </ThemeProvider>
   )
 }
