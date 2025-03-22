@@ -45,14 +45,5 @@ namespace HassioOneDriveBackup.Services
         /// <param name="description">Description of what the counter measures</param>
         /// <returns>A counter metric instrument</returns>
         Counter<long> CreateCounter(string name, string unit = "", string description = "");
-
-        /// <summary>
-        /// Creates and returns a histogram metric instrument
-        /// </summary>
-        /// <param name="name">Name of the histogram</param>
-        /// <param name="unit">Unit of measurement</param>
-        /// <param name="description">Description of what the histogram measures</param>
-        /// <returns>A histogram metric instrument</returns>
-        Histogram<double> CreateHistogram(string name, string unit = "", string description = "");
     }
 }
