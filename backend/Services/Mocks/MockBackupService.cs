@@ -5,7 +5,7 @@ namespace HassioOneDriveBackup.Services.Mocks;
 public class MockBackupService : IBackupService
 {
     private readonly List<Backup> _backups;
-    private readonly Dictionary<string, BackupTransferOperation> _operations;
+    private readonly Dictionary<string, TransferOperation> _operations;
     private readonly ISettingsService _settingsService;
 
     public MockBackupService(ISettingsService settingsService)
@@ -17,24 +17,36 @@ public class MockBackupService : IBackupService
             {
                 Slug = "backup_2024_01_01",
                 Name = "Automated Backup 2024-01-01",
-                Date = "2024-01-01 12:00:00",
-                Size = "1.2 GB",
+                Date = DateTime.Parse("2024-01-01 12:00:00"),
+                Size = 1.2f,
                 Status = "Local",
                 SourceType = "Automated",
-                BackupType = "Full"
+                BackupType = "Full",
+                Content = new Content
+                {
+                    Homeassistant = true,
+                    Addons = new string[] { "addon1", "addon2" },
+                    Folders = new string[] { "folder1", "folder2" }
+                }
             },
             new()
             {
                 Slug = "backup_2024_01_02",
                 Name = "Manual Backup 2024-01-02",
-                Date = "2024-01-02 15:30:00",
-                Size = "800 MB",
+                Date = DateTime.Parse("2024-01-02 15:30:00"),
+                Size = 0.8f,
                 Status = "OneDrive",
                 SourceType = "Manual",
-                BackupType = "Partial"
+                BackupType = "Partial",
+                Content = new Content
+                {
+                    Homeassistant = true,
+                    Addons = new string[] { "addon1" },
+                    Folders = new string[] { "folder1" }
+                }
             }
         };
-        _operations = new Dictionary<string, BackupTransferOperation>();
+        _operations = new Dictionary<string, TransferOperation>();
     }
 
     public async Task<IEnumerable<Backup>> GetBackupsAsync()
@@ -51,12 +63,13 @@ public class MockBackupService : IBackupService
             throw new InvalidOperationException("Backup must be local to upload");
 
         string operationId = Guid.NewGuid().ToString();
-        var operation = new BackupTransferOperation
+        var operation = new TransferOperation
         {
-            OperationId = operationId,
-            BackupId = slugId,
-            StartTime = DateTime.UtcNow,
-            Type = "upload"
+            Id = operationId,
+            BackupSlug = slugId,
+            Type = TransferType.Upload,
+            Status = TransferStatus.InProgress,
+            StartTime = DateTime.UtcNow
         };
 
         _operations[operationId] = operation;
@@ -76,12 +89,13 @@ public class MockBackupService : IBackupService
             throw new InvalidOperationException("Backup must be on OneDrive to download");
 
         string operationId = Guid.NewGuid().ToString();
-        var operation = new BackupTransferOperation
+        var operation = new TransferOperation
         {
-            OperationId = operationId,
-            BackupId = slugId,
-            StartTime = DateTime.UtcNow,
-            Type = "download"
+            Id = operationId,
+            BackupSlug = slugId,
+            Type = TransferType.Download,
+            Status = TransferStatus.InProgress,
+            StartTime = DateTime.UtcNow
         };
 
         _operations[operationId] = operation;
@@ -114,11 +128,17 @@ public class MockBackupService : IBackupService
         {
             Slug = $"backup_{DateTime.UtcNow:yyyy_MM_dd_HHmmss}",
             Name = $"{(isPartial ? "Partial" : "Full")} Backup {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}",
-            Date = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"),
-            Size = "1.5 GB",
+            Date = DateTime.UtcNow,
+            Size = 1.5f,
             Status = "Local",
             SourceType = "Manual",
-            BackupType = isPartial ? "Partial" : "Full"
+            BackupType = isPartial ? "Partial" : "Full",
+            Content = new Content
+            {
+                Homeassistant = true,
+                Addons = new string[0],
+                Folders = new string[0]
+            }
         };
 
         _backups.Add(backup);
@@ -139,7 +159,7 @@ public class MockBackupService : IBackupService
         if (!_operations.TryGetValue(operationId, out var operation))
             throw new ArgumentException("Operation not found", nameof(operationId));
 
-        return await Task.FromResult(operation.Progress);
+        return await Task.FromResult((double)operation.Progress);
     }
 
     private async Task SimulateTransferAsync(string operationId)
@@ -149,13 +169,17 @@ public class MockBackupService : IBackupService
         // Simulate progress over 5 seconds
         for (int i = 0; i <= 100; i += 5)
         {
-            operation.Progress = i / 100.0;
+            operation.Progress = i;
             await Task.Delay(250);
         }
 
         // Update backup status when complete
-        var backup = _backups.First(b => b.Slug == operation.BackupId);
-        backup.Status = operation.Type == "upload" ? "OneDrive" : "Local";
+        var backup = _backups.First(b => b.Slug == operation.BackupSlug);
+        backup.Status = operation.Type == TransferType.Upload ? "OneDrive" : "Local";
+
+        // Update operation status
+        operation.Status = TransferStatus.Completed;
+        operation.EndTime = DateTime.UtcNow;
 
         // Cleanup operation
         _operations.Remove(operationId);

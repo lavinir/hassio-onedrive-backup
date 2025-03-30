@@ -17,7 +17,7 @@ public class Backup
     public float Size { get; set; }
 
     [JsonProperty("type")]
-    public string Type { get; set; }
+    public string BackupType { get; set; }
 
     [JsonProperty("protected")]
     public bool Protected { get; set; }
@@ -30,7 +30,6 @@ public class Backup
 
     public string Status { get; set; } = string.Empty;
     public string SourceType { get; set; } = string.Empty;
-    public string BackupType => Type;
     public string? Path { get; set; }
     public bool Retained { get; set; }
 }

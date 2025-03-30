@@ -3,7 +3,6 @@ using HassioOneDriveBackup.Services.Mocks;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Metrics;
-using OpenTelemetry;
 using System.Diagnostics.Metrics;
 using System.Diagnostics;
 using Microsoft.Extensions.Configuration;
@@ -34,9 +33,12 @@ serviceName = !string.IsNullOrEmpty(telemetryOptions.ServiceName)
     ? telemetryOptions.ServiceName 
     : serviceName;
 
-builder.Services.AddOpenTelemetry()
-    .WithTracing(tracing => tracing
+// Configure OpenTelemetry with minimal setup - only for our explicit telemetry,
+// without automatic ASP.NET Core instrumentation
+builder.Services
+    .AddOpenTelemetryTracing(tracing => tracing
         .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(serviceName, serviceVersion: telemetryOptions.ServiceVersion))
+        // Only add our own ActivitySource, not ASP.NET's
         .AddSource(serviceName) 
         .AddOtlpExporter(options =>
         {
@@ -51,8 +53,11 @@ builder.Services.AddOpenTelemetry()
                 options.Headers = $"Authorization=Basic {telemetryOptions.ApiKey}";
             }
         })
-    )
-    .WithMetrics(metrics => metrics
+    );
+
+builder.Services
+    .AddOpenTelemetryMetrics(metrics => metrics
+        // Only add our own Meter, not ASP.NET's
         .AddMeter(serviceName) 
         .AddOtlpExporter(options =>
         {

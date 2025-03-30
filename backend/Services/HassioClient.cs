@@ -92,7 +92,7 @@ namespace HassioOneDriveBackup.Services;
                     NullValueHandling = NullValueHandling.Ignore
                 });
 
-                _logger.LogInfo("Starting full local backup");
+                _logger.LogInformation("Starting full local backup");
             }
             // Partial Backup
             else
@@ -113,13 +113,13 @@ namespace HassioOneDriveBackup.Services;
                     NullValueHandling = NullValueHandling.Ignore
                 });
 
-                _logger.LogInfo("Starting partial local backup");
+                _logger.LogInformation("Starting partial local backup");
             }
 
             try
             {
                 await _httpClient.PostAsync(uri, new StringContent(payloadStr, Encoding.UTF8, "application/json"));
-                _logger.LogInfo("Backup complete");
+                _logger.LogInformation("Backup complete");
             }
             catch (TaskCanceledException tce)
             {
@@ -205,13 +205,13 @@ namespace HassioOneDriveBackup.Services;
 
         public async Task<string> DownloadBackupAsync(string backupSlug)
         {            
-            _logger.LogInfo($"Fetching Local Backup (Slug:{backupSlug})");
+            _logger.LogInformation($"Fetching Local Backup (Slug:{backupSlug})");
             Uri uri = new Uri(Supervisor_Base_Uri_Str + $"/backups/{backupSlug}/download");
             var fileInfo = new FileInfo($"{LocalStorage.TempFolder}/{backupSlug}.tar");
             await using var memStream =  await _httpClient.GetStreamAsync(uri);
             using var fileStream = System.IO.File.Create(fileInfo.FullName);
             await memStream.CopyToAsync(fileStream);
-            _logger.LogInfo($"Backup ({backupSlug}) fetched successfully");
+            _logger.LogInformation($"Backup ({backupSlug}) fetched successfully");
             return fileInfo.FullName;
         }
 
