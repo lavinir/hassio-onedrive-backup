@@ -1,18 +1,18 @@
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace HassioOneDriveBackup.Models
 {
     public class HassBackupsResponse
     {
-        [JsonProperty("result")]
+        [JsonPropertyName("result")]
         public string Result { get; set; }
 
-        [JsonProperty("data")]
+        [JsonPropertyName("data")]
         public Data DataProperty { get; set; }
 
         public class Data
         {
-            [JsonProperty("backups")]
+            [JsonPropertyName("backups")]
             public Backup[] Backups { get; set; }
         }
     }

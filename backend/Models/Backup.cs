@@ -1,57 +1,73 @@
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace HassioOneDriveBackup.Models;
 
 public class Backup
 {
-    [JsonProperty("slug")]
+    [JsonPropertyName("slug")]
     public string Slug { get; set; }
 
-    [JsonProperty("date")]
+    [JsonPropertyName("date")]
     public DateTime Date { get; set; }
 
-    [JsonProperty("name")]
+    [JsonPropertyName("name")]
     public string Name { get; set; }
 
-    [JsonProperty("size")]
-    public float Size { get; set; }
+    [JsonPropertyName("size")]
+    public string Size { get; set; }
 
-    [JsonProperty("type")]
+    [JsonPropertyName("backup_type")]
     public string BackupType { get; set; }
 
-    [JsonProperty("protected")]
+    [JsonPropertyName("protected")]
     public bool Protected { get; set; }
 
-    [JsonProperty("compressed")]
+    [JsonPropertyName("compressed")]
     public bool Compressed { get; set; }
 
-    [JsonProperty("content")]
+    [JsonPropertyName("content")]
     public Content Content { get; set; }
 
+    [JsonPropertyName("status")]
     public string Status { get; set; } = string.Empty;
+
+    [JsonPropertyName("source_type")]
     public string SourceType { get; set; } = string.Empty;
+
+    [JsonPropertyName("path")]
     public string? Path { get; set; }
+
+    [JsonPropertyName("retained")]
     public bool Retained { get; set; }
 }
 
 public class Content
 {
-    [JsonProperty("homeassistant")]
+    [JsonPropertyName("homeassistant")]
     public bool Homeassistant { get; set; }
 
-    [JsonProperty("addons")]
+    [JsonPropertyName("addons")]
     public string[] Addons { get; set; }
 
-    [JsonProperty("folders")]
+    [JsonPropertyName("folders")]
     public string[] Folders { get; set; }
 }
 
 
 public class BackupTransferOperation
 {
+    [JsonPropertyName("operationId")]
     public string OperationId { get; set; } = string.Empty;
+    
+    [JsonPropertyName("backupId")]
     public string BackupId { get; set; } = string.Empty;
+    
+    [JsonPropertyName("startTime")]
     public DateTime StartTime { get; set; }
+    
+    [JsonPropertyName("type")]
     public string Type { get; set; } = string.Empty;
+    
+    [JsonPropertyName("progress")]
     public double Progress { get; set; }
 }

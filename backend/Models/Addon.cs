@@ -1,12 +1,12 @@
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace HassioOneDriveBackup.Models;
 
 public class Addon
 {
-    [JsonProperty("slug")]
+    [JsonPropertyName("slug")]
     public string Slug { get; set; }
 
-    [JsonProperty("name")]
+    [JsonPropertyName("name")]
     public string Name { get; set; }
 }

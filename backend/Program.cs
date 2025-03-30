@@ -3,15 +3,20 @@ using HassioOneDriveBackup.Services.Mocks;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Metrics;
-using System.Diagnostics.Metrics;
-using System.Diagnostics;
-using Microsoft.Extensions.Configuration;
+using OpenTelemetry;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 string serviceName = "HassOneDriveBackup";
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+    });
+    
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -33,46 +38,50 @@ serviceName = !string.IsNullOrEmpty(telemetryOptions.ServiceName)
     ? telemetryOptions.ServiceName 
     : serviceName;
 
-// Configure OpenTelemetry with minimal setup - only for our explicit telemetry,
-// without automatic ASP.NET Core instrumentation
-builder.Services
-    .AddOpenTelemetryTracing(tracing => tracing
-        .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(serviceName, serviceVersion: telemetryOptions.ServiceVersion))
-        // Only add our own ActivitySource, not ASP.NET's
-        .AddSource(serviceName) 
-        .AddOtlpExporter(options =>
-        {
-            // Set endpoint and API key from configuration
-            if (!string.IsNullOrEmpty(telemetryOptions.OtlpEndpoint))
-            {
-                options.Endpoint = new Uri(telemetryOptions.OtlpEndpoint);
-            }
-            
-            if (!string.IsNullOrEmpty(telemetryOptions.ApiKey))
-            {
-                options.Headers = $"Authorization=Basic {telemetryOptions.ApiKey}";
-            }
-        })
-    );
+// Configure OpenTelemetry manually (without ASP.NET Core automatic integration)
+// This only sets up the SDK for our explicit manual telemetry from GrafanaTelemetryManager
 
-builder.Services
-    .AddOpenTelemetryMetrics(metrics => metrics
-        // Only add our own Meter, not ASP.NET's
-        .AddMeter(serviceName) 
-        .AddOtlpExporter(options =>
+// Configure the TracerProvider
+var tracerProvider = Sdk.CreateTracerProviderBuilder()
+    .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(serviceName, serviceVersion: telemetryOptions.ServiceVersion))
+    .AddSource(serviceName)  // Only add our own ActivitySource, not ASP.NET's
+    .AddOtlpExporter(options =>
+    {
+        // Set endpoint and API key from configuration
+        if (!string.IsNullOrEmpty(telemetryOptions.OtlpEndpoint))
         {
-            // Set endpoint and API key from configuration (same as tracing)
-            if (!string.IsNullOrEmpty(telemetryOptions.OtlpEndpoint))
-            {
-                options.Endpoint = new Uri(telemetryOptions.OtlpEndpoint);
-            }
-            
-            if (!string.IsNullOrEmpty(telemetryOptions.ApiKey))
-            {
-                options.Headers = $"Authorization=Basic {telemetryOptions.ApiKey}";
-            }
-        })
-    );
+            options.Endpoint = new Uri(telemetryOptions.OtlpEndpoint);
+        }
+        
+        if (!string.IsNullOrEmpty(telemetryOptions.ApiKey))
+        {
+            options.Headers = $"Authorization=Basic {telemetryOptions.ApiKey}";
+        }
+    })
+    .Build();
+
+// Configure the MeterProvider
+var meterProvider = Sdk.CreateMeterProviderBuilder()
+    .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(serviceName, serviceVersion: telemetryOptions.ServiceVersion))
+    .AddMeter(serviceName)  // Only add our own Meter, not ASP.NET's
+    .AddOtlpExporter(options =>
+    {
+        // Set endpoint and API key from configuration (same as tracing)
+        if (!string.IsNullOrEmpty(telemetryOptions.OtlpEndpoint))
+        {
+            options.Endpoint = new Uri(telemetryOptions.OtlpEndpoint);
+        }
+        
+        if (!string.IsNullOrEmpty(telemetryOptions.ApiKey))
+        {
+            options.Headers = $"Authorization=Basic {telemetryOptions.ApiKey}";
+        }
+    })
+    .Build();
+
+// Register providers to be disposed when application shuts down
+builder.Services.AddSingleton(tracerProvider);
+builder.Services.AddSingleton(meterProvider);
 
 var app = builder.Build();
 
