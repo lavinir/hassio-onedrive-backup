@@ -27,8 +27,10 @@ export const uploadBackup = async (slugId: string): Promise<string> => {
   return response.data.operationId;
 };
 
-export const triggerBackup = async (): Promise<Backup> => {
-  const response = await instance.post('/backup/create');
+export const triggerBackup = async (name: string): Promise<Backup> => {
+  const response = await instance.post('/backup/create', null, {
+    params: { name }
+  });
   return response.data;
 };
 

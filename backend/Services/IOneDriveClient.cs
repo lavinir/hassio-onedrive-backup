@@ -1,0 +1,33 @@
+using Microsoft.Graph;
+using Microsoft.Graph.Models;
+
+namespace HassioOneDriveBackup.Services;
+
+public enum OneDriveAuthState
+{
+    NotLoggedIn,
+    LoggingIn,
+    LoggedIn
+}
+
+public class OneDriveAuthInfo
+{
+    public OneDriveAuthState AuthState { get; set; }
+    public string? UserEmail { get; set; }
+}
+
+public delegate void ProgressCallback(long bytesTransferred, long? totalBytes);
+
+public interface IOneDriveClient
+{
+    Task<OneDriveAuthInfo> IsLoggedInAsync();
+    Task<(string deviceCode, string verificationUrl, string userCode)> InitiateAuthenticationAsync();
+    void Disconnect();
+    Task<GraphServiceClient> GetGraphClientAsync();
+    
+    // Upload a file to OneDrive App Folder with progress reporting
+    Task<DriveItem> UploadFileAsync(string localFilePath, string oneDrivePath, ProgressCallback? progressCallback = null);
+    
+    // Download a file from OneDrive App Folder with progress reporting
+    Task DownloadFileAsync(string oneDrivePath, string localFilePath, ProgressCallback? progressCallback = null);
+}

@@ -9,9 +9,9 @@ namespace HassioOneDriveBackup.Controllers;
 public class SettingsController : ControllerBase
 {
     private readonly ISettingsService _settingsService;
-    private readonly IOneDriveAuthService _authService;
+    private readonly IOneDriveClient _authService;
 
-    public SettingsController(ISettingsService settingsService, IOneDriveAuthService authService)
+    public SettingsController(ISettingsService settingsService, IOneDriveClient authService)
     {
         _settingsService = settingsService;
         _authService = authService;

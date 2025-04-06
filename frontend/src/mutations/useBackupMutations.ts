@@ -59,7 +59,7 @@ export const useTriggerBackup = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: (isPartial: boolean) => triggerBackup(isPartial),
+    mutationFn: (name: string) => triggerBackup(name),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['backups'] });
     },

@@ -1,15 +1,18 @@
 using Azure.Core;
 using Azure.Identity;
 using Microsoft.Graph;
+using Microsoft.Graph.Models;
+using Microsoft.Graph.Drives.Item.Items.Item.CreateUploadSession;
+using Microsoft.Kiota.Abstractions;
 using System.Reflection;
 
 namespace HassioOneDriveBackup.Services;
 
-public class OneDriveAuthService : IOneDriveAuthService
+public class OneDriveClient : IOneDriveClient
 {
     private readonly string _clientId;
     private readonly string[] _scopes = new[] { "Files.ReadWrite.AppFolder", "User.Read" };
-    private readonly ILogger<OneDriveAuthService> _logger;
+    private readonly ILogger<OneDriveClient> _logger;
     private readonly string _tokenCachePath;
     private DeviceCodeCredential? _deviceCodeCredential;
     private GraphServiceClient? _graphClient;
@@ -23,7 +26,7 @@ public class OneDriveAuthService : IOneDriveAuthService
     private DateTime? _lastConnectionTest;
     private OneDriveAuthInfo _lastKnownAuthInfo = new() { AuthState = OneDriveAuthState.NotLoggedIn, UserEmail = null };
     
-    public OneDriveAuthService(IConfiguration configuration, ILogger<OneDriveAuthService> logger)
+    public OneDriveClient(IConfiguration configuration, ILogger<OneDriveClient> logger)
     {
         _clientId = configuration["OneDrive:ClientId"] ?? throw new ArgumentNullException("OneDrive:ClientId configuration is missing");
         _logger = logger;
@@ -380,5 +383,237 @@ public class OneDriveAuthService : IOneDriveAuthService
         }
 
         _logger.LogInformation("Successfully disconnected from OneDrive");
+    }
+
+    public async Task<DriveItem> UploadFileAsync(string localFilePath, string oneDrivePath, ProgressCallback? progressCallback = null)
+    {
+        var client = await GetGraphClientAsync();
+        
+        using var fileStream = File.OpenRead(localFilePath);
+        var fileSize = new FileInfo(localFilePath).Length;
+
+        // Normalize the path to use forward slashes
+        oneDrivePath = oneDrivePath.Replace('\\', '/').TrimStart('/');
+        
+        // Ensure parent folders exist
+        if (Path.GetDirectoryName(oneDrivePath) is string dirPath && !string.IsNullOrWhiteSpace(dirPath))
+        {
+            await EnsureFolderPathExistsAsync(client, dirPath);
+        }
+
+        // For files larger than 4MB, use large file upload session
+        if (fileSize > 4 * 1024 * 1024)
+        {
+            _logger.LogInformation($"Using large file upload session for {oneDrivePath} ({fileSize} bytes)");
+            
+            var uploadSessionRequestBody = new CreateUploadSessionPostRequestBody
+            {
+                Item = new DriveItemUploadableProperties
+                {
+                    Name = Path.GetFileName(oneDrivePath),
+                    AdditionalData = new Dictionary<string, object>
+                    {
+                        { "@microsoft.graph.conflictBehavior", "replace" }
+                    }
+                }
+            };
+
+            var uploadSession = await client.Drives["/special/approot"].Items[oneDrivePath].CreateUploadSession.PostAsync(uploadSessionRequestBody);
+
+            if (uploadSession == null)
+            {
+                throw new Exception($"Failed to create upload session for {oneDrivePath}");
+            }
+
+            // Create upload task
+            var maxSliceSize = 320 * 1024; // 320 KB chunk size
+            var largeFileUploadTask = new LargeFileUploadTask<DriveItem>(uploadSession, fileStream, maxSliceSize);
+
+            // Track progress using Progress<T>
+            var uploadedBytes = 0L;
+            var progress = new Progress<long>(bytes => {
+                uploadedBytes = bytes;
+                progressCallback?.Invoke(uploadedBytes, fileSize);
+            });
+
+            var uploadResult = await largeFileUploadTask.UploadAsync(progress);
+
+            if (!uploadResult.UploadSucceeded)
+            {
+                throw new Exception($"Failed to upload file {oneDrivePath}");
+            }
+
+            return uploadResult.ItemResponse;
+        }
+        else
+        {
+            _logger.LogInformation($"Using simple upload for {oneDrivePath} ({fileSize} bytes)");
+
+            // For small files, wrap the stream to track progress
+            var progressStream = new ProgressStream(fileStream, progress => 
+            {
+                progressCallback?.Invoke(progress, fileSize);
+            });
+            
+            var result = await client.Drives["/special/approot"].Items[oneDrivePath].Content.PutAsync(progressStream);
+            if (result == null)
+            {
+                throw new Exception($"Failed to upload file {oneDrivePath}");
+            }
+            return result;
+        }
+    }
+
+    public async Task DownloadFileAsync(string oneDrivePath, string localFilePath, ProgressCallback? progressCallback = null)
+    {
+        var client = await GetGraphClientAsync();
+
+        try
+        {
+            // Normalize the path
+            oneDrivePath = oneDrivePath.Replace('\\', '/').TrimStart('/');
+
+            // Ensure the local directory exists
+            var localDir = Path.GetDirectoryName(localFilePath);
+            if (!string.IsNullOrEmpty(localDir))
+            {
+                Directory.CreateDirectory(localDir);
+            }
+
+            // Get the file size first for progress reporting
+            var item = await client.Drives["/special/approot"].Items[oneDrivePath].GetAsync();
+            var totalSize = item?.Size;
+
+            var stream = await client.Drives["/special/approot"].Items[oneDrivePath].Content.GetAsync();
+            
+            if (stream == null)
+            {
+                throw new Exception($"Failed to get content stream for file {oneDrivePath}");
+            }
+
+            using var fileStream = File.Create(localFilePath);
+            
+            // Use buffer for efficient copying
+            var buffer = new byte[81920];
+            long totalBytesRead = 0;
+            int bytesRead;
+
+            while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+            {
+                await fileStream.WriteAsync(buffer, 0, bytesRead);
+                totalBytesRead += bytesRead;
+                progressCallback?.Invoke(totalBytesRead, totalSize);
+            }
+            
+            _logger.LogInformation($"Successfully downloaded {oneDrivePath} to {localFilePath}");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Failed to download file {oneDrivePath}");
+            throw;
+        }
+    }
+
+    private async Task EnsureFolderPathExistsAsync(GraphServiceClient client, string path)
+    {
+        var segments = path.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+        var currentPath = "";
+
+        foreach (var segment in segments)
+        {
+            currentPath = string.IsNullOrEmpty(currentPath) ? segment : currentPath + "/" + segment;
+
+            try
+            {
+                // Try to get the folder
+                await client.Drives["/special/approot"].Items[currentPath].GetAsync();
+                _logger.LogDebug($"Folder {currentPath} already exists");
+            }
+            catch
+            {
+                // Folder doesn't exist, create it
+                _logger.LogInformation($"Creating folder {currentPath}");
+                var folderItem = new DriveItem
+                {
+                    Name = segment,
+                    Folder = new Folder(),
+                    AdditionalData = new Dictionary<string, object>
+                    {
+                        { "@microsoft.graph.conflictBehavior", "replace" }
+                    }
+                };
+
+                // Always use the /special/approot drive but modify the path for parent folder
+                if (string.IsNullOrEmpty(Path.GetDirectoryName(currentPath)))
+                {
+                    await client.Drives["/special/approot"].Items.PostAsync(folderItem);
+                }
+                else
+                {
+                    var parentPath = Path.GetDirectoryName(currentPath)?.Replace('\\', '/') ?? "";
+                    await client.Drives["/special/approot"].Items[parentPath].Children.PostAsync(folderItem);
+                }
+            }
+        }
+    }
+
+    // Helper class for progress tracking on small file uploads
+    private class ProgressStream : Stream
+    {
+        private readonly Stream _inner;
+        private readonly Action<long> _progress;
+        private long _position;
+
+        public ProgressStream(Stream inner, Action<long> progress)
+        {
+            _inner = inner;
+            _progress = progress;
+        }
+
+        public override bool CanRead => _inner.CanRead;
+        public override bool CanSeek => _inner.CanSeek;
+        public override bool CanWrite => _inner.CanWrite;
+        public override long Length => _inner.Length;
+        
+        public override long Position
+        {
+            get => _position;
+            set => Seek(value, SeekOrigin.Begin);
+        }
+
+        public override void Flush() => _inner.Flush();
+
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            var bytesRead = _inner.Read(buffer, offset, count);
+            _position += bytesRead;
+            _progress(_position);
+            return bytesRead;
+        }
+
+        public override long Seek(long offset, SeekOrigin origin)
+        {
+            var pos = _inner.Seek(offset, origin);
+            _position = pos;
+            return pos;
+        }
+
+        public override void SetLength(long value) => _inner.SetLength(value);
+
+        public override void Write(byte[] buffer, int offset, int count)
+        {
+            _inner.Write(buffer, offset, count);
+            _position += count;
+            _progress(_position);
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _inner.Dispose();
+            }
+            base.Dispose(disposing);
+        }
     }
 }

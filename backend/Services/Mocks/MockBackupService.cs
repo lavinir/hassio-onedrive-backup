@@ -115,7 +115,7 @@ public class MockBackupService : IBackupService
         await Task.CompletedTask;
     }
 
-    public async Task<Backup> TriggerBackupAsync()
+    public async Task<Backup> TriggerBackupAsync(string name)
     {
         var settings = await _settingsService.GetSettingsAsync();
         bool isPartial = settings.Backup.ExcludeMediaFolder || 
@@ -124,10 +124,15 @@ public class MockBackupService : IBackupService
                         settings.Backup.ExcludeLocalAddonsFolder ||
                         settings.Backup.ExcludedAddons.Any();
 
+        // Use provided name if not empty or null, otherwise use default naming pattern
+        string backupName = !string.IsNullOrWhiteSpace(name) 
+            ? name 
+            : $"{(isPartial ? "Partial" : "Full")} Backup {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}";
+
         var backup = new Backup
         {
             Slug = $"backup_{DateTime.UtcNow:yyyy_MM_dd_HHmmss}",
-            Name = $"{(isPartial ? "Partial" : "Full")} Backup {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}",
+            Name = backupName,
             Date = DateTime.UtcNow,
             Size = "2.2 GB",
             Status = "Local",
@@ -160,6 +165,18 @@ public class MockBackupService : IBackupService
             throw new ArgumentException("Operation not found", nameof(operationId));
 
         return await Task.FromResult((double)operation.Progress);
+    }
+
+    public Task<TransferProgress> GetDetailedTransferProgressAsync(string operationId)
+    {
+        if (!_operations.TryGetValue(operationId, out var operation))
+            throw new ArgumentException("Operation not found", nameof(operationId));
+
+        return Task.FromResult(new TransferProgress
+        {
+            BytesTransferred = operation.Progress,
+            TotalBytes = 100 // Since we're using percentage progress
+        });
     }
 
     private async Task SimulateTransferAsync(string operationId)
