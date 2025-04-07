@@ -616,4 +616,11 @@ public class OneDriveClient : IOneDriveClient
             base.Dispose(disposing);
         }
     }
+
+    public async Task ResetConnectionAsync()
+    {
+        Disconnect(); // This handles clearing the token cache and auth records
+        InitializeCredential(); // Reinitialize with fresh credentials
+        await Task.CompletedTask;
+    }
 }

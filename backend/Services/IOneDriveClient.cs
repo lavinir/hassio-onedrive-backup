@@ -24,6 +24,7 @@ public interface IOneDriveClient
     Task<(string deviceCode, string verificationUrl, string userCode)> InitiateAuthenticationAsync();
     void Disconnect();
     Task<GraphServiceClient> GetGraphClientAsync();
+    Task ResetConnectionAsync();
     
     // Upload a file to OneDrive App Folder with progress reporting
     Task<DriveItem> UploadFileAsync(string localFilePath, string oneDrivePath, ProgressCallback? progressCallback = null);

@@ -9,12 +9,12 @@ namespace HassioOneDriveBackup.Controllers;
 public class SettingsController : ControllerBase
 {
     private readonly ISettingsService _settingsService;
-    private readonly IOneDriveClient _authService;
+    private readonly IOneDriveClient _oneDriveClient;
 
-    public SettingsController(ISettingsService settingsService, IOneDriveClient authService)
+    public SettingsController(ISettingsService settingsService, IOneDriveClient oneDriveClient)
     {
         _settingsService = settingsService;
-        _authService = authService;
+        _oneDriveClient = oneDriveClient;
     }
 
     // Settings endpoints
@@ -34,7 +34,7 @@ public class SettingsController : ControllerBase
     [HttpGet("login-status")]
     public async Task<ActionResult<IDictionary<string, string>>> CheckLoginStatus()
     {
-        var authInfo = await _authService.IsLoggedInAsync();
+        var authInfo = await _oneDriveClient.IsLoggedInAsync();
         return Ok(new Dictionary<string, string> { 
             { "authState", authInfo.AuthState.ToString() },
             { "userEmail", authInfo.UserEmail ?? "" }
@@ -44,8 +44,7 @@ public class SettingsController : ControllerBase
     [HttpPost("onedrive/auth")]
     public async Task<ActionResult<IDictionary<string, string>>> InitiateAuth()
     {
-        // This is where we explicitly want to initiate a new auth flow
-        var (deviceCode, verificationUrl, userCode) = await _authService.InitiateAuthenticationAsync();
+        var (deviceCode, verificationUrl, userCode) = await _oneDriveClient.InitiateAuthenticationAsync();
         return Ok(new Dictionary<string, string> 
         { 
             { "verificationUrl", verificationUrl },
@@ -56,25 +55,14 @@ public class SettingsController : ControllerBase
     [HttpPost("onedrive/disconnect")]
     public ActionResult Disconnect()
     {
-        _authService.Disconnect();
+        _oneDriveClient.Disconnect();
         return Ok();
-    }
-
-    [HttpPost("onedrive/test")]
-    public async Task<ActionResult<IDictionary<string, object>>> TestConnection()
-    {
-        var success = await _settingsService.TestOneDriveConnectionAsync();
-        return Ok(new Dictionary<string, object>
-        {
-            { "success", success },
-            { "message", success ? "Connection successful" : "Connection failed" }
-        });
     }
 
     [HttpPost("onedrive/reset")]
     public async Task<ActionResult> ResetConnection()
     {
-        await _settingsService.ResetOneDriveConnectionAsync();
+        await _oneDriveClient.ResetConnectionAsync();
         return Ok();
     }
 }
