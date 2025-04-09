@@ -21,9 +21,11 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // Register service implementations
-builder.Services.AddSingleton<IBackupService, MockBackupService>();
+// builder.Services.AddSingleton<IBackupService, MockBackupService>();
+builder.Services.AddSingleton<IBackupService, BackupService>();
+builder.Services.AddSingleton<IHassioClient, MockHassioClient>();
 builder.Services.AddSingleton<IOneDriveClient, OneDriveClient>(); // Changed to singleton for persistent token storage
-builder.Services.AddSingleton<ISettingsService, MockSettingsService>();
+builder.Services.AddSingleton<ISettingsService, SettingsService>();
 
 // Configure Grafana Cloud telemetry
 builder.Services.Configure<GrafanaTelemetryOptions>(builder.Configuration.GetSection("GrafanaTelemetry"));

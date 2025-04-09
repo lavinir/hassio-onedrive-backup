@@ -4,12 +4,21 @@ import { getTransferProgress } from '../api/backups';
 export const useTransferProgress = (operationId: string | null) => {
   const [progress, setProgress] = useState<number>(0);
   const [isComplete, setIsComplete] = useState(false);
+  const [isFailed, setIsFailed] = useState(false);
 
   const checkProgress = useCallback(async () => {
     if (!operationId) return;
 
     try {
       const currentProgress = await getTransferProgress(operationId);
+      
+      // Check for failure condition (-1 response)
+      if (currentProgress < 0) {
+        setIsFailed(true);
+        setIsComplete(true); // Stop polling on failure
+        return;
+      }
+      
       setProgress(currentProgress);
       
       if (currentProgress >= 100) {
@@ -17,6 +26,7 @@ export const useTransferProgress = (operationId: string | null) => {
       }
     } catch (error) {
       console.error('Error checking progress:', error);
+      setIsFailed(true);
       setIsComplete(true); // Stop polling on error
     }
   }, [operationId]);
@@ -25,6 +35,7 @@ export const useTransferProgress = (operationId: string | null) => {
     if (!operationId) {
       setProgress(0);
       setIsComplete(false);
+      setIsFailed(false);
       return;
     }
 
@@ -35,5 +46,5 @@ export const useTransferProgress = (operationId: string | null) => {
     };
   }, [operationId, checkProgress]);
 
-  return { progress, isComplete };
+  return { progress, isComplete, isFailed };
 };

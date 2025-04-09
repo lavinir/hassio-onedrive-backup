@@ -211,6 +211,12 @@ public class BackupService : IBackupService
     {
         if (_operations.TryGetValue(operationId, out var operation))
         {
+            // If the transfer has failed, return -1 to indicate failure
+            if (operation.Status == TransferStatus.Failed)
+            {
+                return Task.FromResult(-1.0);
+            }
+            
             return Task.FromResult((double)operation.Progress);
         }
 

@@ -14,7 +14,7 @@ public class SettingsService : ISettingsService
 
     public SettingsService(ILogger<SettingsService> logger, IOneDriveClient oneDriveClient)
     {
-        _settingsPath = Path.Combine("/config", "hassio-onedrive-backup-settings.json");
+        _settingsPath = Path.Combine("/data", "settings.json");
         _logger = logger;
         _oneDriveClient = oneDriveClient;
         _settings = LoadSettingsFromDisk() ?? CreateDefaultSettings();
@@ -90,16 +90,16 @@ public class SettingsService : ISettingsService
         },
         Backup = new BackupSettings
         {
-            InstanceName = "Home Assistant",
-            BackupName = "{type}-backup-{date}",
+            InstanceName = "",
+            BackupName = "HassBackup",
             BackupIntervalDays = 3,
-            BackupAllowedHours = "*",
+            BackupAllowedHours = "",
             MaxLocalBackups = 10,
             MaxOnedriveBackups = 20,
-            GenerationalDays = 7,
-            GenerationalWeeks = 4,
-            GenerationalMonths = 6,
-            GenerationalYears = 1,
+            GenerationalDays = null,
+            GenerationalWeeks = null,
+            GenerationalMonths = null,
+            GenerationalYears = null,
             ExcludedAddons = new List<string>(),
             ExcludeMediaFolder = false,
             ExcludeSSLFolder = false,

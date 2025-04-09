@@ -28,10 +28,10 @@ public class BackupSettings
     // Retention settings
     public int MaxLocalBackups { get; set; }
     public int MaxOnedriveBackups { get; set; }
-    public int GenerationalDays { get; set; }
-    public int GenerationalWeeks { get; set; }
-    public int GenerationalMonths { get; set; }
-    public int GenerationalYears { get; set; }
+    public int? GenerationalDays { get; set; }
+    public int? GenerationalWeeks { get; set; }
+    public int? GenerationalMonths { get; set; }
+    public int? GenerationalYears { get; set; }
 
     // Exclusion settings
     public List<string> ExcludedAddons { get; set; } = new();

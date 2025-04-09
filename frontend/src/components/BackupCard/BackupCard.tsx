@@ -1,5 +1,5 @@
 import { FC, useState } from 'react';
-import { CardContent, CardActions, Button, Typography, IconButton, Menu, MenuItem, ListItemIcon, ListItemText, Divider, Tooltip } from '@mui/material';
+import { CardContent, CardActions, Button, Typography, IconButton, Menu, MenuItem, ListItemIcon, ListItemText, Divider, Tooltip, Alert } from '@mui/material';
 import { 
   MoreVert as MoreVertIcon,
   PushPin as PinIcon,
@@ -34,14 +34,14 @@ const BackupCard: FC<IBackupCardProps> = ({ backup }) => {
   const { mutate: updateRetention } = useUpdateBackupRetention();
   const [action, setAction] = useState<'upload' | 'download' | null>(null);
   const [operationId, setOperationId] = useState<string | null>(null);
-  const { progress, isComplete } = useTransferProgress(operationId);
+  const { progress, isComplete, isFailed } = useTransferProgress(operationId);
   
   // Menu state
   const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
   const isMenuOpen = Boolean(menuAnchorEl);
 
   // Reset state when operation completes
-  if (isComplete && operationId) {
+  if (isComplete && operationId && !isFailed) {
     setOperationId(null);
     setAction(null);
   }
@@ -78,6 +78,12 @@ const BackupCard: FC<IBackupCardProps> = ({ backup }) => {
 
   const handleDelete = () => {
     deleteBackup(backup.slug);
+  };
+
+  // Reset the failed state
+  const handleDismissError = () => {
+    setOperationId(null);
+    setAction(null);
   };
 
   // Menu handlers
@@ -204,7 +210,17 @@ const BackupCard: FC<IBackupCardProps> = ({ backup }) => {
         </ChipsContainer>
         {operationId && action && (
           <Box mt={2}>
-            <ProgressIndicator progress={progress} action={action} />
+            {isFailed ? (
+              <Alert 
+                severity="error" 
+                onClose={handleDismissError}
+                sx={{ mb: 1 }}
+              >
+                {action === 'upload' ? 'Upload' : 'Download'} failed. See logs for details.
+              </Alert>
+            ) : (
+              <ProgressIndicator progress={progress} action={action} />
+            )}
           </Box>
         )}
       </CardContent>
