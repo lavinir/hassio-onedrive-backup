@@ -45,15 +45,8 @@ public class BackupController : ControllerBase
     [HttpGet("progress/{operationId}")]
     public async Task<ActionResult<IDictionary<string, double>>> GetTransferProgress(string operationId)
     {
-        var progress = await _backupService.GetTransferProgressAsync(operationId);
-        return Ok(new Dictionary<string, double> { { "progress", progress } });
-    }
-
-    [HttpGet("progress/{operationId}/detailed")]
-    public async Task<ActionResult<TransferProgress>> GetDetailedTransferProgress(string operationId)
-    {
-        var progress = await _backupService.GetDetailedTransferProgressAsync(operationId);
-        return Ok(progress);
+        var operation = await _backupService.GetTransferProgressAsync(operationId);
+        return Ok(new Dictionary<string, double> { { "progress", operation.Progress } });
     }
 
     [HttpPost("create")]

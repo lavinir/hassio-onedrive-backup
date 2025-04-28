@@ -2,6 +2,7 @@ import { Theme } from '@mui/material';
 import { ReactNode } from 'react';
 
 export interface IGeneralSettings {
+  instanceName: string;
   hassAPITimeoutMinutes: number;
   logLevelStr: 'error' | 'warning' | 'info' | 'verbose';
   notifyOnError: boolean;
@@ -11,7 +12,6 @@ export interface IGeneralSettings {
 
 export interface IBackupSettings {
   // Core backup settings
-  instanceName: string;
   backupName: string;
   backupPassword?: string;
   backupIntervalDays: number;

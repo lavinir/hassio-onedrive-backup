@@ -25,34 +25,18 @@ public class Backup
     [JsonPropertyName("compressed")]
     public bool Compressed { get; set; }
 
-    [JsonPropertyName("content")]
-    public Content Content { get; set; }
-
     [JsonPropertyName("status")]
     public string Status { get; set; } = string.Empty;
 
     [JsonPropertyName("source_type")]
     public string SourceType { get; set; } = string.Empty;
 
-    [JsonPropertyName("path")]
-    public string? Path { get; set; }
+    [JsonPropertyName("local_path")]
+    public string? LocalPath { get; set; }
 
     [JsonPropertyName("retained")]
     public bool Retained { get; set; }
 }
-
-public class Content
-{
-    [JsonPropertyName("homeassistant")]
-    public bool Homeassistant { get; set; }
-
-    [JsonPropertyName("addons")]
-    public string[] Addons { get; set; }
-
-    [JsonPropertyName("folders")]
-    public string[] Folders { get; set; }
-}
-
 
 public class BackupTransferOperation
 {

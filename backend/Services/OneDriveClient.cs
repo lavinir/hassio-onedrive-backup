@@ -19,13 +19,14 @@ public class OneDriveClient : IOneDriveClient
     private readonly string _tenantId = "consumers";
     private string _authRecordPath => Path.Combine(_tokenCachePath, "auth_record.json");
     private AuthenticationRecord? _authRecord;
-    
+
     // Simple flag to track if there's an ongoing auth flow
     private bool _authFlowInProgress = false;
     private TaskCompletionSource<(string deviceCode, string verificationUrl, string userCode)>? _currentAuthFlowTcs;
     private DateTime? _lastConnectionTest;
     private OneDriveAuthInfo _lastKnownAuthInfo = new() { AuthState = OneDriveAuthState.NotLoggedIn, UserEmail = null };
-    
+    private string? _driveId = null;
+
     public OneDriveClient(IConfiguration configuration, ILogger<OneDriveClient> logger)
     {
         _clientId = configuration["OneDrive:ClientId"] ?? throw new ArgumentNullException("OneDrive:ClientId configuration is missing");
@@ -123,10 +124,10 @@ public class OneDriveClient : IOneDriveClient
                 _logger.LogDebug("Device code callback invoked during initialization (this should only happen during explicit auth)");
                 return Task.CompletedTask;
             }, _tenantId, _clientId, options);
-            
+
             // Hook up the credential with Graph client
             _graphClient = new GraphServiceClient(_deviceCodeCredential, _scopes);
-            
+
             _logger.LogInformation("Graph client initialized");
         }
         catch (Exception ex)
@@ -167,7 +168,7 @@ public class OneDriveClient : IOneDriveClient
             _logger.LogDebug("IsLoggedInAsync: Auth flow in progress, returning LoggingIn state");
             return new OneDriveAuthInfo { AuthState = OneDriveAuthState.LoggingIn, UserEmail = null };
         }
-        
+
         // If no client or no auth record, definitely not logged in
         if (_graphClient == null || _authRecord == null)
         {
@@ -176,7 +177,7 @@ public class OneDriveClient : IOneDriveClient
 
         // Only test the connection if we're in the regular polling interval (every 30s)
         // or if this is the first call after auth flow completed
-        var shouldTestConnection = _lastConnectionTest == null || 
+        var shouldTestConnection = _lastConnectionTest == null ||
                                  DateTime.UtcNow - _lastConnectionTest > TimeSpan.FromSeconds(25);
 
         if (!shouldTestConnection)
@@ -188,21 +189,23 @@ public class OneDriveClient : IOneDriveClient
         try
         {
             // Test the connection with a lightweight call and get user info
-            var user = await _graphClient.Me.GetAsync(requestConfiguration => {
+            var user = await _graphClient.Me.GetAsync(requestConfiguration =>
+            {
                 requestConfiguration.QueryParameters.Select = new string[] { "mail", "userPrincipalName" };
             });
-            
+
             _logger.LogDebug("IsLoggedInAsync: User is authenticated");
             _lastConnectionTest = DateTime.UtcNow;
-            
+
             // Get the user's email (prefer mail, fallback to userPrincipalName)
             string? email = user?.Mail ?? user?.UserPrincipalName;
-            
-            _lastKnownAuthInfo = new OneDriveAuthInfo { 
-                AuthState = OneDriveAuthState.LoggedIn, 
-                UserEmail = email 
+
+            _lastKnownAuthInfo = new OneDriveAuthInfo
+            {
+                AuthState = OneDriveAuthState.LoggedIn,
+                UserEmail = email
             };
-            
+
             return _lastKnownAuthInfo;
         }
         catch (Exception ex)
@@ -231,11 +234,11 @@ public class OneDriveClient : IOneDriveClient
         _graphClient = null;
         _deviceCodeCredential = null;
         _authRecord = null;
-        
+
         // Mark that we're starting an auth flow and create a TaskCompletionSource
         _authFlowInProgress = true;
         _currentAuthFlowTcs = new TaskCompletionSource<(string deviceCode, string verificationUrl, string userCode)>();
-        
+
         try
         {
             // Create options with callback for authentication
@@ -249,19 +252,19 @@ public class OneDriveClient : IOneDriveClient
                 AuthorityHost = AzureAuthorityHosts.AzurePublicCloud,
                 TenantId = _tenantId
             };
-            
+
             // Create a new DeviceCodeCredential with a callback that captures the device code
             _deviceCodeCredential = new DeviceCodeCredential(
                 (info, cancel) =>
                 {
                     _logger.LogInformation($"Received device code: {info.UserCode} at {info.VerificationUri}");
-                    
+
                     // Set the result with the device code info
                     _currentAuthFlowTcs!.TrySetResult((info.DeviceCode, info.VerificationUri.ToString(), info.UserCode));
-                    
+
                     return Task.CompletedTask;
                 },
-                _tenantId, 
+                _tenantId,
                 _clientId,
                 options);
 
@@ -276,7 +279,7 @@ public class OneDriveClient : IOneDriveClient
                     // This will trigger the device code flow
                     var user = await _graphClient.Me.GetAsync();
                     _logger.LogInformation($"Successfully authenticated with OneDrive for user: {user?.DisplayName ?? "Unknown"}");
-                    
+
                     var fieldInfo = typeof(DeviceCodeCredential).GetProperty("Record", BindingFlags.NonPublic | BindingFlags.Instance);
                     if (fieldInfo != null)
                     {
@@ -304,7 +307,7 @@ public class OneDriveClient : IOneDriveClient
             // Wait for the device code callback to complete or timeout after 60 seconds
             var timeoutTask = Task.Delay(TimeSpan.FromSeconds(60));
             var completedTask = await Task.WhenAny(_currentAuthFlowTcs.Task, timeoutTask);
-            
+
             if (completedTask == timeoutTask)
             {
                 _logger.LogError("Timed out waiting for device code");
@@ -312,7 +315,7 @@ public class OneDriveClient : IOneDriveClient
                 _currentAuthFlowTcs.TrySetCanceled();
                 throw new TimeoutException("Timed out waiting for device code");
             }
-            
+
             // Return the device code info
             return await _currentAuthFlowTcs.Task;
         }
@@ -320,14 +323,14 @@ public class OneDriveClient : IOneDriveClient
         {
             // In case of an error, reset the auth flow state
             _authFlowInProgress = false;
-            
+
             if (_currentAuthFlowTcs != null && !_currentAuthFlowTcs.Task.IsCompleted)
             {
                 _currentAuthFlowTcs.TrySetException(ex);
             }
-            
+
             _currentAuthFlowTcs = null;
-            
+
             _logger.LogError(ex, "Failed to initiate device code flow");
             throw new Exception("Failed to initiate device code flow", ex);
         }
@@ -336,7 +339,7 @@ public class OneDriveClient : IOneDriveClient
     public void Disconnect()
     {
         _logger.LogInformation("Disconnecting from OneDrive");
-        
+
         // Clear the in-memory references
         _graphClient = null;
         _deviceCodeCredential = null;
@@ -374,10 +377,10 @@ public class OneDriveClient : IOneDriveClient
                     _logger.LogWarning(ex, $"Failed to delete MSAL cache file: {file.FullName}");
                 }
             }
-            
+
             _logger.LogInformation("Token cache files deleted");
         }
-        catch (Exception ex) 
+        catch (Exception ex)
         {
             _logger.LogWarning(ex, "Error cleaning up token cache files");
         }
@@ -388,24 +391,19 @@ public class OneDriveClient : IOneDriveClient
     public async Task<DriveItem> UploadFileAsync(string localFilePath, string oneDrivePath, ProgressCallback? progressCallback = null)
     {
         var client = await GetGraphClientAsync();
-        
+        var driveId = await GetDriveIdFromAppFolder();
+
         using var fileStream = File.OpenRead(localFilePath);
         var fileSize = new FileInfo(localFilePath).Length;
 
         // Normalize the path to use forward slashes
         oneDrivePath = oneDrivePath.Replace('\\', '/').TrimStart('/');
-        
-        // Ensure parent folders exist
-        if (Path.GetDirectoryName(oneDrivePath) is string dirPath && !string.IsNullOrWhiteSpace(dirPath))
-        {
-            await EnsureFolderPathExistsAsync(client, dirPath);
-        }
 
         // For files larger than 4MB, use large file upload session
         if (fileSize > 4 * 1024 * 1024)
         {
             _logger.LogInformation($"Using large file upload session for {oneDrivePath} ({fileSize} bytes)");
-            
+
             var uploadSessionRequestBody = new CreateUploadSessionPostRequestBody
             {
                 Item = new DriveItemUploadableProperties
@@ -418,7 +416,9 @@ public class OneDriveClient : IOneDriveClient
                 }
             };
 
-            var uploadSession = await client.Drives["/special/approot"].Items[oneDrivePath].CreateUploadSession.PostAsync(uploadSessionRequestBody);
+            // Use the app folder with the drive ID
+            var appFolder = await client.Drives[driveId].Special["approot"].GetAsync();
+            var uploadSession = await client.Drives[driveId].Items[appFolder.Id].ItemWithPath(oneDrivePath).CreateUploadSession.PostAsync(uploadSessionRequestBody);
 
             if (uploadSession == null)
             {
@@ -431,7 +431,8 @@ public class OneDriveClient : IOneDriveClient
 
             // Track progress using Progress<T>
             var uploadedBytes = 0L;
-            var progress = new Progress<long>(bytes => {
+            var progress = new Progress<long>(bytes =>
+            {
                 uploadedBytes = bytes;
                 progressCallback?.Invoke(uploadedBytes, fileSize);
             });
@@ -450,12 +451,14 @@ public class OneDriveClient : IOneDriveClient
             _logger.LogInformation($"Using simple upload for {oneDrivePath} ({fileSize} bytes)");
 
             // For small files, wrap the stream to track progress
-            var progressStream = new ProgressStream(fileStream, progress => 
+            var progressStream = new ProgressStream(fileStream, progress =>
             {
                 progressCallback?.Invoke(progress, fileSize);
             });
-            
-            var result = await client.Drives["/special/approot"].Items[oneDrivePath].Content.PutAsync(progressStream);
+
+            // Use the app folder with the drive ID
+            var appFolder = await client.Drives[driveId].Special["approot"].GetAsync();
+            var result = await client.Drives[driveId].Items[appFolder.Id].ItemWithPath(oneDrivePath).Content.PutAsync(progressStream);
             if (result == null)
             {
                 throw new Exception($"Failed to upload file {oneDrivePath}");
@@ -467,6 +470,7 @@ public class OneDriveClient : IOneDriveClient
     public async Task DownloadFileAsync(string oneDrivePath, string localFilePath, ProgressCallback? progressCallback = null)
     {
         var client = await GetGraphClientAsync();
+        var driveId = await GetDriveIdFromAppFolder();
 
         try
         {
@@ -480,19 +484,22 @@ public class OneDriveClient : IOneDriveClient
                 Directory.CreateDirectory(localDir);
             }
 
+            // Get the app folder to use as base for all operations
+            var appFolder = await client.Drives[driveId].Special["approot"].GetAsync();
+
             // Get the file size first for progress reporting
-            var item = await client.Drives["/special/approot"].Items[oneDrivePath].GetAsync();
+            var item = await client.Drives[driveId].Items[appFolder.Id].ItemWithPath(oneDrivePath).GetAsync();
             var totalSize = item?.Size;
 
-            var stream = await client.Drives["/special/approot"].Items[oneDrivePath].Content.GetAsync();
-            
+            var stream = await client.Drives[driveId].Items[appFolder.Id].ItemWithPath(oneDrivePath).Content.GetAsync();
+
             if (stream == null)
             {
                 throw new Exception($"Failed to get content stream for file {oneDrivePath}");
             }
 
             using var fileStream = File.Create(localFilePath);
-            
+
             // Use buffer for efficient copying
             var buffer = new byte[81920];
             long totalBytesRead = 0;
@@ -504,56 +511,13 @@ public class OneDriveClient : IOneDriveClient
                 totalBytesRead += bytesRead;
                 progressCallback?.Invoke(totalBytesRead, totalSize);
             }
-            
+
             _logger.LogInformation($"Successfully downloaded {oneDrivePath} to {localFilePath}");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, $"Failed to download file {oneDrivePath}");
             throw;
-        }
-    }
-
-    private async Task EnsureFolderPathExistsAsync(GraphServiceClient client, string path)
-    {
-        var segments = path.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
-        var currentPath = "";
-
-        foreach (var segment in segments)
-        {
-            currentPath = string.IsNullOrEmpty(currentPath) ? segment : currentPath + "/" + segment;
-
-            try
-            {
-                // Try to get the folder
-                await client.Drives["/special/approot"].Items[currentPath].GetAsync();
-                _logger.LogDebug($"Folder {currentPath} already exists");
-            }
-            catch
-            {
-                // Folder doesn't exist, create it
-                _logger.LogInformation($"Creating folder {currentPath}");
-                var folderItem = new DriveItem
-                {
-                    Name = segment,
-                    Folder = new Folder(),
-                    AdditionalData = new Dictionary<string, object>
-                    {
-                        { "@microsoft.graph.conflictBehavior", "replace" }
-                    }
-                };
-
-                // Always use the /special/approot drive but modify the path for parent folder
-                if (string.IsNullOrEmpty(Path.GetDirectoryName(currentPath)))
-                {
-                    await client.Drives["/special/approot"].Items.PostAsync(folderItem);
-                }
-                else
-                {
-                    var parentPath = Path.GetDirectoryName(currentPath)?.Replace('\\', '/') ?? "";
-                    await client.Drives["/special/approot"].Items[parentPath].Children.PostAsync(folderItem);
-                }
-            }
         }
     }
 
@@ -574,7 +538,7 @@ public class OneDriveClient : IOneDriveClient
         public override bool CanSeek => _inner.CanSeek;
         public override bool CanWrite => _inner.CanWrite;
         public override long Length => _inner.Length;
-        
+
         public override long Position
         {
             get => _position;
@@ -617,10 +581,54 @@ public class OneDriveClient : IOneDriveClient
         }
     }
 
+    public async Task<string> GetDriveIdFromAppFolder()
+    {        
+        try
+        {
+            if (_driveId != null)
+            {
+                return _driveId;
+            }
+
+            var resp = await _graphClient.Drives.WithUrl("https://graph.microsoft.com/v1.0/me/drive/special/approot").GetAsync();
+            string id = resp.AdditionalData["id"].ToString().Split("!").First();
+            return id;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("Failed getting Drive Id", ex);
+            throw;
+        }
+    }
+
     public async Task ResetConnectionAsync()
     {
         Disconnect(); // This handles clearing the token cache and auth records
         InitializeCredential(); // Reinitialize with fresh credentials
         await Task.CompletedTask;
+    }
+
+    public async Task<IList<DriveItem>> ListFilesInDirectoryAsync(string oneDriveDirectoryPath)
+    {
+        var client = await GetGraphClientAsync();
+        var driveId = await GetDriveIdFromAppFolder();
+
+        // Normalize the path to use forward slashes and trim leading slashes
+        oneDriveDirectoryPath = oneDriveDirectoryPath.Replace('\\', '/').TrimStart('/');
+
+        // Get the app folder as the base
+        var appFolder = await client.Drives[driveId].Special["approot"].GetAsync();
+        if (appFolder == null)
+        {
+            throw new Exception("Failed to get app folder root");
+        }
+
+        // If the path is empty, list the root of the app folder
+        var itemRequest = string.IsNullOrEmpty(oneDriveDirectoryPath)
+            ? client.Drives[driveId].Items[appFolder.Id].Children
+            : client.Drives[driveId].Items[appFolder.Id].ItemWithPath(oneDriveDirectoryPath).Children;
+
+        var items = await itemRequest.GetAsync();
+        return items?.Value ?? new List<DriveItem>();
     }
 }

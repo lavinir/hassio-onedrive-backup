@@ -22,12 +22,6 @@ public class MockBackupService : IBackupService
                 Status = "Local",
                 SourceType = "Automated",
                 BackupType = "Full",
-                Content = new Content
-                {
-                    Homeassistant = true,
-                    Addons = new string[] { "addon1", "addon2" },
-                    Folders = new string[] { "folder1", "folder2" }
-                }
             },
             new()
             {
@@ -38,12 +32,6 @@ public class MockBackupService : IBackupService
                 Status = "OneDrive",
                 SourceType = "Manual",
                 BackupType = "Partial",
-                Content = new Content
-                {
-                    Homeassistant = true,
-                    Addons = new string[] { "addon1" },
-                    Folders = new string[] { "folder1" }
-                }
             }
         };
         _operations = new Dictionary<string, TransferOperation>();
@@ -138,12 +126,6 @@ public class MockBackupService : IBackupService
             Status = "Local",
             SourceType = "Manual",
             BackupType = isPartial ? "Partial" : "Full",
-            Content = new Content
-            {
-                Homeassistant = true,
-                Addons = new string[0],
-                Folders = new string[0]
-            }
         };
 
         _backups.Add(backup);
@@ -159,24 +141,12 @@ public class MockBackupService : IBackupService
         return await Task.FromResult(backup);
     }
 
-    public async Task<double> GetTransferProgressAsync(string operationId)
+    public async Task<TransferOperation> GetTransferProgressAsync(string operationId)
     {
         if (!_operations.TryGetValue(operationId, out var operation))
             throw new ArgumentException("Operation not found", nameof(operationId));
 
-        return await Task.FromResult((double)operation.Progress);
-    }
-
-    public Task<TransferProgress> GetDetailedTransferProgressAsync(string operationId)
-    {
-        if (!_operations.TryGetValue(operationId, out var operation))
-            throw new ArgumentException("Operation not found", nameof(operationId));
-
-        return Task.FromResult(new TransferProgress
-        {
-            BytesTransferred = operation.Progress,
-            TotalBytes = 100 // Since we're using percentage progress
-        });
+        return await Task.FromResult(operation);
     }
 
     private async Task SimulateTransferAsync(string operationId)

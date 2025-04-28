@@ -10,8 +10,7 @@ public interface IBackupService
     Task DeleteBackupAsync(string slugId);
     Task<Backup> TriggerBackupAsync(string name);
     Task<Backup> UpdateBackupRetentionAsync(string slugId, bool retain);
-    Task<double> GetTransferProgressAsync(string operationId);
-    Task<TransferProgress> GetDetailedTransferProgressAsync(string operationId);
+    Task<TransferOperation> GetTransferProgressAsync(string operationId);
 }
 
 public class TransferProgress

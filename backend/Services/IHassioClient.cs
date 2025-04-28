@@ -14,7 +14,7 @@ namespace HassioOneDriveBackup.Services
 
         Task UpdateHassEntityStateAsync(string entityId, string payload);
 
-        Task<string> DownloadBackupAsync(string backupSlug);
+        Task<Backup> DownloadBackupAsync(string backupSlug);
 
         Task<bool> UploadBackupAsync(string filePath);
 

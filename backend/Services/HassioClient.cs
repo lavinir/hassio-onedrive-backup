@@ -203,7 +203,7 @@ namespace HassioOneDriveBackup.Services;
             await _httpClient.PostAsync(uri, new StringContent(payload, Encoding.UTF8, "application/json"));
         }
 
-        public async Task<string> DownloadBackupAsync(string backupSlug)
+        public async Task<Backup> DownloadBackupAsync(string backupSlug)
         {            
             _logger.LogInformation($"Fetching Local Backup (Slug:{backupSlug})");
             Uri uri = new Uri(Supervisor_Base_Uri_Str + $"/backups/{backupSlug}/download");
@@ -212,7 +212,12 @@ namespace HassioOneDriveBackup.Services;
             using var fileStream = System.IO.File.Create(fileInfo.FullName);
             await memStream.CopyToAsync(fileStream);
             _logger.LogInformation($"Backup ({backupSlug}) fetched successfully");
-            return fileInfo.FullName;
+
+            // Try to get backup metadata
+            var backups = await GetBackupsAsync(b => b.Slug == backupSlug);
+            var backup = backups.FirstOrDefault() ?? new Backup { Slug = backupSlug };
+            backup.LocalPath = fileInfo.FullName;
+            return backup;
         }
 
         public async Task<string> GetTimeZoneAsync()

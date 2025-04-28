@@ -22,7 +22,6 @@ public class MockSettingsService : ISettingsService
             Backup = new BackupSettings
             {
                 // Core backup settings
-                InstanceName = "Home Assistant",
                 BackupName = "{type}-backup-{date}",
                 BackupIntervalDays = 3,
                 BackupAllowedHours = "*",

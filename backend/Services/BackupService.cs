@@ -52,11 +52,16 @@ public class BackupService : IBackupService
         {
             try
             {
+                Settings settings = await _settingsService.GetSettingsAsync();
                 // First download the backup locally from Home Assistant
-                var localPath = await _hassioClient.DownloadBackupAsync(slugId);
-                var oneDrivePath = $"backups/{slugId}.tar";
+                var backup = await _hassioClient.DownloadBackupAsync(slugId);
+                var localPath = backup.LocalPath;
+                var oneDrivePath = $"backups/{settings.General.InstanceName}/{slugId}.tar";
 
-                // Upload to OneDrive with progress tracking
+                if (string.IsNullOrEmpty(localPath))
+                {
+                    throw new Exception($"Backup local path is null or empty for slug {slugId}");
+                }
                 await _oneDriveClient.UploadFileAsync(localPath, oneDrivePath, (bytesTransferred, totalBytes) =>
                 {
                     if (totalBytes.HasValue)
@@ -70,7 +75,7 @@ public class BackupService : IBackupService
                 operation.EndTime = DateTime.UtcNow;
 
                 // Clean up local file
-                if (File.Exists(localPath))
+                if (!string.IsNullOrEmpty(localPath) && File.Exists(localPath))
                 {
                     File.Delete(localPath);
                 }
@@ -207,34 +212,14 @@ public class BackupService : IBackupService
         return backup;
     }
 
-    public Task<double> GetTransferProgressAsync(string operationId)
+    public Task<TransferOperation> GetTransferProgressAsync(string operationId)
     {
         if (_operations.TryGetValue(operationId, out var operation))
-        {
-            // If the transfer has failed, return -1 to indicate failure
-            if (operation.Status == TransferStatus.Failed)
-            {
-                return Task.FromResult(-1.0);
-            }
-            
-            return Task.FromResult((double)operation.Progress);
+        {            
+            return Task.FromResult(operation);
         }
 
         throw new ArgumentException("Operation not found", nameof(operationId));
-    }
-
-    public Task<TransferProgress> GetDetailedTransferProgressAsync(string operationId)
-    {
-        if (!_operations.TryGetValue(operationId, out var operation))
-        {
-            throw new ArgumentException("Operation not found", nameof(operationId));
-        }
-
-        return Task.FromResult(new TransferProgress
-        {
-            BytesTransferred = operation.Progress,
-            TotalBytes = 100 // Since we're using percentage progress
-        });
     }
 
     private static string[] GetExcludedFolders(Settings settings)

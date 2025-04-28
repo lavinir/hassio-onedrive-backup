@@ -9,6 +9,7 @@ public class Settings
 
 public class GeneralSettings
 {
+    public string InstanceName { get; set; } = string.Empty;
     public int HassAPITimeoutMinutes { get; set; }
     public string LogLevelStr { get; set; } = "info";
     public bool NotifyOnError { get; set; }
@@ -19,7 +20,6 @@ public class GeneralSettings
 public class BackupSettings
 {
     // Core backup settings
-    public string InstanceName { get; set; } = string.Empty;
     public string BackupName { get; set; } = string.Empty;
     public string? BackupPassword { get; set; }
     public int BackupIntervalDays { get; set; }

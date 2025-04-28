@@ -82,6 +82,7 @@ public class SettingsService : ISettingsService
     {
         General = new GeneralSettings
         {
+            InstanceName = "",
             HassAPITimeoutMinutes = 5,
             LogLevelStr = "info",
             NotifyOnError = true,
@@ -90,7 +91,6 @@ public class SettingsService : ISettingsService
         },
         Backup = new BackupSettings
         {
-            InstanceName = "",
             BackupName = "HassBackup",
             BackupIntervalDays = 3,
             BackupAllowedHours = "",

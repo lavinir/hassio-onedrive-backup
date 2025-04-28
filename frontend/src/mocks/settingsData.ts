@@ -2,6 +2,7 @@ import { ISettingsForm } from '../types/settings.types';
 
 export const mockSettings: ISettingsForm = {
   general: {
+    instanceName: 'Home Assistant',
     hassAPITimeoutMinutes: 5,
     logLevelStr: 'info',
     notifyOnError: true,
@@ -10,8 +11,7 @@ export const mockSettings: ISettingsForm = {
   },
   backup: {
     // Core backup settings
-    instanceName: 'Home Assistant',
-    backupName: '{type}-backup-{date}',
+    backupName: 'hassBackup',
     backupIntervalDays: 3,
     backupAllowedHours: '*',
 

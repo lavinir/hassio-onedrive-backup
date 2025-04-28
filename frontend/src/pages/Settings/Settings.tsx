@@ -319,6 +319,22 @@ const Settings: FC<ISettingsProps> = () => {
             <FormSection>
               <FieldRow>
                 <FieldLabel>
+                  <Typography>Instance Name</Typography>
+                  <FieldDescription>
+                    Name of your Home Assistant instance
+                  </FieldDescription>
+                </FieldLabel>
+                <FieldInput>
+                  <StyledTextField
+                    value={settings.general.instanceName}
+                    onChange={handleInputChange('general', 'instanceName')}
+                    size="small"
+                    fullWidth
+                  />
+                </FieldInput>
+              </FieldRow>
+              <FieldRow>
+                <FieldLabel>
                   <Typography>Home Assistant API Timeout</Typography>
                   <FieldDescription>
                     Timeout for Home Assistant API calls (minutes)
@@ -433,23 +449,6 @@ const Settings: FC<ISettingsProps> = () => {
             </SectionHeader>
 
             <FormSection>
-              <FieldRow>
-                <FieldLabel>
-                  <Typography>Instance Name</Typography>
-                  <FieldDescription>
-                    Name of your Home Assistant instance
-                  </FieldDescription>
-                </FieldLabel>
-                <FieldInput>
-                  <StyledTextField
-                    value={settings.backup.instanceName}
-                    onChange={handleInputChange('backup', 'instanceName')}
-                    size="small"
-                    fullWidth
-                  />
-                </FieldInput>
-              </FieldRow>
-
               <FieldRow>
                 <FieldLabel>
                   <Typography>Backup Name Template</Typography>

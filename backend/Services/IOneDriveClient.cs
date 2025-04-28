@@ -31,4 +31,7 @@ public interface IOneDriveClient
     
     // Download a file from OneDrive App Folder with progress reporting
     Task DownloadFileAsync(string oneDrivePath, string localFilePath, ProgressCallback? progressCallback = null);
+    
+    // Enumerate all files in a directory in OneDrive App Folder
+    Task<IList<DriveItem>> ListFilesInDirectoryAsync(string oneDriveDirectoryPath);
 }

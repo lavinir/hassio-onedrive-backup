@@ -26,12 +26,6 @@ public class MockHassioClient : IHassioClient
                 Status = "Local",
                 SourceType = "Automated",
                 BackupType = "Full",
-                Content = new Content
-                {
-                    Homeassistant = true,
-                    Addons = new[] { "core_ssh", "core_mosquitto", "core_samba" },
-                    Folders = new[] { "ssl", "share", "media" }
-                }
             },
             new()
             {
@@ -42,12 +36,6 @@ public class MockHassioClient : IHassioClient
                 Status = "Local",
                 SourceType = "Manual",
                 BackupType = "Partial",
-                Content = new Content
-                {
-                    Homeassistant = true,
-                    Addons = new[] { "core_ssh" },
-                    Folders = new[] { "share" }
-                }
             }
         };
 
@@ -109,13 +97,7 @@ public class MockHassioClient : IHassioClient
             Size = isPartial ? "750 MB" : "2.3 GB",
             Status = "Local",
             SourceType = "Manual",
-            BackupType = isPartial ? "Partial" : "Full",
-            Content = new Content
-            {
-                Homeassistant = true,
-                Addons = addons?.ToArray() ?? Array.Empty<string>(),
-                Folders = folders?.ToArray() ?? Array.Empty<string>()
-            }
+            BackupType = isPartial ? "Partial" : "Full",            
         };
 
         _logger.LogInformation($"Mock: Created new {newBackup.BackupType} backup: {newBackup.Name}");
@@ -147,7 +129,7 @@ public class MockHassioClient : IHassioClient
         await Task.CompletedTask;
     }
 
-    public async Task<string> DownloadBackupAsync(string backupSlug)
+    public async Task<Backup> DownloadBackupAsync(string backupSlug)
     {
         var backup = _backups.FirstOrDefault(b => b.Slug == backupSlug);
         if (backup == null)
@@ -171,9 +153,11 @@ public class MockHassioClient : IHassioClient
         
         _logger.LogInformation($"Mock: Downloaded backup to: {filePath}");
         
+
+        backup.LocalPath = filePath; // Set the local path for the downloaded backup
         // Simulate a download delay
         await Task.Delay(1000);
-        return filePath;
+        return backup;
     }
 
     public async Task<bool> UploadBackupAsync(string filePath)
