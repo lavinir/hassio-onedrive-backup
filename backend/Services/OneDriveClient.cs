@@ -628,7 +628,30 @@ public class OneDriveClient : IOneDriveClient
             ? client.Drives[driveId].Items[appFolder.Id].Children
             : client.Drives[driveId].Items[appFolder.Id].ItemWithPath(oneDriveDirectoryPath).Children;
 
-        var items = await itemRequest.GetAsync();
-        return items?.Value ?? new List<DriveItem>();
+        var allItems = new List<DriveItem>();
+        var page = await itemRequest.GetAsync();
+        if (page?.Value != null)
+            allItems.AddRange(page.Value);
+
+        // Handle paging using @odata.nextLink
+        var nextLink = page?.OdataNextLink;
+        while (!string.IsNullOrEmpty(nextLink))
+        {
+            var nextPage = await client.RequestAdapter.SendAsync(
+                new RequestInformation
+                {
+                    HttpMethod = Method.GET,
+                    UrlTemplate = nextLink,
+                    PathParameters = new Dictionary<string, object>()
+                },
+                DriveItemCollectionResponse.CreateFromDiscriminatorValue,
+                null
+            );
+            if (nextPage?.Value != null)
+                allItems.AddRange(nextPage.Value);
+            nextLink = nextPage?.OdataNextLink;
+        }
+
+        return allItems;
     }
 }
