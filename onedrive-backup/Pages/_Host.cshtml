@@ -19,7 +19,6 @@
     <link href="css/site.css" rel="stylesheet" />
     <link href="css/main.css" rel="stylesheet" />
     <link href="onedrive-backup.styles.css" rel="stylesheet" />
-    <link href="css/main.css" rel="stylesheet" />
     <link rel="icon" type="image/png" href="favicon.png" />
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <component type="typeof(HeadOutlet)" render-mode="ServerPrerendered" />
@@ -36,23 +35,24 @@
                 </div>
                 <div class="modal-body">
                     <h6>🎉 New Preview Channel</h6>
-                    <p><A>A new Preview Channel is available to try and test new versions and fixes. See details in the Readme's'</A> <a href="https://github.com/lavinir/hassio-onedrive-backup?tab=readme-ov-file#installation-instructions"
+                    <p>A new Preview Channel is available to try and test new versions and fixes. See details in the Readme's <a href="https://github.com/lavinir/hassio-onedrive-backup?tab=readme-ov-file#installation-instructions"
                             target="_blank">Installation Instructions</a></p>
                     <h6>🐞 Fixed</h6>
-                        <li>Updated backup file naming in OneDrive to include the backup slug to avoid potential duplicates with upgrade backups</li>>
-                        <li>Fixed issue when only the first 200 backups are fetched from OneDrive and the rest are ignored, also causing repeated uploads.</li>>
+                    <ul>
+                        <li>Updated backup file naming in OneDrive to include the backup slug to avoid potential duplicates with upgrade backups</li>
+                        <li>Fixed issue when only the first 200 backups are fetched from OneDrive and the rest are ignored, also causing repeated uploads.</li>
+                    </ul>
                     <h6>🆕 Added</h6>
                     <ul>
                         <li>Additional debugging logs</li>
                         <li>Updated backup file naming in OneDrive to include the backup slug to avoid potential duplicates with upgrade backups</li>
                     </ul>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
             </div>
         </div>
-    </div>
     </div>
     <div id="alertPlaceholder"></div>
     <component type="typeof(App)" render-mode="ServerPrerendered" />

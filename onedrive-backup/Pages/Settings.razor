@@ -1,4 +1,4 @@
-﻿@page "/settings"
+@page "/settings"
 @using hassio_onedrive_backup.Contracts;
 @using hassio_onedrive_backup.Hass;
 @using hassio_onedrive_backup.Storage;
@@ -15,220 +15,249 @@
         <DataAnnotationsValidator />
         @*<ValidationSummary />*@
 
-        <h3>General</h3>
-        <div class="mb-3 form-switch">
-            <label class="form-check-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.dark_mode.description">
-                <input type="checkbox" class="form-check-input" role="switch" id="@SettingsReader.Settings.dark_mode.name" @bind="newOptions.DarkMode">
-                @SettingsReader.Settings.dark_mode.name
-            </label>
-        </div>
-
-
-        <div class="mb-3">
-            <label for="hassApiTimeoutMinutes" class="form-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.hass_api_timeout_minutes.description">@SettingsReader.Settings.hass_api_timeout_minutes.name</label>
-            <input type="number" class="form-control @(AddonOptions.DarkMode ? "dark": "")" min="30" id="@SettingsReader.Settings.hass_api_timeout_minutes.name" @bind="newOptions.HassAPITimeoutMinutes" placeholder="30" required>
-        </div>
-
-
-        <div class="mb-3 form-switch">
-            <label class="form-check-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.notify_on_error.description">
-                <input type="checkbox" class="form-check-input" role="switch" id="@SettingsReader.Settings.notify_on_error.name" @bind="newOptions.NotifyOnError">
-                @SettingsReader.Settings.notify_on_error.name
-            </label>
-        </div>
-
-        <div class="mb-3 form-switch">
-            <label class="form-check-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.enable_anonymous_telemetry.description">
-                <input type="checkbox" class="form-check-input" role="switch" id="@SettingsReader.Settings.enable_anonymous_telemetry.name" @bind="newOptions.EnableAnonymousTelemetry">
-                @SettingsReader.Settings.enable_anonymous_telemetry.name
-            </label>
-        </div>
-
-        <div class="mb-3 form-switch">
-            <label class="form-check-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.enable_anonymous_error_reporting.description">
-                <input type="checkbox" class="form-check-input" role="switch" id="@SettingsReader.Settings.enable_anonymous_error_reporting.name" @bind="newOptions.EnableAnonymousErrorReporting">
-                @SettingsReader.Settings.enable_anonymous_error_reporting.name
-            </label>
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.log_level.description">@SettingsReader.Settings.log_level.name</label>
-            <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="inlineRadioOptions" id="verbose" value="verbose"
-                       checked="@(AddonOptions.LogLevelStr == "verbose")" @onchange="LogLevelChanged">
-                <label class="form-check-label" for="verbose">Verbose</label>
-            </div>
-            <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="inlineRadioOptions" id="info" value="info"
-                       checked="@(AddonOptions.LogLevelStr == "info")" @onchange="LogLevelChanged">
-                <label class="form-check-label" for="info">Info</label>
-            </div>
-            <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="inlineRadioOptions" id="warning" value="warning"
-                       checked="@(AddonOptions.LogLevelStr == "warning")" @onchange="LogLevelChanged">
-                <label class="form-check-label" for="info">Warning</label>
-            </div>
-            <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="inlineRadioOptions" id="error" value="error"
-                       checked="@(AddonOptions.LogLevelStr == "error")" @onchange="LogLevelChanged">
-                <label class="form-check-label" for="info">Error</label>
-            </div>
-        </div>
-
-        <h3>Backup</h3>
-
-        <div class="mb-3">
-            <label for="@SettingsReader.Settings.local_backup_num_to_keep.name"
-                   class="form-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.local_backup_num_to_keep.description">
-                @SettingsReader.Settings.local_backup_num_to_keep.name
-            </label>
-            <input type="number" class="form-control @(AddonOptions.DarkMode ? "dark": "")" min="0" id="@SettingsReader.Settings.local_backup_num_to_keep.name" placeholder="0" @bind="newOptions.MaxLocalBackups" required>
-        </div>
-
-        <div class="mb-3">
-            <label for="@SettingsReader.Settings.onedrive_backup_num_to_keep.name"
-                   class="form-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.onedrive_backup_num_to_keep.description">
-                @SettingsReader.Settings.onedrive_backup_num_to_keep.name
-            </label>
-            <input type="number" class="form-control @(AddonOptions.DarkMode ? "dark": "")" min="1" id="@SettingsReader.Settings.onedrive_backup_num_to_keep.name" placeholder="1" @bind="newOptions.MaxOnedriveBackups" required>
-        </div>
-
-        <div class="mb-3">
-            <label for="@SettingsReader.Settings.backup_interval_days.name" class="form-label"
-                   data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.backup_interval_days.description">@SettingsReader.Settings.backup_interval_days.name</label>
-            <input type="number" min="0.1" step="0.1" class="form-control @(AddonOptions.DarkMode ? "dark": "")" id="@SettingsReader.Settings.backup_interval_days.name" placeholder="1" @bind="newOptions.BackupIntervalDays" required>
-        </div>
-
-        <div class="mb-3">
-            <label for="@SettingsReader.Settings.generational_days.name" class="form-label"
-                   data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.generational_days.description">@SettingsReader.Settings.generational_days.name</label>
-            <input type="number" class="form-control @(AddonOptions.DarkMode ? "dark": "")" min="0" id="@SettingsReader.Settings.generational_days.name" placeholder="GenDays (Optional)" @bind="newOptions.GenerationalDays">
-        </div>
-
-        <div class="mb-3">
-            <label for="@SettingsReader.Settings.generational_weeks.name" class="form-label"
-                   data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.generational_weeks.description">@SettingsReader.Settings.generational_weeks.name</label>
-            <input type="number" class="form-control @(AddonOptions.DarkMode ? "dark": "")" min="0" id="@SettingsReader.Settings.generational_weeks.name" placeholder="GenWeeks (Optional)" @bind="newOptions.GenerationalWeeks">
-        </div>
-
-        <div class="mb-3">
-            <label for="@SettingsReader.Settings.generational_months.name" class="form-label"
-                   data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.generational_months.description">@SettingsReader.Settings.generational_months.name</label>
-            <input type="number" class="form-control @(AddonOptions.DarkMode ? "dark": "")" min="0" id="@SettingsReader.Settings.generational_months.name" placeholder="GenMonths (Optional)" @bind="newOptions.GenerationalMonths">
-        </div>
-
-        <div class="mb-3">
-            <label for="@SettingsReader.Settings.generational_years.name" class="form-label"
-                   data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.generational_years.description">@SettingsReader.Settings.generational_years.name</label>
-            <input type="number" class="form-control @(AddonOptions.DarkMode ? "dark": "")" min="0" id="@SettingsReader.Settings.generational_years.name" placeholder="GenYears (Optional)" @bind="newOptions.GenerationalYears">
-        </div>
-
-        <div class="mb-3">
-            <label for="@SettingsReader.Settings.backup_name.name" class="form-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.backup_name.description">@SettingsReader.Settings.backup_name.name</label>
-            <input type="text" class="form-control @(AddonOptions.DarkMode ? "dark": "")" pattern="[A\-Za\-z0\-9\_]+" id="@SettingsReader.Settings.backup_name.name" placeholder="hass_backup" @bind="newOptions.BackupName" required>
-        </div>
-
-        <div class="mb-3">
-            <label for="@SettingsReader.Settings.backup_instance_name.name" class="form-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.backup_instance_name.description">@SettingsReader.Settings.backup_instance_name.name</label>
-            <input type="text" class="form-control @(AddonOptions.DarkMode ? "dark": "")" pattern="[A\-Za\-z0\-9\_]+" id="@SettingsReader.Settings.backup_instance_name.name" @bind="newOptions.InstanceName" placeholder="Enter backup instance name (Optional)">
-        </div>
-
-        <div class="mb-3">
-            <label for="@SettingsReader.Settings.backup_allowed_hours.name" class="form-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.backup_allowed_hours.description">@SettingsReader.Settings.backup_allowed_hours.name</label>
-            <input type="text" class="form-control @(AddonOptions.DarkMode ? "dark": "")" pattern="[0-9,\-]+" id="@SettingsReader.Settings.backup_allowed_hours.name" @bind="newOptions.BackupAllowedHours" placeholder="Enter allowed hours (e.g. 1-4) (Optional)">
-        </div>
-
-        <div class="mb-3">
-            <label for="backupPasswd" class="form-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.backup_passwd.description">@SettingsReader.Settings.backup_passwd.name</label>
-            <input type="password" class="form-control @(AddonOptions.DarkMode ? "dark": "")" id="@SettingsReader.Settings.backup_passwd.name" @bind="newOptions.BackupPassword" placeholder="Enter password (Optional)">
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label" data-bs-toggle="tooltip"
-                   data-bs-title="@SettingsReader.Settings.excluded_addons.description">@SettingsReader.Settings.excluded_addons.name</label>
-            @for (var idx = 0; idx < AddonOptions.ExcludedAddons.Count; idx++)
-            {
-                var tmpIdx = idx;
-                <div class="mb-3">
-                    <input type="text" class="form-control @(AddonOptions.DarkMode ? "dark": "")" placeholder="Addon Name to exclude (Optional)" value="@AddonOptions.ExcludedAddons[idx]"
-                    @onchange="e => UpdateExcludedAddons(e, tmpIdx)" />
+        @* ── General ── *@
+        <div class="card mb-4 @(AddonOptions.DarkMode ? "bg-secondary text-white border-secondary" : "")">
+            <div class="card-header fw-semibold">General</div>
+            <div class="card-body">
+                <div class="mb-3 form-switch">
+                    <label class="form-check-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.dark_mode.description">
+                        <input type="checkbox" class="form-check-input" role="switch" id="@SettingsReader.Settings.dark_mode.name" @bind="newOptions.DarkMode">
+                        @SettingsReader.Settings.dark_mode.name
+                    </label>
                 </div>
-            }
 
-        </div>
-
-        <div class="mb-3 form-switch">
-            <label class="form-check-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.monitor_all_local_backups.description">
-                <input type="checkbox" class="form-check-input" role="switch" id="@SettingsReader.Settings.monitor_all_local_backups.name" @bind="newOptions.MonitorAllLocalBackups" />
-                @SettingsReader.Settings.monitor_all_local_backups.name
-            </label>
-        </div>
-
-        <div class="mb-3 form-switch">
-            <label class="form-check-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.ignore_upgrade_backups.description">
-                <input type="checkbox" class="form-check-input" role="switch" id="@SettingsReader.Settings.ignore_upgrade_backups.name" @bind="newOptions.IgnoreUpgradeBackups" />
-                @SettingsReader.Settings.ignore_upgrade_backups.name
-            </label>
-        </div>
-
-        <div class="mb-3 form-switch">
-            <label class="form-check-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.exclude_media_folder.description">
-                <input type="checkbox" class="form-check-input" role="switch" id="@SettingsReader.Settings.exclude_media_folder.name" @bind="newOptions.ExcludeMediaFolder" />
-                @SettingsReader.Settings.exclude_media_folder.name
-            </label>
-        </div>
-
-        <div class="mb-3 form-switch">
-            <label class="form-check-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.exclude_ssl_folder.description">
-                <input type="checkbox" class="form-check-input" role="switch" id="@SettingsReader.Settings.exclude_ssl_folder.name" @bind="newOptions.ExcludeSSLFolder" />
-                @SettingsReader.Settings.exclude_ssl_folder.name
-            </label>
-        </div>
-
-        <div class="mb-3 form-switch">
-            <label class="form-check-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.exclude_share_folder.description">
-                <input type="checkbox" class="form-check-input" role="switch" id="@SettingsReader.Settings.exclude_share_folder.name" @bind="newOptions.ExcludeShareFolder" />
-                @SettingsReader.Settings.exclude_share_folder.name
-            </label>
-        </div>
-
-        <div class="mb-3 form-switch">
-            <label class="form-check-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.exclude_local_addons_folder.description">
-                <input type="checkbox" class="form-check-input" role="switch" id="@SettingsReader.Settings.exclude_local_addons_folder.name" @bind="newOptions.ExcludeLocalAddonsFolder" />
-                @SettingsReader.Settings.exclude_local_addons_folder.name
-            </label>
-        </div>
-
-        <h3>File Sync</h3>
-
-
-        <div class="mb-3">
-            <label class="form-label" data-bs-toggle="tooltip"
-                   data-bs-title="@SettingsReader.Settings.sync_paths.description">@SettingsReader.Settings.sync_paths.name</label>
-            @for (var idx = 0; idx < AddonOptions.SyncPaths.Count; idx++)
-            {
-                var tmpIdx = idx;
                 <div class="mb-3">
-                    <input type="text" class="form-control @(AddonOptions.DarkMode ? "dark": "")" placeholder="Enter path (Optional)" value="@AddonOptions.SyncPaths[idx]"
-                    @onchange="e => UpdateSyncPath(e, tmpIdx)" />
+                    <label for="hassApiTimeoutMinutes" class="form-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.hass_api_timeout_minutes.description">@SettingsReader.Settings.hass_api_timeout_minutes.name</label>
+                    <input type="number" class="form-control @(AddonOptions.DarkMode ? "dark": "")" min="30" id="@SettingsReader.Settings.hass_api_timeout_minutes.name" @bind="newOptions.HassAPITimeoutMinutes" placeholder="30" required>
                 </div>
-            }
 
+                <div class="mb-3 form-switch">
+                    <label class="form-check-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.notify_on_error.description">
+                        <input type="checkbox" class="form-check-input" role="switch" id="@SettingsReader.Settings.notify_on_error.name" @bind="newOptions.NotifyOnError">
+                        @SettingsReader.Settings.notify_on_error.name
+                    </label>
+                </div>
+
+                <div class="mb-3 form-switch">
+                    <label class="form-check-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.enable_anonymous_telemetry.description">
+                        <input type="checkbox" class="form-check-input" role="switch" id="@SettingsReader.Settings.enable_anonymous_telemetry.name" @bind="newOptions.EnableAnonymousTelemetry">
+                        @SettingsReader.Settings.enable_anonymous_telemetry.name
+                    </label>
+                </div>
+
+                <div class="mb-3 form-switch">
+                    <label class="form-check-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.enable_anonymous_error_reporting.description">
+                        <input type="checkbox" class="form-check-input" role="switch" id="@SettingsReader.Settings.enable_anonymous_error_reporting.name" @bind="newOptions.EnableAnonymousErrorReporting">
+                        @SettingsReader.Settings.enable_anonymous_error_reporting.name
+                    </label>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.log_level.description">@SettingsReader.Settings.log_level.name</label>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="inlineRadioOptions" id="verbose" value="verbose"
+                               checked="@(AddonOptions.LogLevelStr == "verbose")" @onchange="LogLevelChanged">
+                        <label class="form-check-label" for="verbose">Verbose</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="inlineRadioOptions" id="info" value="info"
+                               checked="@(AddonOptions.LogLevelStr == "info")" @onchange="LogLevelChanged">
+                        <label class="form-check-label" for="info">Info</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="inlineRadioOptions" id="warning" value="warning"
+                               checked="@(AddonOptions.LogLevelStr == "warning")" @onchange="LogLevelChanged">
+                        <label class="form-check-label" for="warning">Warning</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="inlineRadioOptions" id="error" value="error"
+                               checked="@(AddonOptions.LogLevelStr == "error")" @onchange="LogLevelChanged">
+                        <label class="form-check-label" for="error">Error</label>
+                    </div>
+                </div>
+            </div>
         </div>
 
+        @* ── Backup ── *@
+        <div class="card mb-4 @(AddonOptions.DarkMode ? "bg-secondary text-white border-secondary" : "")">
+            <div class="card-header fw-semibold">Backup</div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="@SettingsReader.Settings.local_backup_num_to_keep.name"
+                           class="form-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.local_backup_num_to_keep.description">
+                        @SettingsReader.Settings.local_backup_num_to_keep.name
+                    </label>
+                    <input type="number" class="form-control @(AddonOptions.DarkMode ? "dark": "")" min="0" id="@SettingsReader.Settings.local_backup_num_to_keep.name" placeholder="0" @bind="newOptions.MaxLocalBackups" required>
+                </div>
 
-        <div class="mb-3 form-switch">
-            <label class="form-check-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.file_sync_remove_deleted.description">
-                <input type="checkbox" class="form-check-input" role="switch" id="@SettingsReader.Settings.file_sync_remove_deleted.name" @bind="newOptions.FileSyncRemoveDeleted" />
-                @SettingsReader.Settings.file_sync_remove_deleted.name
-            </label>
+                <div class="mb-3">
+                    <label for="@SettingsReader.Settings.onedrive_backup_num_to_keep.name"
+                           class="form-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.onedrive_backup_num_to_keep.description">
+                        @SettingsReader.Settings.onedrive_backup_num_to_keep.name
+                    </label>
+                    <input type="number" class="form-control @(AddonOptions.DarkMode ? "dark": "")" min="1" id="@SettingsReader.Settings.onedrive_backup_num_to_keep.name" placeholder="1" @bind="newOptions.MaxOnedriveBackups" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="@SettingsReader.Settings.backup_interval_days.name" class="form-label"
+                           data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.backup_interval_days.description">@SettingsReader.Settings.backup_interval_days.name</label>
+                    <input type="number" min="0.1" step="0.1" class="form-control @(AddonOptions.DarkMode ? "dark": "")" id="@SettingsReader.Settings.backup_interval_days.name" placeholder="1" @bind="newOptions.BackupIntervalDays" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="@SettingsReader.Settings.backup_name.name" class="form-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.backup_name.description">@SettingsReader.Settings.backup_name.name</label>
+                    <input type="text" class="form-control @(AddonOptions.DarkMode ? "dark": "")" pattern="[A\-Za\-z0\-9\_]+" id="@SettingsReader.Settings.backup_name.name" placeholder="hass_backup" @bind="newOptions.BackupName" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="@SettingsReader.Settings.backup_instance_name.name" class="form-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.backup_instance_name.description">@SettingsReader.Settings.backup_instance_name.name</label>
+                    <input type="text" class="form-control @(AddonOptions.DarkMode ? "dark": "")" pattern="[A\-Za\-z0\-9\_]+" id="@SettingsReader.Settings.backup_instance_name.name" @bind="newOptions.InstanceName" placeholder="Enter backup instance name (Optional)">
+                </div>
+
+                <div class="mb-3">
+                    <label for="@SettingsReader.Settings.backup_allowed_hours.name" class="form-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.backup_allowed_hours.description">@SettingsReader.Settings.backup_allowed_hours.name</label>
+                    <input type="text" class="form-control @(AddonOptions.DarkMode ? "dark": "")" pattern="[0-9,\-]+" id="@SettingsReader.Settings.backup_allowed_hours.name" @bind="newOptions.BackupAllowedHours" placeholder="Enter allowed hours (e.g. 1-4) (Optional)">
+                </div>
+
+                <div class="mb-3">
+                    <label for="backupPasswd" class="form-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.backup_passwd.description">@SettingsReader.Settings.backup_passwd.name</label>
+                    <input type="password" class="form-control @(AddonOptions.DarkMode ? "dark": "")" id="@SettingsReader.Settings.backup_passwd.name" @bind="newOptions.BackupPassword" placeholder="Enter password (Optional)">
+                </div>
+
+                <div class="mb-3 form-switch">
+                    <label class="form-check-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.monitor_all_local_backups.description">
+                        <input type="checkbox" class="form-check-input" role="switch" id="@SettingsReader.Settings.monitor_all_local_backups.name" @bind="newOptions.MonitorAllLocalBackups" />
+                        @SettingsReader.Settings.monitor_all_local_backups.name
+                    </label>
+                </div>
+
+                <div class="mb-3 form-switch">
+                    <label class="form-check-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.ignore_upgrade_backups.description">
+                        <input type="checkbox" class="form-check-input" role="switch" id="@SettingsReader.Settings.ignore_upgrade_backups.name" @bind="newOptions.IgnoreUpgradeBackups" />
+                        @SettingsReader.Settings.ignore_upgrade_backups.name
+                    </label>
+                </div>
+
+                <div class="mb-3 form-switch">
+                    <label class="form-check-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.exclude_media_folder.description">
+                        <input type="checkbox" class="form-check-input" role="switch" id="@SettingsReader.Settings.exclude_media_folder.name" @bind="newOptions.ExcludeMediaFolder" />
+                        @SettingsReader.Settings.exclude_media_folder.name
+                    </label>
+                </div>
+
+                <div class="mb-3 form-switch">
+                    <label class="form-check-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.exclude_ssl_folder.description">
+                        <input type="checkbox" class="form-check-input" role="switch" id="@SettingsReader.Settings.exclude_ssl_folder.name" @bind="newOptions.ExcludeSSLFolder" />
+                        @SettingsReader.Settings.exclude_ssl_folder.name
+                    </label>
+                </div>
+
+                <div class="mb-3 form-switch">
+                    <label class="form-check-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.exclude_share_folder.description">
+                        <input type="checkbox" class="form-check-input" role="switch" id="@SettingsReader.Settings.exclude_share_folder.name" @bind="newOptions.ExcludeShareFolder" />
+                        @SettingsReader.Settings.exclude_share_folder.name
+                    </label>
+                </div>
+
+                <div class="mb-3 form-switch">
+                    <label class="form-check-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.exclude_local_addons_folder.description">
+                        <input type="checkbox" class="form-check-input" role="switch" id="@SettingsReader.Settings.exclude_local_addons_folder.name" @bind="newOptions.ExcludeLocalAddonsFolder" />
+                        @SettingsReader.Settings.exclude_local_addons_folder.name
+                    </label>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" data-bs-toggle="tooltip"
+                           data-bs-title="@SettingsReader.Settings.excluded_addons.description">@SettingsReader.Settings.excluded_addons.name</label>
+                    @for (var idx = 0; idx < newOptions.ExcludedAddons.Count; idx++)
+                    {
+                        var tmpIdx = idx;
+                        <div class="input-group mb-2">
+                            <input type="text" class="form-control @(AddonOptions.DarkMode ? "dark": "")" placeholder="Addon Name to exclude (Optional)" value="@newOptions.ExcludedAddons[idx]"
+                            @onchange="e => UpdateExcludedAddons(e, tmpIdx)" />
+                            <button type="button" class="btn btn-outline-danger" @onclick="() => RemoveExcludedAddon(tmpIdx)" tabindex="-1">
+                                <i class="bi bi-x"></i>
+                            </button>
+                        </div>
+                    }
+                    <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="AddExcludedAddon">
+                        <i class="bi bi-plus"></i> Add
+                    </button>
+                </div>
+
+                @* ── Generational (collapsible) ── *@
+                <div class="mb-1">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#generationalSettings">
+                        Generational Backup Settings <i class="bi bi-chevron-expand"></i>
+                    </button>
+                </div>
+                <div class="collapse" id="generationalSettings">
+                    <div class="card card-body mb-3 @(AddonOptions.DarkMode ? "bg-dark text-white border-secondary" : "bg-light")">
+                        <div class="mb-3">
+                            <label for="@SettingsReader.Settings.generational_days.name" class="form-label"
+                                   data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.generational_days.description">@SettingsReader.Settings.generational_days.name</label>
+                            <input type="number" class="form-control @(AddonOptions.DarkMode ? "dark": "")" min="0" id="@SettingsReader.Settings.generational_days.name" placeholder="GenDays (Optional)" @bind="newOptions.GenerationalDays">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="@SettingsReader.Settings.generational_weeks.name" class="form-label"
+                                   data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.generational_weeks.description">@SettingsReader.Settings.generational_weeks.name</label>
+                            <input type="number" class="form-control @(AddonOptions.DarkMode ? "dark": "")" min="0" id="@SettingsReader.Settings.generational_weeks.name" placeholder="GenWeeks (Optional)" @bind="newOptions.GenerationalWeeks">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="@SettingsReader.Settings.generational_months.name" class="form-label"
+                                   data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.generational_months.description">@SettingsReader.Settings.generational_months.name</label>
+                            <input type="number" class="form-control @(AddonOptions.DarkMode ? "dark": "")" min="0" id="@SettingsReader.Settings.generational_months.name" placeholder="GenMonths (Optional)" @bind="newOptions.GenerationalMonths">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="@SettingsReader.Settings.generational_years.name" class="form-label"
+                                   data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.generational_years.description">@SettingsReader.Settings.generational_years.name</label>
+                            <input type="number" class="form-control @(AddonOptions.DarkMode ? "dark": "")" min="0" id="@SettingsReader.Settings.generational_years.name" placeholder="GenYears (Optional)" @bind="newOptions.GenerationalYears">
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="mb-3 form-switch">
-            <label class="form-check-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.ignore_allowed_hours_for_file_sync.description">
-                <input type="checkbox" class="form-check-input" role="switch" id="@SettingsReader.Settings.ignore_allowed_hours_for_file_sync.name" @bind="newOptions.IgnoreAllowedHoursForFileSync" />
-                @SettingsReader.Settings.ignore_allowed_hours_for_file_sync.name
-            </label>
+        @* ── File Sync ── *@
+        <div class="card mb-4 @(AddonOptions.DarkMode ? "bg-secondary text-white border-secondary" : "")">
+            <div class="card-header fw-semibold">File Sync</div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label" data-bs-toggle="tooltip"
+                           data-bs-title="@SettingsReader.Settings.sync_paths.description">@SettingsReader.Settings.sync_paths.name</label>
+                    @for (var idx = 0; idx < newOptions.SyncPaths.Count; idx++)
+                    {
+                        var tmpIdx = idx;
+                        <div class="input-group mb-2">
+                            <input type="text" class="form-control @(AddonOptions.DarkMode ? "dark": "")" placeholder="Enter path (Optional)" value="@newOptions.SyncPaths[idx]"
+                            @onchange="e => UpdateSyncPath(e, tmpIdx)" />
+                            <button type="button" class="btn btn-outline-danger" @onclick="() => RemoveSyncPath(tmpIdx)" tabindex="-1">
+                                <i class="bi bi-x"></i>
+                            </button>
+                        </div>
+                    }
+                    <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="AddSyncPath">
+                        <i class="bi bi-plus"></i> Add
+                    </button>
+                </div>
+
+                <div class="mb-3 form-switch">
+                    <label class="form-check-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.file_sync_remove_deleted.description">
+                        <input type="checkbox" class="form-check-input" role="switch" id="@SettingsReader.Settings.file_sync_remove_deleted.name" @bind="newOptions.FileSyncRemoveDeleted" />
+                        @SettingsReader.Settings.file_sync_remove_deleted.name
+                    </label>
+                </div>
+
+                <div class="mb-3 form-switch">
+                    <label class="form-check-label" data-bs-toggle="tooltip" data-bs-title="@SettingsReader.Settings.ignore_allowed_hours_for_file_sync.description">
+                        <input type="checkbox" class="form-check-input" role="switch" id="@SettingsReader.Settings.ignore_allowed_hours_for_file_sync.name" @bind="newOptions.IgnoreAllowedHoursForFileSync" />
+                        @SettingsReader.Settings.ignore_allowed_hours_for_file_sync.name
+                    </label>
+                </div>
+            </div>
         </div>
 
         <button type="submit" class="btn btn-primary position-fixed bottom-0 end-0 m-4 mb-5">Save Settings</button>
@@ -265,18 +294,6 @@
             await JS.InvokeVoidAsync("addTooltips");
             await JS.InvokeVoidAsync("addToasts");
         }
-
-        if (string.IsNullOrWhiteSpace(newOptions.SyncPaths.LastOrDefault()) == false || newOptions.SyncPaths.Any() == false)
-        {
-            newOptions.SyncPaths.Add(string.Empty);
-            TriggerStateChanged();
-        }
-
-        if (string.IsNullOrWhiteSpace(newOptions.ExcludedAddons.LastOrDefault()) == false || newOptions.ExcludedAddons.Any() == false)
-        {
-            newOptions.ExcludedAddons.Add(string.Empty);
-            TriggerStateChanged();
-        }
     }
 
     private async Task Save()
@@ -299,9 +316,35 @@
         newOptions.SyncPaths[index] = val;
     }
 
+    private void AddSyncPath()
+    {
+        newOptions.SyncPaths.Add(string.Empty);
+    }
+
+    private void RemoveSyncPath(int index)
+    {
+        if (newOptions.SyncPaths.Count > index)
+        {
+            newOptions.SyncPaths.RemoveAt(index);
+        }
+    }
+
     private void UpdateExcludedAddons(ChangeEventArgs e, int index)
     {
         newOptions.ExcludedAddons[index] = e.Value.ToString();
+    }
+
+    private void AddExcludedAddon()
+    {
+        newOptions.ExcludedAddons.Add(string.Empty);
+    }
+
+    private void RemoveExcludedAddon(int index)
+    {
+        if (newOptions.ExcludedAddons.Count > index)
+        {
+            newOptions.ExcludedAddons.RemoveAt(index);
+        }
     }
 
     private void LogLevelChanged(ChangeEventArgs e)

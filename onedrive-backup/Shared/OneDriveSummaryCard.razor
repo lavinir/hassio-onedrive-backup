@@ -50,26 +50,7 @@
 		</div>
 	</div>
 	<div class="card-body  @(AddonOptions.DarkMode ? "bg-dark text-white" : "bg-light text-body")">
-@* 		<div class="row">
-			<div class="col">
-				<span class="card-text">OneDrive Storage</span>
-			</div>
-			<div class="col">
-				@if (HassOnedriveFreeSpaceEntityState.FreeSpaceGB == null)
-				{
-					<div class="progress">
-						<div class="progress-bar progress-bar-striped progress-bar-animated bg-secondary" role="progressbar" style="width: 100%">Initializing</div>
-					</div>
-				}
-				else
-				{
-					<div class="progress">
-						<div id="free-space-pb" class="progress-bar @FreeSpaceColor" role="progressbar" style="width: @(OneDriveUsedSpacePercentage)%;transition-duration:300ms;" aria-valuenow="@OneDriveUsedSpacePercentage" data-bs-toggle="tooltip" title=@(OneDriveUsedSpace.ToString("N2") + " GB / " + (HassOnedriveFreeSpaceEntityState.FreeSpaceGB ?? 0).ToString("N2") + " GB" ) aria-valuemin="0" aria-valuemax="100">Used: @(OneDriveUsedSpacePercentage)%</div>
-					</div>
-				}
-			</div>
-		</div>
- *@		<div class="row">
+		<div class="row">
 			<div class="col">
 				<span class="card-text">Local Backups</span>
 			</div>
