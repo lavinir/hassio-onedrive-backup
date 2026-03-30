@@ -9,7 +9,7 @@ namespace hassio_onedrive_backup.Contracts
 {
     public class AddonOptions : IEqualityComparer<AddonOptions>
     {
-        public const string AddonVersion = "2.3.8";
+        public const string AddonVersion = "2.3.9";
 
         public event Action OnOptionsChanged;
 

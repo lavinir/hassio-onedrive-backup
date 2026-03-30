@@ -148,6 +148,7 @@ namespace hassio_onedrive_backup.Storage
         public enum Flag
         {
             ReleaseNotes_2_3_8,
+            ReleaseNotes_2_3_9,
         }
 
         private static string ConvertBackFileNameToMetadataFileName(string fileName)
