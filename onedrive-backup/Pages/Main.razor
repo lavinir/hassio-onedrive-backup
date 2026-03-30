@@ -12,6 +12,7 @@
 @inject HassContext HassContext;
 @inject AddonOptions AddonOptions
 @inject BackupAdditionalData BackupAdditionalData;
+@implements IDisposable
 
 <div class="pt-3 @(AddonOptions.DarkMode ? "body-dark-mode": "body-light-mode")" style="height:100vh;">
 <div class="container">
@@ -83,6 +84,14 @@
         {
             StateHasChanged();
         });
+    }
+
+    public void Dispose()
+    {
+        AddonOptions.OnOptionsChanged -= OnStateChanged;
+        GraphHelper.AuthStatusChangedEventHandler -= OnStateChanged;
+        Orchestrator.BackupManager.OneDriveBackupsUpdated -= OnStateChanged;
+        Orchestrator.BackupManager.LocalBackupsUpdated -= OnStateChanged;
     }
 
 }    
