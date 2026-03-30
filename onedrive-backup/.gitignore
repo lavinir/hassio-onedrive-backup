@@ -238,3 +238,4 @@ settings.json
 additionalBackupData.json
 .*
 docs/
+onlineBackupsData/
