@@ -1,4 +1,7 @@
 ## v2.3.9 [March 30th 2025]
+### Dependency Updates
+* Upgraded from .Net 7 (End of support) to .Net 10
+
 ### 🐞 Fixed
 * Added backoff for backup cycle when detecting a backup / restore job triggered from Home Assistant
 * Minor edge case fixes in backend
