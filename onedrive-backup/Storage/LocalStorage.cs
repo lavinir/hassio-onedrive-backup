@@ -140,7 +140,7 @@ namespace hassio_onedrive_backup.Storage
                 return true;
             }
 
-            File.Create(fileName);
+            File.Create(fileName).Dispose();
             setFlags.Add(flag);
             return false;        
         }

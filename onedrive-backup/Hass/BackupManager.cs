@@ -170,7 +170,10 @@ namespace hassio_onedrive_backup.Hass
                         else
                         {
                             bool metadataDelted = LocalStorage.DeleteOneDriveBackup(backupToDelete);
-                            _logger.LogWarning($"Failed deleting backup metadata {backupToDelete.Slug}");
+                            if (!metadataDelted)
+                            {
+                                _logger.LogWarning($"Failed deleting backup metadata {backupToDelete.Slug}");
+                            }
                         }
                     }
 

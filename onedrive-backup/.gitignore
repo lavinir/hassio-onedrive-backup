@@ -237,3 +237,4 @@ record.auth*
 settings.json
 additionalBackupData.json
 .*
+docs/

@@ -184,6 +184,7 @@ namespace hassio_onedrive_backup.Contracts
             LogLevelStr = newOptions.LogLevelStr;
             IgnoreUpgradeBackups = newOptions.IgnoreUpgradeBackups;
             EnableAnonymousTelemetry = newOptions.EnableAnonymousTelemetry;
+            EnableAnonymousErrorReporting = newOptions.EnableAnonymousErrorReporting;
             IgnoreAllowedHoursForFileSync = newOptions.IgnoreAllowedHoursForFileSync;
             DarkMode = newOptions.DarkMode;
         }

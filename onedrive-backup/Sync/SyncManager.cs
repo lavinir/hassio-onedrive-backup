@@ -130,10 +130,10 @@ namespace hassio_onedrive_backup.Sync
             }
 
             DriveItem? remoteFile = await _graphHelper.GetItemInAppFolderAsync(remotePath);                             
-            bool requiresUpload = 
-                remoteFile == null 
-                || remoteFile.Size != fileInfo.Length 
-                || remoteFile.File.Hashes.Sha256Hash.Equals(fileHash, StringComparison.OrdinalIgnoreCase) == false;
+            bool requiresUpload =
+                remoteFile == null
+                || remoteFile.Size != fileInfo.Length
+                || remoteFile.File?.Hashes?.Sha256Hash?.Equals(fileHash, StringComparison.OrdinalIgnoreCase) == false;
 
             if (requiresUpload == false)
             {
