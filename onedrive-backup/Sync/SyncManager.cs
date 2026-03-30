@@ -50,7 +50,7 @@ namespace hassio_onedrive_backup.Sync
 			_fileMatcher.AddIncludePatterns(_addonOptions.SyncPaths.Where(path => string.IsNullOrWhiteSpace(path) == false));
 		}
 
-		public async void SyncLoop(CancellationToken ct)
+		public async Task SyncLoop(CancellationToken ct)
         {
             _logger.LogVerbose($"Setting up Sync Loop");
             while (true && ct.IsCancellationRequested == false)
@@ -130,10 +130,10 @@ namespace hassio_onedrive_backup.Sync
             }
 
             DriveItem? remoteFile = await _graphHelper.GetItemInAppFolderAsync(remotePath);                             
-            bool requiresUpload = 
-                remoteFile == null 
-                || remoteFile.Size != fileInfo.Length 
-                || remoteFile.File.Hashes.Sha256Hash.Equals(fileHash, StringComparison.OrdinalIgnoreCase) == false;
+            bool requiresUpload =
+                remoteFile == null
+                || remoteFile.Size != fileInfo.Length
+                || remoteFile.File?.Hashes?.Sha256Hash?.Equals(fileHash, StringComparison.OrdinalIgnoreCase) == false;
 
             if (requiresUpload == false)
             {
