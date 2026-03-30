@@ -11,6 +11,7 @@
 @inject Orchestrator Orchestrator
 @inject IGraphHelper GraphHelper
 @inject BackupAdditionalData BackupAdditionalData;
+@implements IDisposable
 
 <div class="card mb-3 w-100 @(AddonOptions.DarkMode ? "text-white bg-secondary": "text-dark bg-light")" style="min-width: 16rem">
 	<div class="card-header @(AddonOptions.DarkMode ? "text-light" : "text-dark") ">
@@ -50,26 +51,7 @@
 		</div>
 	</div>
 	<div class="card-body  @(AddonOptions.DarkMode ? "bg-dark text-white" : "bg-light text-body")">
-@* 		<div class="row">
-			<div class="col">
-				<span class="card-text">OneDrive Storage</span>
-			</div>
-			<div class="col">
-				@if (HassOnedriveFreeSpaceEntityState.FreeSpaceGB == null)
-				{
-					<div class="progress">
-						<div class="progress-bar progress-bar-striped progress-bar-animated bg-secondary" role="progressbar" style="width: 100%">Initializing</div>
-					</div>
-				}
-				else
-				{
-					<div class="progress">
-						<div id="free-space-pb" class="progress-bar @FreeSpaceColor" role="progressbar" style="width: @(OneDriveUsedSpacePercentage)%;transition-duration:300ms;" aria-valuenow="@OneDriveUsedSpacePercentage" data-bs-toggle="tooltip" title=@(OneDriveUsedSpace.ToString("N2") + " GB / " + (HassOnedriveFreeSpaceEntityState.FreeSpaceGB ?? 0).ToString("N2") + " GB" ) aria-valuemin="0" aria-valuemax="100">Used: @(OneDriveUsedSpacePercentage)%</div>
-					</div>
-				}
-			</div>
-		</div>
- *@		<div class="row">
+		<div class="row">
 			<div class="col">
 				<span class="card-text">Local Backups</span>
 			</div>
@@ -176,13 +158,13 @@
 
 	private int OneDriveUsedSpacePercentage => (int)Math.Round(((OneDriveUsedSpace / (HassOnedriveFreeSpaceEntityState.TotalSpaceGB ?? 1)) * 100));
 
-	private int LocalBackupsPercentage => (int)Math.Round(((HassOnedriveEntityState.BackupsInHomeAssistant / ((double)AddonOptions.MaxLocalBackups + HassOnedriveEntityState.RetainedLocalBackups)) * 100));
+	private int LocalBackupsPercentage => (int)Math.Round(((HassOnedriveEntityState.BackupsInHomeAssistant / Math.Max(1.0, (double)AddonOptions.MaxLocalBackups + HassOnedriveEntityState.RetainedLocalBackups)) * 100));
 
-	private int OneDriveBackupsPercentage => (int)Math.Round(((HassOnedriveEntityState.BackupsInOnedrive / ((double)AddonOptions.MaxOnedriveBackups + HassOnedriveEntityState.RetainedOneDriveBackups)) * 100));
+	private int OneDriveBackupsPercentage => (int)Math.Round(((HassOnedriveEntityState.BackupsInOnedrive / Math.Max(1.0, (double)AddonOptions.MaxOnedriveBackups + HassOnedriveEntityState.RetainedOneDriveBackups)) * 100));
 
-	private int LocalRetainedBackupsPercentage =>  (int)Math.Round(((HassOnedriveEntityState.RetainedLocalBackups / ((double)AddonOptions.MaxLocalBackups + HassOnedriveEntityState.RetainedLocalBackups)) * 100));
+	private int LocalRetainedBackupsPercentage => (int)Math.Round(((HassOnedriveEntityState.RetainedLocalBackups / Math.Max(1.0, (double)AddonOptions.MaxLocalBackups + HassOnedriveEntityState.RetainedLocalBackups)) * 100));
 
-	private int OneDriveRetainedBackupsPercentage => (int)Math.Round(((HassOnedriveEntityState.RetainedOneDriveBackups / ((double)AddonOptions.MaxOnedriveBackups + HassOnedriveEntityState.RetainedOneDriveBackups)) * 100));
+	private int OneDriveRetainedBackupsPercentage => (int)Math.Round(((HassOnedriveEntityState.RetainedOneDriveBackups / Math.Max(1.0, (double)AddonOptions.MaxOnedriveBackups + HassOnedriveEntityState.RetainedOneDriveBackups)) * 100));
 
 	private string BackupUploadSpeed => ViewHelpers.GetSpeedDisplayText(HassOnedriveEntityState.UploadSpeed);
 
@@ -329,5 +311,13 @@
 		{
 			StateHasChanged();
 		});
+	}
+
+	public void Dispose()
+	{
+		HassOnedriveFreeSpaceEntityState.PropertyChanged -= TriggerStateChanged;
+		HassOnedriveEntityState.PropertyChanged -= TriggerStateChanged;
+		HassOnedriveFileSyncEntityState.PropertyChanged -= TriggerStateChanged;
+		AddonOptions.OnOptionsChanged -= TriggerStateChanged;
 	}
 }

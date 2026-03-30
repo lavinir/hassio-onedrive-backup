@@ -94,6 +94,11 @@ namespace hassio_onedrive_backup.Hass
             return Task.FromResult("Local");
         }
 
+        public Task<bool> IsBackupManagerJobInProgressAsync()
+        {
+            return Task.FromResult(false);
+        }
+
         public Task PublishEventAsync(OneDriveEvents eventType, string payload = "")
         {
             Debug.WriteLine($"EventType: {eventType}. Payload: {payload}");

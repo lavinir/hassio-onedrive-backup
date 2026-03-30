@@ -12,6 +12,7 @@
 @inject HassContext HassContext;
 @inject AddonOptions AddonOptions
 @inject BackupAdditionalData BackupAdditionalData;
+@implements IDisposable
 
 <div class="pt-3 @(AddonOptions.DarkMode ? "body-dark-mode": "body-light-mode")" style="height:100vh;">
 <div class="container">
@@ -22,14 +23,24 @@
     </div>
 </div>
     <div class="container-fluid pt-0 pb-5 @(AddonOptions.DarkMode ? "body-dark-mode": "body-light-mode")" style="overflow-x:hidden">
-    <div class="row row-cols-1 row-cols-md-3 g-4">
-        @foreach (var backup in Backups)
-        {
-            <div class="col">
-                <onedrive_backup.Shared.BackupCard Backup="@backup" />
-            </div>
-        }
-    </div>
+    @if (Backups.Any())
+    {
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4">
+            @foreach (var backup in Backups)
+            {
+                <div class="col">
+                    <onedrive_backup.Shared.BackupCard Backup="@backup" />
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="d-flex flex-column align-items-center justify-content-center py-5 @(AddonOptions.DarkMode ? "text-white" : "text-muted")">
+            <i class="bi bi-cloud-slash fs-1 mb-3"></i>
+            <p class="fs-5">No backups found</p>
+        </div>
+    }
 </div>
 </div>
 @code
@@ -73,6 +84,14 @@
         {
             StateHasChanged();
         });
+    }
+
+    public void Dispose()
+    {
+        AddonOptions.OnOptionsChanged -= OnStateChanged;
+        GraphHelper.AuthStatusChangedEventHandler -= OnStateChanged;
+        Orchestrator.BackupManager.OneDriveBackupsUpdated -= OnStateChanged;
+        Orchestrator.BackupManager.LocalBackupsUpdated -= OnStateChanged;
     }
 
 }    
