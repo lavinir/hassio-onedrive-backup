@@ -371,7 +371,7 @@ namespace hassio_onedrive_backup.Graph
         public async Task<string> GetDriveIdFromAppFolder()
         {
             try
-            {
+            {                
                 var resp = await _userClient.Drives.WithUrl("https://graph.microsoft.com/v1.0/me/drive/special/approot").GetAsync();
                 return resp.AdditionalData["id"].ToString().Split("!").First();
             }
@@ -438,6 +438,7 @@ namespace hassio_onedrive_backup.Graph
                         return null;
                     }
 
+                    attempt++;
                     await Task.Delay(5000);
                 }
             }

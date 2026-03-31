@@ -19,7 +19,6 @@
     <link href="css/site.css" rel="stylesheet" />
     <link href="css/main.css" rel="stylesheet" />
     <link href="onedrive-backup.styles.css" rel="stylesheet" />
-    <link href="css/main.css" rel="stylesheet" />
     <link rel="icon" type="image/png" href="favicon.png" />
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <component type="typeof(HeadOutlet)" render-mode="ServerPrerendered" />
@@ -32,19 +31,18 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="rnotesModalLabel">Version 2.3.8 Notes</h5>
+                    <h5 class="modal-title" id="rnotesModalLabel">Version 2.3.10 Notes</h5>
                 </div>
                 <div class="modal-body">
-                    <h6>🎉 New Preview Channel</h6>
-                    <p><A>A new Preview Channel is available to try and test new versions and fixes. See details in the Readme's'</A> <a href="https://github.com/lavinir/hassio-onedrive-backup?tab=readme-ov-file#installation-instructions"
-                            target="_blank">Installation Instructions</a></p>
-                    <h6>🐞 Fixed</h6>
-                        <li>Updated backup file naming in OneDrive to include the backup slug to avoid potential duplicates with upgrade backups</li>>
-                        <li>Fixed issue when only the first 200 backups are fetched from OneDrive and the rest are ignored, also causing repeated uploads.</li>>
-                    <h6>🆕 Added</h6>
+                    <h6>📦 Dependency Updates</h6>
                     <ul>
-                        <li>Additional debugging logs</li>
-                        <li>Updated backup file naming in OneDrive to include the backup slug to avoid potential duplicates with upgrade backups</li>
+                        <li>Upgraded from .Net 7 (End of support) to .Net 10</li>
+                    </ul>
+                    <h6>🐞 Fixed</h6>
+                    <ul>
+                        <li>Added backoff for backup cycle when detecting a backup / restore job triggered from Home Assistant</li>
+                        <li>Minor edge case fixes in backend</li>
+                        <li>Some cleanups to UI</li>
                     </ul>
                 </div>
             </div>
