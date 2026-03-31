@@ -68,12 +68,6 @@ namespace hassio_onedrive_backup.Hass
                 _isExecuting = true;
                 var now = _dateTimeProvider.Now;
 
-                if (await _hassIoClient.IsBackupManagerJobInProgressAsync())
-                {
-                    _logger.LogInfo("Home Assistant Backup Manager Job In Progress. Skipping backup cycle.");
-                    return;
-                }
-
                 _logger.LogVerbose("Refreshing existing backups...");
                 await RefreshBackupsAndUpdateHassEntity();
 
@@ -176,10 +170,7 @@ namespace hassio_onedrive_backup.Hass
                         else
                         {
                             bool metadataDelted = LocalStorage.DeleteOneDriveBackup(backupToDelete);
-                            if (!metadataDelted)
-                            {
-                                _logger.LogWarning($"Failed deleting backup metadata {backupToDelete.Slug}");
-                            }
+                            _logger.LogWarning($"Failed deleting backup metadata {backupToDelete.Slug}");
                         }
                     }
 

@@ -64,8 +64,7 @@ namespace hassio_onedrive_backup
             _syncManager = new SyncManager(_serviceProvider, _allowedBackupHours, transferSpeedHelper, _logger, _dateTimeProvider);
             var tokenSource = new CancellationTokenSource();
             await _graphHelper.GetAndCacheUserTokenAsync();
-            var fileSyncTask = Task.Run(() => _syncManager.SyncLoop(tokenSource.Token), tokenSource.Token)
-                .ContinueWith(t => _logger.LogError($"File sync loop terminated unexpectedly: {t.Exception}", t.Exception!.GetBaseException()), TaskContinuationOptions.OnlyOnFaulted);
+            var fileSyncTask = Task.Run(() => _syncManager.SyncLoop(tokenSource.Token), tokenSource.Token);
 
             while (_enabled)
             {
