@@ -438,6 +438,7 @@ namespace hassio_onedrive_backup.Graph
                         return null;
                     }
 
+                    attempt++;
                     await Task.Delay(5000);
                 }
             }

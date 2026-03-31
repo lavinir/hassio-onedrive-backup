@@ -11,29 +11,34 @@
     @if (GraphHelper.IsAuthenticated == false)
     {
         <div class="alert alert-danger" role="alert" style="padding:1px;margin-bottom:1px;">
-            <strong>Not logged in!</strong> To sign in to OneDrive, navigate to <a href="@GraphHelper.AuthUrl" class="alert-link" target="_blank">@GraphHelper.AuthUrl</a> and enter the code <i>
-                @GraphHelper.AuthCode
-            </i>
+            <strong>Not logged in!</strong> To sign in to OneDrive, navigate to <a href="@GraphHelper.AuthUrl" class="alert-link" target="_blank">@GraphHelper.AuthUrl</a> and enter the code <code class="badge bg-dark text-white mx-1">@GraphHelper.AuthCode</code>
             <button type="button" class="btn btn-sm m-1 btn-light" @onclick="CopyCodeToClipboard"><span class="bi bi-clipboard-check" title="Copy code to clipboard"></span></button> to authenticate.
         </div>
     }
 
-    <nav class="p-1 navbar navbar-expand-lg  @(AddonOptions.DarkMode ? "dark": "")">
-        <span class="navbar-brand @(AddonOptions.DarkMode ? "dark": "")" href="#">OneDrive Backup</span>
-        <div class="nav-item">
-            <NavLink class="@navUiStyle" href="" Match="NavLinkMatch.All">
-                Dashboard
-            </NavLink>
-        </div>
-        <div id="settingsNav" class="nav-item @(AddonOptions.DarkMode ? "dark": "")">
-            <NavLink class="@navUiStyle" href="settings" Match="NavLinkMatch.All">
-                Settings
-            </NavLink>
-        </div>
-        <div class="nav-item @(AddonOptions.DarkMode ? "dark": "")">
-            <NavLink class="@navUiStyle" href="about" Match="NavLinkMatch.All">
-                About
-            </NavLink>
+    <nav class="p-1 navbar navbar-expand-lg @(AddonOptions.DarkMode ? "dark": "")">
+        <span class="navbar-brand @(AddonOptions.DarkMode ? "dark": "")">OneDrive Backup</span>
+        <button class="navbar-toggler ms-auto border-0" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="mainNavbar">
+            <div class="navbar-nav">
+                <div class="nav-item">
+                    <NavLink class="@navUiStyle" href="" Match="NavLinkMatch.All">
+                        Dashboard
+                    </NavLink>
+                </div>
+                <div id="settingsNav" class="nav-item @(AddonOptions.DarkMode ? "dark": "")">
+                    <NavLink class="@navUiStyle" href="settings" Match="NavLinkMatch.All">
+                        Settings
+                    </NavLink>
+                </div>
+                <div class="nav-item @(AddonOptions.DarkMode ? "dark": "")">
+                    <NavLink class="@navUiStyle" href="about" Match="NavLinkMatch.All">
+                        About
+                    </NavLink>
+                </div>
+            </div>
         </div>
     </nav>
 </div>
@@ -63,7 +68,7 @@
     {
         if (firstRender)
         {
-            if (LocalStorage.CheckAndMarkFlag(LocalStorage.Flag.ReleaseNotes_2_3_8) == false)
+            if (LocalStorage.CheckAndMarkFlag(LocalStorage.Flag.ReleaseNotes_2_3_10) == false)
             {
                 await Task.Delay(1000);
                 await JS.InvokeVoidAsync("showReleaseNotes");

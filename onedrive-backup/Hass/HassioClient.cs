@@ -223,6 +223,21 @@ namespace hassio_onedrive_backup.Hass
             return fileInfo.FullName;
         }
 
+        public async Task<bool> IsBackupManagerJobInProgressAsync()
+        {
+            try
+            {
+                Uri uri = new Uri(Supervisor_Base_Uri_Str + "/jobs");
+                var response = await GetJsonResponseAsync<HassJobsResponse>(uri);
+                return response?.DataProperty?.Jobs?.Any(j => !j.Done && j.Name.StartsWith("backup_manager", StringComparison.OrdinalIgnoreCase)) ?? false;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogVerbose($"Could not check supervisor jobs: {ex.Message}");
+                return false;
+            }
+        }
+
         public async Task<string> GetTimeZoneAsync()
         {
             Uri uri = new Uri(Supervisor_Base_Uri_Str + "/supervisor/info");

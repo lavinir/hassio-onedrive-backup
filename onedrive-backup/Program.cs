@@ -93,12 +93,10 @@ namespace hassio_onedrive_backup
 				app.UseIncomingHassFirewallMiddleware();
 				if (!app.Environment.IsDevelopment())
 				{
-					app.UseWhen(ctx => !ctx.Request.Path
-					.StartsWithSegments("/_framework/blazor.server.js"),
-						subApp => subApp.UseStaticFiles(new StaticFileOptions
-						{
-							FileProvider = new PhysicalFileProvider($"{_baseDirectory}/wwwroot")
-						}));
+					app.UseStaticFiles(new StaticFileOptions
+					{
+						FileProvider = new PhysicalFileProvider($"{_baseDirectory}/wwwroot")
+					});
 				}
 				else
 				{
