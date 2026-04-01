@@ -43,10 +43,10 @@ public class BackupController : ControllerBase
     }
 
     [HttpGet("progress/{operationId}")]
-    public async Task<ActionResult<IDictionary<string, double>>> GetTransferProgress(string operationId)
+    public async Task<ActionResult<object>> GetTransferProgress(string operationId)
     {
         var operation = await _backupService.GetTransferProgressAsync(operationId);
-        return Ok(new Dictionary<string, double> { { "progress", operation.Progress } });
+        return Ok(new { progress = operation.Progress, status = operation.Status.ToString() });
     }
 
     [HttpPost("create")]

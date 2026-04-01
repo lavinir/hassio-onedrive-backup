@@ -21,11 +21,23 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // Register service implementations
-// builder.Services.AddSingleton<IBackupService, MockBackupService>();
 builder.Services.AddSingleton<IBackupService, BackupService>();
-builder.Services.AddSingleton<IHassioClient, MockHassioClient>();
-builder.Services.AddSingleton<IOneDriveClient, OneDriveClient>(); // Changed to singleton for persistent token storage
+builder.Services.AddSingleton<IOneDriveClient, OneDriveClient>();
 builder.Services.AddSingleton<ISettingsService, SettingsService>();
+builder.Services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
+builder.Services.AddSingleton<IRetentionPolicyService, RetentionPolicyService>();
+builder.Services.AddSingleton<RetentionDataStore>();
+
+
+bool developmentMode = builder.Configuration.GetValue<bool>("DevelopmentMode");
+if (developmentMode)
+{
+    builder.Services.AddSingleton<IHassioClient, MockHassioClient>();
+}
+else
+{
+    builder.Services.AddSingleton<IHassioClient, HassioClient>();
+}
 
 // Configure Grafana Cloud telemetry
 builder.Services.Configure<GrafanaTelemetryOptions>(builder.Configuration.GetSection("GrafanaTelemetry"));
@@ -86,6 +98,9 @@ builder.Services.AddSingleton(tracerProvider);
 builder.Services.AddSingleton(meterProvider);
 
 var app = builder.Build();
+
+// Initialize local storage (creates temp dir, cleans up legacy artifacts)
+LocalStorage.InitializeStorage(app.Services.GetRequiredService<ILogger<LocalStorage>>());
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

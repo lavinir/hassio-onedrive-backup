@@ -9,6 +9,8 @@ public class BackupService : IBackupService
     private readonly IHassioClient _hassioClient;
     private readonly IOneDriveClient _oneDriveClient;
     private readonly ISettingsService _settingsService;
+    private readonly IDateTimeProvider _dateTimeProvider;
+    private readonly RetentionDataStore _retentionDataStore;
     private readonly ILogger<BackupService> _logger;
     private readonly ConcurrentDictionary<string, TransferOperation> _operations;
 
@@ -16,19 +18,28 @@ public class BackupService : IBackupService
         IHassioClient hassioClient,
         IOneDriveClient oneDriveClient,
         ISettingsService settingsService,
+        IDateTimeProvider dateTimeProvider,
+        RetentionDataStore retentionDataStore,
         ILogger<BackupService> logger)
     {
         _hassioClient = hassioClient;
         _oneDriveClient = oneDriveClient;
         _settingsService = settingsService;
+        _dateTimeProvider = dateTimeProvider;
+        _retentionDataStore = retentionDataStore;
         _logger = logger;
         _operations = new ConcurrentDictionary<string, TransferOperation>();
     }
 
     public async Task<IEnumerable<Backup>> GetBackupsAsync()
     {
-        // Get all backups from Home Assistant
         var backups = await _hassioClient.GetBackupsAsync(_ => true);
+
+        // Merge the persisted retained flags — the HA API doesn't store this
+        var retainedSlugs = _retentionDataStore.GetRetainedSlugs();
+        foreach (var backup in backups)
+            backup.Retained = retainedSlugs.Contains(backup.Slug);
+
         return backups;
     }
 
@@ -115,7 +126,8 @@ public class BackupService : IBackupService
         {
             try
             {
-                var oneDrivePath = $"backups/{slugId}.tar";
+                Settings settings = await _settingsService.GetSettingsAsync();
+                var oneDrivePath = $"backups/{settings.General.InstanceName}/{slugId}.tar";
                 var localPath = Path.Combine(Path.GetTempPath(), $"{slugId}.tar");
 
                 // Download from OneDrive with progress tracking
@@ -161,44 +173,53 @@ public class BackupService : IBackupService
 
     public async Task DeleteBackupAsync(string slugId)
     {
-        // Get the backup details
         var backup = (await _hassioClient.GetBackupsAsync(b => b.Slug == slugId)).FirstOrDefault()
             ?? throw new ArgumentException("Backup not found", nameof(slugId));
 
-        // Delete from Home Assistant
         await _hassioClient.DeleteBackupAsync(backup);
+
+        // Clean up any persisted retention flag for this backup
+        _retentionDataStore.SetRetained(slugId, false);
     }
 
     public async Task<Backup> TriggerBackupAsync(string name)
     {
         var settings = await _settingsService.GetSettingsAsync();
-        var timeStamp = DateTime.UtcNow;
-        var excludedAddons = settings.Backup.ExcludedAddons ?? new List<string>();
-        var excludedFolders = GetExcludedFolders(settings);
+        var timeStamp = _dateTimeProvider.Now;
+        var excludedAddonSlugs = settings.Backup.ExcludedAddons ?? new List<string>();
 
         bool isPartial = settings.Backup.ExcludeMediaFolder ||
-                        settings.Backup.ExcludeSSLFolder ||
-                        settings.Backup.ExcludeShareFolder ||
-                        settings.Backup.ExcludeLocalAddonsFolder ||
-                        excludedAddons.Any();
+                         settings.Backup.ExcludeSSLFolder ||
+                         settings.Backup.ExcludeShareFolder ||
+                         settings.Backup.ExcludeLocalAddonsFolder ||
+                         excludedAddonSlugs.Any(s => !string.IsNullOrWhiteSpace(s));
 
-        // Create the backup
+        // For a partial backup the HA API expects the lists of what TO include, not what to exclude
+        List<string>? includedAddons = null;
+        List<string>? includedFolders = null;
+        if (isPartial)
+        {
+            var allAddons = await _hassioClient.GetAddonsAsync();
+            includedAddons = allAddons
+                .Where(a => !excludedAddonSlugs.Any(ex => ex.Equals(a.Slug, StringComparison.OrdinalIgnoreCase)))
+                .Select(a => a.Slug)
+                .ToList();
+            includedFolders = GetIncludedFolders(settings);
+        }
+
         var success = await _hassioClient.CreateBackupAsync(
             name,
             timeStamp,
             appendTimestamp: true,
-            compressed: true, // Always use compression
+            compressed: true,
             password: settings.Backup.BackupPassword,
-            folders: isPartial ? excludedFolders : null,
-            addons: isPartial ? excludedAddons : null
+            folders: includedFolders,
+            addons: includedAddons
         );
 
         if (!success)
-        {
             throw new Exception("Failed to create backup");
-        }
 
-        // Return the newly created backup
         var backups = await _hassioClient.GetBackupsAsync(b => b.Name.StartsWith(name));
         return backups.OrderByDescending(b => b.Date).First();
     }
@@ -208,6 +229,8 @@ public class BackupService : IBackupService
         var backup = (await _hassioClient.GetBackupsAsync(b => b.Slug == slugId)).FirstOrDefault()
             ?? throw new ArgumentException("Backup not found", nameof(slugId));
 
+        // Persist so the flag survives the next GetBackupsAsync call
+        _retentionDataStore.SetRetained(slugId, retain);
         backup.Retained = retain;
         return backup;
     }
@@ -222,22 +245,23 @@ public class BackupService : IBackupService
         throw new ArgumentException("Operation not found", nameof(operationId));
     }
 
-    private static string[] GetExcludedFolders(Settings settings)
+    // Returns the standard HA folders TO include in a partial backup (i.e. all except the ones the user excluded)
+    private static List<string> GetIncludedFolders(Settings settings)
     {
-        var excludedFolders = new List<string>();
-        
-        if (settings.Backup.ExcludeMediaFolder)
-            excludedFolders.Add("media");
-        
-        if (settings.Backup.ExcludeSSLFolder)
-            excludedFolders.Add("ssl");
-        
-        if (settings.Backup.ExcludeShareFolder)
-            excludedFolders.Add("share");
-        
-        if (settings.Backup.ExcludeLocalAddonsFolder)
-            excludedFolders.Add("addons/local");
+        var folders = new List<string>();
 
-        return excludedFolders.ToArray();
+        if (!settings.Backup.ExcludeLocalAddonsFolder)
+            folders.Add("addons/local");
+
+        if (!settings.Backup.ExcludeMediaFolder)
+            folders.Add("media");
+
+        if (!settings.Backup.ExcludeShareFolder)
+            folders.Add("share");
+
+        if (!settings.Backup.ExcludeSSLFolder)
+            folders.Add("ssl");
+
+        return folders;
     }
 }

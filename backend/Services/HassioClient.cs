@@ -6,245 +6,209 @@ using Newtonsoft.Json;
 
 namespace HassioOneDriveBackup.Services;
 
-   internal class HassioClient : IHassioClient
+public class HassioClient : IHassioClient
+{
+    private const string SupervisorBaseUri = "http://supervisor";
+    private const string HassBaseUri = "http://supervisor/core/api";
+
+    private readonly ILogger<HassioClient> _logger;
+    private readonly ITelemetryManager _telemetryManager;
+    private readonly ISettingsService _settingsService;
+    private readonly HttpClient _httpClient;
+
+    public HassioClient(IConfiguration configuration, ISettingsService settingsService, ILogger<HassioClient> logger, ITelemetryManager telemetryManager)
     {
-        private const string Supervisor_Base_Uri_Str = "http://supervisor";
-        private const string Hass_Base_Uri_Str = "http://supervisor/core/api";
-		private readonly string _token;
-        private readonly ILogger _logger;
-        private readonly ITelemetryManager _telemetryManager;
-        private HttpClient _httpClient;
+        _logger = logger;
+        _telemetryManager = telemetryManager;
+        _settingsService = settingsService;
 
-		public HassioClient(string token, int hassioTimeout, ILogger logger, ITelemetryManager telemetryManager) 
+        var token = configuration["SUPERVISOR_TOKEN"];
+        if (string.IsNullOrEmpty(token))
         {
-            _token = token;
-            _httpClient = new HttpClient();
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            _httpClient.Timeout = TimeSpan.FromMinutes(hassioTimeout);
-            _logger = logger;
-            _telemetryManager = telemetryManager;
+            _logger.LogError("SUPERVISOR_TOKEN is not set — all Home Assistant API calls will fail with 401.");
+            token = string.Empty;
         }
 
-        public void UpdateTimeoutValue(int timeoutMinutes)
+        _httpClient = new HttpClient();
+        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+    }
+
+    public async Task<bool> DeleteBackupAsync(Backup backup)
+    {
+        try
         {
-            if (_httpClient.Timeout.TotalMinutes != timeoutMinutes)
-            {
-                _logger.LogDebug($"HassIoClient timeout value changed. Creating new httpclient");
-				_httpClient = new HttpClient();
-				_httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _token);
-				_httpClient.Timeout = TimeSpan.FromMinutes(timeoutMinutes);
-			}
-		}
-
-		public async Task<bool> DeleteBackupAsync(Backup backup)
+            var uri = new Uri(SupervisorBaseUri + $"/backups/{backup.Slug}");
+            var response = await _httpClient.DeleteAsync(uri);
+            response.EnsureSuccessStatusCode();
+        }
+        catch (Exception ex)
         {
-            try
-            {
-                Uri uri = new Uri(Supervisor_Base_Uri_Str + $"/backups/{backup.Slug}");
-                await _httpClient.DeleteAsync(uri);
-
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Error deleting backup {backup.Slug}. {ex}", ex, _telemetryManager);
-                return false;
-            }
-
-            return true;
+            _logger.LogError(ex, "Error deleting backup {Slug}", backup.Slug);
+            _telemetryManager.TrackException(ex);
+            return false;
         }
 
-        public async Task<List<Backup>> GetBackupsAsync(Predicate<Backup> filter)
+        return true;
+    }
+
+    public async Task<List<Backup>> GetBackupsAsync(Predicate<Backup> filter)
+    {
+        var uri = new Uri(SupervisorBaseUri + "/backups");
+        var response = await GetJsonResponseAsync<HassBackupsResponse>(uri);
+        if (!response.Result.Equals("ok", StringComparison.OrdinalIgnoreCase))
         {
-            Uri uri = new Uri(Supervisor_Base_Uri_Str + "/backups");
-            var response = await GetJsonResponseAsync<HassBackupsResponse>(uri);
-            if (response.Result.Equals("ok", StringComparison.OrdinalIgnoreCase) == false)
-            {
-                throw new InvalidOperationException($"Failed getting Backups from Supervisor. Result: {response.Result}");
-            }
-
-            var backups = response.DataProperty.Backups;
-
-            return filter != null ? backups.Where(backup => filter(backup)).ToList() : backups.ToList();
+            throw new InvalidOperationException($"Failed getting backups from Supervisor. Result: {response.Result}");
         }
 
-        public async Task<bool> CreateBackupAsync(string backupName, DateTime timeStamp, bool appendTimestamp = true, bool compressed = true, string? password = null, IEnumerable<string>? folders = null, IEnumerable<string>? addons = null)
+        var backups = response.DataProperty.Backups;
+        return filter != null ? backups.Where(b => filter(b)).ToList() : backups.ToList();
+    }
+
+    public async Task<bool> CreateBackupAsync(string backupName, DateTime timeStamp, bool appendTimestamp = true, bool compressed = true, string? password = null, IEnumerable<string>? folders = null, IEnumerable<string>? addons = null)
+    {
+        const string dtFormat = "yyyy-MM-dd-HH-mm";
+        string finalBackupName = appendTimestamp ? $"{backupName}_{timeStamp.ToString(dtFormat, CultureInfo.CurrentCulture)}" : backupName;
+
+        string payloadStr;
+        Uri uri;
+
+        // Full Backup
+        if (folders == null && addons == null)
         {
-            const string dt_format = "yyyy-MM-dd-HH-mm";
-
-            string? payloadStr;
-            Uri? uri;
-
-            string finalBackupName = appendTimestamp ? $"{backupName}_{timeStamp.ToString(dt_format, CultureInfo.CurrentCulture)}" : backupName;
-
-            // Full Backup
-            if (folders == null && addons == null)
-            {
-                uri = new Uri(Supervisor_Base_Uri_Str + "/backups/new/full");
-                var fullPayload = new
-                {
-                    name = finalBackupName,
-                    compressed = compressed,
-                    password = password
-                };
-
-                payloadStr = JsonConvert.SerializeObject(fullPayload, new JsonSerializerSettings
-                {
-                    NullValueHandling = NullValueHandling.Ignore
-                });
-
-                _logger.LogInformation("Starting full local backup");
-            }
-            // Partial Backup
-            else
-            {
-                uri = new Uri(Supervisor_Base_Uri_Str + "/backups/new/partial");
-                var partialPayload = new
-                {
-                    name = finalBackupName,
-                    compressed = compressed,
-                    password = password,
-                    homeassistant = true,
-                    addons = addons,
-                    folders = folders
-                };
-
-                payloadStr = JsonConvert.SerializeObject(partialPayload, new JsonSerializerSettings
-                {
-                    NullValueHandling = NullValueHandling.Ignore
-                });
-
-                _logger.LogInformation("Starting partial local backup");
-            }
-
-            try
-            {
-                await _httpClient.PostAsync(uri, new StringContent(payloadStr, Encoding.UTF8, "application/json"));
-                _logger.LogInformation("Backup complete");
-            }
-            catch (TaskCanceledException tce)
-            {
-                if (tce.InnerException is TimeoutException)
-                {
-                    _logger.LogError($"Backup request timed out (Increase the Hass API timeout in settings to fix). {tce}", tce, _telemetryManager);
-                    return false;
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Failed creating new backup. {ex}", ex, _telemetryManager);
-                return false;
-            }
-                     
-            return true;
+            uri = new Uri(SupervisorBaseUri + "/backups/new/full");
+            var fullPayload = new { name = finalBackupName, compressed, password };
+            payloadStr = JsonConvert.SerializeObject(fullPayload, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
+            _logger.LogInformation("Starting full local backup");
         }
-
-        public async Task<bool> UploadBackupAsync(string filePath)
+        // Partial Backup
+        else
         {
-            try
-            {
-                Uri uri = new Uri(Supervisor_Base_Uri_Str + "/backups/new/upload");
-                using var multiPartFormContent = new MultipartFormDataContent();
-                var fsContent = new StreamContent(System.IO.File.OpenRead(filePath));
-                multiPartFormContent.Add(fsContent, name: "file", fileName: filePath);
-                var response = await _httpClient.PostAsync(uri, multiPartFormContent);
-                response.EnsureSuccessStatusCode();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Error uploading backup to Home Assistant. {ex}", ex, _telemetryManager);
-                return false;
-            }
-
-            return true;
+            uri = new Uri(SupervisorBaseUri + "/backups/new/partial");
+            var partialPayload = new { name = finalBackupName, compressed, password, homeassistant = true, addons, folders };
+            payloadStr = JsonConvert.SerializeObject(partialPayload, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
+            _logger.LogInformation("Starting partial local backup");
         }
 
-        public async Task SendPersistentNotificationAsync(string message, string? notificationId = null)
+        var settings = await _settingsService.GetSettingsAsync();
+        using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(settings.General.HassAPITimeoutMinutes));
+
+        try
         {
-            try
-            {
-                Uri uri = new Uri(Hass_Base_Uri_Str + "/services/persistent_notification/create");
-                var payload = new
-                {
-                    message = message,
-                    title = "hassio-onedrive-backup",
-                    notification_id = notificationId
-                };
-
-                string payloadStr = JsonConvert.SerializeObject(payload, new JsonSerializerSettings
-                {
-                    NullValueHandling = NullValueHandling.Ignore
-                });
-
-                await _httpClient.PostAsync(uri, new StringContent(payloadStr, Encoding.UTF8, "application/json"));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Failed sending persistent notification. {ex}", ex, _telemetryManager);
-            }
+            var response = await _httpClient.PostAsync(uri, new StringContent(payloadStr, Encoding.UTF8, "application/json"), cts.Token);
+            response.EnsureSuccessStatusCode();
+            _logger.LogInformation("Backup complete");
         }
-
-        public async Task<List<Addon>> GetAddonsAsync()
+        catch (OperationCanceledException) when (cts.IsCancellationRequested)
         {
-            Uri uri = new Uri(Supervisor_Base_Uri_Str + "/addons");
-            var response = await GetJsonResponseAsync<HassAddonsResponse>(uri);
-            var ret = response.DataProperty.Addons.ToList();
-            return ret;
+            _logger.LogError("Backup request timed out after {Minutes} minutes. Increase the Hass API timeout in settings.", settings.General.HassAPITimeoutMinutes);
+            _telemetryManager.TrackException(new TimeoutException($"Backup creation timed out after {settings.General.HassAPITimeoutMinutes} minutes"));
+            return false;
         }
-
-        public async Task UpdateHassEntityStateAsync(string entityId, string payload)
+        catch (Exception ex)
         {
-            Uri uri = new Uri(Hass_Base_Uri_Str + $"/states/{entityId}");
-            await _httpClient.PostAsync(uri, new StringContent(payload, Encoding.UTF8, "application/json"));
+            _logger.LogError(ex, "Failed creating new backup");
+            _telemetryManager.TrackException(ex);
+            return false;
         }
 
-        public async Task PublishEventAsync(OneDriveEvents eventType, string payload = "")
+        return true;
+    }
+
+    public async Task<bool> UploadBackupAsync(string filePath)
+    {
+        try
         {
-            Uri uri = new Uri(Hass_Base_Uri_Str + $"/events/onedrive.{eventType}");
-            await _httpClient.PostAsync(uri, new StringContent(payload, Encoding.UTF8, "application/json"));
+            var uri = new Uri(SupervisorBaseUri + "/backups/new/upload");
+            using var multiPartFormContent = new MultipartFormDataContent();
+            var fsContent = new StreamContent(File.OpenRead(filePath));
+            multiPartFormContent.Add(fsContent, name: "file", fileName: filePath);
+            var response = await _httpClient.PostAsync(uri, multiPartFormContent);
+            response.EnsureSuccessStatusCode();
         }
-
-        public async Task<Backup> DownloadBackupAsync(string backupSlug)
-        {            
-            _logger.LogInformation($"Fetching Local Backup (Slug:{backupSlug})");
-            Uri uri = new Uri(Supervisor_Base_Uri_Str + $"/backups/{backupSlug}/download");
-            var fileInfo = new FileInfo($"{LocalStorage.TempFolder}/{backupSlug}.tar");
-            await using var memStream =  await _httpClient.GetStreamAsync(uri);
-            using var fileStream = System.IO.File.Create(fileInfo.FullName);
-            await memStream.CopyToAsync(fileStream);
-            _logger.LogInformation($"Backup ({backupSlug}) fetched successfully");
-
-            // Try to get backup metadata
-            var backups = await GetBackupsAsync(b => b.Slug == backupSlug);
-            var backup = backups.FirstOrDefault() ?? new Backup { Slug = backupSlug };
-            backup.LocalPath = fileInfo.FullName;
-            return backup;
-        }
-
-        public async Task<string> GetTimeZoneAsync()
+        catch (Exception ex)
         {
-            Uri uri = new Uri(Supervisor_Base_Uri_Str + "/supervisor/info");
-            var response = await GetJsonResponseAsync<HassSupervisorInfoResponse>(uri);
-            var ret = response.DataProperty.Timezone;
-            return ret;
+            _logger.LogError(ex, "Error uploading backup to Home Assistant");
+            _telemetryManager.TrackException(ex);
+            return false;
         }
 
-        private async Task<T> GetJsonResponseAsync<T>(Uri uri) 
-        { 
-            string response = await _httpClient.GetStringAsync(uri);
-            T ret = JsonConvert.DeserializeObject<T>(response)!;
-            return ret;
-        }
+        return true;
+    }
 
-        public async Task<HassAddonInfoResponse> GetAddonInfo(string slug)
+    public async Task SendPersistentNotificationAsync(string message, string? notificationId = null)
+    {
+        try
         {
-            Uri uri = new Uri(Supervisor_Base_Uri_Str + $"/addons/{slug}/info");
-            var response = await GetJsonResponseAsync<HassAddonInfoResponse>(uri);
-            return response;
+            var uri = new Uri(HassBaseUri + "/services/persistent_notification/create");
+            var payload = new { message, title = "hassio-onedrive-backup", notification_id = notificationId };
+            string payloadStr = JsonConvert.SerializeObject(payload, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
+            await _httpClient.PostAsync(uri, new StringContent(payloadStr, Encoding.UTF8, "application/json"));
         }
-
-        public async Task RestartSelf()
+        catch (Exception ex)
         {
-			Uri uri = new Uri(Supervisor_Base_Uri_Str + $"/addons/self/restart");
-            _ = await _httpClient.PostAsync(uri, null);
-		}
-	}
+            _logger.LogError(ex, "Failed sending persistent notification");
+        }
+    }
+
+    public async Task<List<Addon>> GetAddonsAsync()
+    {
+        var uri = new Uri(SupervisorBaseUri + "/addons");
+        var response = await GetJsonResponseAsync<HassAddonsResponse>(uri);
+        return response.DataProperty.Addons.ToList();
+    }
+
+    public async Task UpdateHassEntityStateAsync(string entityId, string payload)
+    {
+        var uri = new Uri(HassBaseUri + $"/states/{entityId}");
+        await _httpClient.PostAsync(uri, new StringContent(payload, Encoding.UTF8, "application/json"));
+    }
+
+    public async Task PublishEventAsync(OneDriveEvents eventType, string payload = "")
+    {
+        var uri = new Uri(HassBaseUri + $"/events/onedrive.{eventType}");
+        await _httpClient.PostAsync(uri, new StringContent(payload, Encoding.UTF8, "application/json"));
+    }
+
+    public async Task<Backup> DownloadBackupAsync(string backupSlug)
+    {
+        _logger.LogInformation("Fetching local backup (Slug: {Slug})", backupSlug);
+        var uri = new Uri(SupervisorBaseUri + $"/backups/{backupSlug}/download");
+        var fileInfo = new FileInfo($"{LocalStorage.TempFolder}/{backupSlug}.tar");
+        await using var stream = await _httpClient.GetStreamAsync(uri);
+        using var fileStream = File.Create(fileInfo.FullName);
+        await stream.CopyToAsync(fileStream);
+        _logger.LogInformation("Backup {Slug} fetched successfully", backupSlug);
+
+        var backups = await GetBackupsAsync(b => b.Slug == backupSlug);
+        var backup = backups.FirstOrDefault() ?? new Backup { Slug = backupSlug };
+        backup.LocalPath = fileInfo.FullName;
+        return backup;
+    }
+
+    public async Task<string> GetTimeZoneAsync()
+    {
+        var uri = new Uri(SupervisorBaseUri + "/supervisor/info");
+        var response = await GetJsonResponseAsync<HassSupervisorInfoResponse>(uri);
+        return response.DataProperty.Timezone;
+    }
+
+    public async Task<HassAddonInfoResponse> GetAddonInfo(string slug)
+    {
+        var uri = new Uri(SupervisorBaseUri + $"/addons/{slug}/info");
+        return await GetJsonResponseAsync<HassAddonInfoResponse>(uri);
+    }
+
+    public async Task RestartSelf()
+    {
+        var uri = new Uri(SupervisorBaseUri + "/addons/self/restart");
+        await _httpClient.PostAsync(uri, null);
+    }
+
+    private async Task<T> GetJsonResponseAsync<T>(Uri uri)
+    {
+        var response = await _httpClient.GetAsync(uri);
+        response.EnsureSuccessStatusCode();
+        string content = await response.Content.ReadAsStringAsync();
+        return JsonConvert.DeserializeObject<T>(content)!;
+    }
+}

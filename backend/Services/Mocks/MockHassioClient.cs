@@ -8,7 +8,6 @@ public class MockHassioClient : IHassioClient
     private readonly List<Backup> _backups;
     private readonly List<Addon> _addons;
     private readonly ILogger<MockHassioClient> _logger;
-    private int _timeoutMinutes = 5;
 
     public MockHassioClient(ILogger<MockHassioClient> logger)
     {
@@ -222,9 +221,4 @@ public class MockHassioClient : IHassioClient
         await Task.Delay(500); // Simulate restart
     }
 
-    public void UpdateTimeoutValue(int timeoutMinutes)
-    {
-        _timeoutMinutes = timeoutMinutes;
-        _logger.LogInformation($"Mock: Updated timeout value to {timeoutMinutes} minutes");
-    }
 }

@@ -27,7 +27,5 @@ namespace HassioOneDriveBackup.Services
         Task PublishEventAsync(OneDriveEvents eventType, string payload = "");
 		
         Task RestartSelf();
-
-        void UpdateTimeoutValue(int timeoutMinutes);
 	}
 }
