@@ -149,6 +149,15 @@ public class MockBackupService : IBackupService
         return await Task.FromResult(operation);
     }
 
+    public Task AwaitOperationAsync(string operationId, CancellationToken ct = default) =>
+        Task.CompletedTask;
+
+    public void SetSyncing(bool syncing) { }
+
+    public void SetBackupCreationProgress(float? progress) { }
+
+    public SyncStatusSnapshot GetSyncStatus() => new(false, null, null, null, null);
+
     private async Task SimulateTransferAsync(string operationId)
     {
         var operation = _operations[operationId];

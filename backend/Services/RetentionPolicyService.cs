@@ -76,8 +76,6 @@ public class RetentionPolicyService : IRetentionPolicyService
         }
     }
 
-    // --- Generational helpers ---
-
     private static IEnumerable<Backup> GetDailyGenerations(List<Backup> backups, int days, DateTime now)
     {
         if (days <= 0) return Enumerable.Empty<Backup>();

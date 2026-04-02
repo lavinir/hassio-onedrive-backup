@@ -61,6 +61,31 @@ public class BackupController : ControllerBase
         var backup = await _backupService.UpdateBackupRetentionAsync(slug, update.Retain);
         return Ok(backup);
     }
+
+    [HttpGet("sync-status")]
+    public ActionResult<object> GetSyncStatus()
+    {
+        var snap = _backupService.GetSyncStatus();
+        return Ok(new
+        {
+            isSyncing = snap.IsSyncing,
+            lastSyncTime = snap.LastSyncTime,
+            activeUpload = snap.ActiveUpload == null ? null : new
+            {
+                slug = snap.ActiveUpload.BackupSlug,
+                progress = snap.ActiveUpload.Progress
+            },
+            activeDownload = snap.ActiveDownload == null ? null : new
+            {
+                slug = snap.ActiveDownload.BackupSlug,
+                progress = snap.ActiveDownload.Progress
+            },
+            activeBackupCreation = snap.BackupCreationProgress == null ? null : new
+            {
+                progress = snap.BackupCreationProgress
+            }
+        });
+    }
 }
 
 public class RetentionUpdate

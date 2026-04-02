@@ -18,5 +18,4 @@ artifacts/
 node_modules/
 tmp/
 
-# Secrets / local overrides — add appsettings.*.json if they contain real credentials
-# appsettings.Production.json
+docs/

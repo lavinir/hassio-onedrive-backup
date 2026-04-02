@@ -8,7 +8,9 @@ namespace HassioOneDriveBackup.Services
 
         Task SendPersistentNotificationAsync(string message, string? notificationId = null);
 
-        Task<bool> CreateBackupAsync(string backupName, DateTime timeStamp, bool appendTimestamp = true, bool compressed = true, string? password = null, IEnumerable<string>? folders = null, IEnumerable<string>? addons = null);
+        Task<string?> CreateBackupAsync(string backupName, DateTime timeStamp, bool appendTimestamp = true, bool compressed = true, string? password = null, IEnumerable<string>? folders = null, IEnumerable<string>? addons = null);
+
+        Task<(bool isDone, float progress)> GetJobStatusAsync(string jobId);
 
         Task<bool> DeleteBackupAsync(Backup backup);
 
@@ -27,5 +29,7 @@ namespace HassioOneDriveBackup.Services
         Task PublishEventAsync(OneDriveEvents eventType, string payload = "");
 		
         Task RestartSelf();
+
+        Task<bool> IsBackupManagerJobInProgressAsync();
 	}
 }

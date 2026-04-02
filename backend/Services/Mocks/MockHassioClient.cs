@@ -78,16 +78,15 @@ public class MockHassioClient : IHassioClient
         await Task.CompletedTask;
     }
 
-    public async Task<bool> CreateBackupAsync(string backupName, DateTime timeStamp, bool appendTimestamp = true, bool compressed = true, string? password = null, IEnumerable<string>? folders = null, IEnumerable<string>? addons = null)
+    public async Task<string?> CreateBackupAsync(string backupName, DateTime timeStamp, bool appendTimestamp = true, bool compressed = true, string? password = null, IEnumerable<string>? folders = null, IEnumerable<string>? addons = null)
     {
         const string dt_format = "yyyyMMdd_HHmmss";
-        
-        // Create a simulated backup
+
         var isPartial = folders != null || addons != null;
-        string finalName = appendTimestamp 
-            ? $"{backupName}_{timeStamp.ToString(dt_format, CultureInfo.InvariantCulture)}" 
+        string finalName = appendTimestamp
+            ? $"{backupName}_{timeStamp.ToString(dt_format, CultureInfo.InvariantCulture)}"
             : backupName;
-        
+
         var newBackup = new Backup
         {
             Slug = $"mock_backup_{(isPartial ? "partial" : "full")}_{timeStamp.ToString("yyyyMMdd_HHmmss")}",
@@ -96,15 +95,20 @@ public class MockHassioClient : IHassioClient
             Size = isPartial ? "750 MB" : "2.3 GB",
             Status = "Local",
             SourceType = "Manual",
-            BackupType = isPartial ? "Partial" : "Full",            
+            BackupType = isPartial ? "Partial" : "Full",
         };
 
         _logger.LogInformation($"Mock: Created new {newBackup.BackupType} backup: {newBackup.Name}");
         _backups.Add(newBackup);
-        
-        // Simulate some delay for backup creation
+
         await Task.Delay(500);
-        return true;
+        return "mock-job-id";
+    }
+
+    public Task<(bool isDone, float progress)> GetJobStatusAsync(string jobId)
+    {
+        _logger.LogInformation("Mock: GetJobStatus for {JobId} — returning done", jobId);
+        return Task.FromResult((true, 1.0f));
     }
 
     public async Task<bool> DeleteBackupAsync(Backup backup)
@@ -221,4 +225,9 @@ public class MockHassioClient : IHassioClient
         await Task.Delay(500); // Simulate restart
     }
 
+    public Task<bool> IsBackupManagerJobInProgressAsync()
+    {
+        _logger.LogInformation("Mock: Checking backup manager job — returning false");
+        return Task.FromResult(false);
+    }
 }

@@ -1,3 +1,4 @@
+using HassioOneDriveBackup.Middleware;
 using HassioOneDriveBackup.Services;
 using HassioOneDriveBackup.Services.Mocks;
 using OpenTelemetry.Resources;
@@ -27,6 +28,9 @@ builder.Services.AddSingleton<ISettingsService, SettingsService>();
 builder.Services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
 builder.Services.AddSingleton<IRetentionPolicyService, RetentionPolicyService>();
 builder.Services.AddSingleton<RetentionDataStore>();
+builder.Services.AddSingleton<HassEntityStateService>();
+builder.Services.AddHostedService<BackupOrchestratorService>();
+builder.Services.AddHostedService<FileSyncService>();
 
 
 bool developmentMode = builder.Configuration.GetValue<bool>("DevelopmentMode");
@@ -100,7 +104,9 @@ builder.Services.AddSingleton(meterProvider);
 var app = builder.Build();
 
 // Initialize local storage (creates temp dir, cleans up legacy artifacts)
-LocalStorage.InitializeStorage(app.Services.GetRequiredService<ILogger<LocalStorage>>());
+// Skip during integration tests where /config is not available
+if (!app.Environment.IsEnvironment("Testing"))
+    LocalStorage.InitializeStorage(app.Configuration, app.Services.GetRequiredService<ILogger<LocalStorage>>());
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -109,6 +115,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseMiddleware<IncomingHassFirewallMiddleware>();
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
 app.MapControllers();
 
 app.Run();
+
+// Expose Program to WebApplicationFactory in test project
+public partial class Program { }

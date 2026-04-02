@@ -1,4 +1,6 @@
 using System.Text.Json;
+using HassioOneDriveBackup.Models;
+using Microsoft.Extensions.Configuration;
 
 namespace HassioOneDriveBackup.Services;
 
@@ -13,11 +15,14 @@ public class RetentionDataStore
     private readonly object _lock = new();
     private HashSet<string> _retainedSlugs;
 
-    public RetentionDataStore(ILogger<RetentionDataStore> logger)
+    public RetentionDataStore(IConfiguration configuration, ILogger<RetentionDataStore> logger)
     {
-        _filePath = Path.Combine("/data", "retained_backups.json");
+        var dataFolder = configuration["DataFolder"] ?? "/data";
+        var configFolder = configuration["ConfigFolder"] ?? "/config";
+        _filePath = Path.Combine(dataFolder, "retained_backups.json");
         _logger = logger;
         _retainedSlugs = Load();
+        MigrateFromLegacyIfNeeded(configFolder);
     }
 
     public IReadOnlySet<string> GetRetainedSlugs()
@@ -67,6 +72,43 @@ public class RetentionDataStore
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to save retained backups list");
+        }
+    }
+
+    private void MigrateFromLegacyIfNeeded(string configFolder)
+    {
+        var legacyPath = Path.Combine(configFolder, "additionalBackupData.json");
+        if (!File.Exists(legacyPath))
+            return;
+
+        try
+        {
+            _logger.LogInformation("Migrating retention flags from legacy additionalBackupData.json");
+            var json = File.ReadAllText(legacyPath);
+            var legacy = JsonSerializer.Deserialize<LegacyBackupAdditionalData>(json);
+            if (legacy?.Backups != null)
+            {
+                var toMigrate = legacy.Backups
+                    .Where(b => !string.IsNullOrWhiteSpace(b.Slug) && (b.RetainLocal || b.RetainOneDrive))
+                    .Select(b => b.Slug!);
+
+                lock (_lock)
+                {
+                    foreach (var slug in toMigrate)
+                        _retainedSlugs.Add(slug);
+                    Save();
+                }
+
+                _logger.LogInformation("Migrated {Count} retained backup(s) from legacy format",
+                    legacy.Backups.Count(b => b.RetainLocal || b.RetainOneDrive));
+            }
+
+            // Rename so migration doesn't re-run on next restart
+            File.Move(legacyPath, legacyPath + ".migrated");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to migrate legacy retention data — skipping");
         }
     }
 }

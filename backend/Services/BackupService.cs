@@ -1,6 +1,5 @@
 using System.Collections.Concurrent;
 using HassioOneDriveBackup.Models;
-using Microsoft.Graph.Models;
 
 namespace HassioOneDriveBackup.Services;
 
@@ -13,6 +12,9 @@ public class BackupService : IBackupService
     private readonly RetentionDataStore _retentionDataStore;
     private readonly ILogger<BackupService> _logger;
     private readonly ConcurrentDictionary<string, TransferOperation> _operations;
+    private volatile bool _isSyncing;
+    private DateTime? _lastSyncTime;
+    private float? _backupCreationProgress;
 
     public BackupService(
         IHassioClient hassioClient,
@@ -33,65 +35,89 @@ public class BackupService : IBackupService
 
     public async Task<IEnumerable<Backup>> GetBackupsAsync()
     {
-        var backups = await _hassioClient.GetBackupsAsync(_ => true);
+        var settings = await _settingsService.GetSettingsAsync();
+        var localBackups = await _hassioClient.GetBackupsAsync(_ => true);
+        var oneDriveItems = await _oneDriveClient.ListFilesInDirectoryAsync(
+            $"backups/{settings.General.InstanceName}");
 
-        // Merge the persisted retained flags — the HA API doesn't store this
+        var oneDriveSlugs = new HashSet<string>(
+            oneDriveItems.Select(i => Path.GetFileNameWithoutExtension(i.Name ?? "")),
+            StringComparer.OrdinalIgnoreCase);
         var retainedSlugs = _retentionDataStore.GetRetainedSlugs();
-        foreach (var backup in backups)
-            backup.Retained = retainedSlugs.Contains(backup.Slug);
 
-        return backups;
+        foreach (var b in localBackups)
+        {
+            b.Retained = retainedSlugs.Contains(b.Slug);
+            b.Status = oneDriveSlugs.Contains(b.Slug) ? "Synced" : "Local";
+        }
+
+        var localSlugs = new HashSet<string>(localBackups.Select(b => b.Slug), StringComparer.OrdinalIgnoreCase);
+        var oneDriveOnly = oneDriveItems
+            .Where(i => i.Name != null && !localSlugs.Contains(Path.GetFileNameWithoutExtension(i.Name!)))
+            .Select(i =>
+            {
+                var slug = Path.GetFileNameWithoutExtension(i.Name!);
+                var meta = OneDriveBackupMetadata.TryDecode(i.Description);
+                return new Backup
+                {
+                    Slug = slug,
+                    Name = meta?.Name ?? slug,
+                    Date = meta?.Date ?? i.LastModifiedDateTime?.UtcDateTime ?? DateTime.MinValue,
+                    Size = FormatBytes(meta?.Size ?? i.Size ?? 0),
+                    Status = "OneDrive",
+                    SourceType = "External",
+                    BackupType = "Full",
+                    Retained = retainedSlugs.Contains(slug)
+                };
+            });
+
+        return localBackups.Concat(oneDriveOnly).OrderByDescending(b => b.Date);
     }
 
     public Task<string> UploadBackupAsync(string slugId)
     {
-        // Create a new transfer operation
         var operation = new TransferOperation
         {
             BackupSlug = slugId,
             Type = TransferType.Upload,
             Status = TransferStatus.InProgress
         };
-        
-        if (!_operations.TryAdd(operation.Id, operation))
-        {
-            throw new InvalidOperationException("Failed to create transfer operation");
-        }
 
-        // Start the upload process in the background
-        _ = Task.Run(async () =>
+        if (!_operations.TryAdd(operation.Id, operation))
+            throw new InvalidOperationException("Failed to create transfer operation");
+
+        // Start the upload process in the background — store the Task so failures are observable
+        operation.BackgroundTask = Task.Run(async () =>
         {
             try
             {
                 Settings settings = await _settingsService.GetSettingsAsync();
-                // First download the backup locally from Home Assistant
                 var backup = await _hassioClient.DownloadBackupAsync(slugId);
                 var localPath = backup.LocalPath;
                 var oneDrivePath = $"backups/{settings.General.InstanceName}/{slugId}.tar";
 
                 if (string.IsNullOrEmpty(localPath))
-                {
                     throw new Exception($"Backup local path is null or empty for slug {slugId}");
-                }
+
+                var metadata = new OneDriveBackupMetadata
+                {
+                    Name = backup.Name,
+                    Date = backup.Date,
+                    Size = new FileInfo(localPath).Length
+                };
+
                 await _oneDriveClient.UploadFileAsync(localPath, oneDrivePath, (bytesTransferred, totalBytes) =>
                 {
                     if (totalBytes.HasValue)
-                    {
                         operation.Progress = (int)((double)bytesTransferred / totalBytes.Value * 100);
-                    }
-                });
+                }, metadata.Encode());
 
-                // Update operation status
                 operation.Status = TransferStatus.Completed;
                 operation.EndTime = DateTime.UtcNow;
 
-                // Clean up local file
                 if (!string.IsNullOrEmpty(localPath) && File.Exists(localPath))
-                {
                     File.Delete(localPath);
-                }
 
-                // Notify Home Assistant
                 await _hassioClient.PublishEventAsync(OneDriveEvents.BackupUploaded, slugId);
             }
             catch (Exception ex)
@@ -108,21 +134,18 @@ public class BackupService : IBackupService
 
     public Task<string> DownloadBackupAsync(string slugId)
     {
-        // Create a new transfer operation
         var operation = new TransferOperation
         {
             BackupSlug = slugId,
             Type = TransferType.Download,
             Status = TransferStatus.InProgress
         };
-        
-        if (!_operations.TryAdd(operation.Id, operation))
-        {
-            throw new InvalidOperationException("Failed to create transfer operation");
-        }
 
-        // Start the download process in the background
-        _ = Task.Run(async () =>
+        if (!_operations.TryAdd(operation.Id, operation))
+            throw new InvalidOperationException("Failed to create transfer operation");
+
+        // Start the download process in the background — store the Task so failures are observable
+        operation.BackgroundTask = Task.Run(async () =>
         {
             try
             {
@@ -130,33 +153,22 @@ public class BackupService : IBackupService
                 var oneDrivePath = $"backups/{settings.General.InstanceName}/{slugId}.tar";
                 var localPath = Path.Combine(Path.GetTempPath(), $"{slugId}.tar");
 
-                // Download from OneDrive with progress tracking
                 await _oneDriveClient.DownloadFileAsync(oneDrivePath, localPath, (bytesTransferred, totalBytes) =>
                 {
                     if (totalBytes.HasValue)
-                    {
                         operation.Progress = (int)((double)bytesTransferred / totalBytes.Value * 100);
-                    }
                 });
 
-                // Upload the backup to Home Assistant
                 var success = await _hassioClient.UploadBackupAsync(localPath);
                 if (!success)
-                {
                     throw new Exception("Failed to upload backup to Home Assistant");
-                }
 
-                // Update operation status
                 operation.Status = TransferStatus.Completed;
                 operation.EndTime = DateTime.UtcNow;
 
-                // Clean up local file
                 if (File.Exists(localPath))
-                {
                     File.Delete(localPath);
-                }
 
-                // Notify Home Assistant
                 await _hassioClient.PublishEventAsync(OneDriveEvents.BackupDownloaded, slugId);
             }
             catch (Exception ex)
@@ -177,8 +189,6 @@ public class BackupService : IBackupService
             ?? throw new ArgumentException("Backup not found", nameof(slugId));
 
         await _hassioClient.DeleteBackupAsync(backup);
-
-        // Clean up any persisted retention flag for this backup
         _retentionDataStore.SetRetained(slugId, false);
     }
 
@@ -194,7 +204,6 @@ public class BackupService : IBackupService
                          settings.Backup.ExcludeLocalAddonsFolder ||
                          excludedAddonSlugs.Any(s => !string.IsNullOrWhiteSpace(s));
 
-        // For a partial backup the HA API expects the lists of what TO include, not what to exclude
         List<string>? includedAddons = null;
         List<string>? includedFolders = null;
         if (isPartial)
@@ -207,7 +216,7 @@ public class BackupService : IBackupService
             includedFolders = GetIncludedFolders(settings);
         }
 
-        var success = await _hassioClient.CreateBackupAsync(
+        var jobId = await _hassioClient.CreateBackupAsync(
             name,
             timeStamp,
             appendTimestamp: true,
@@ -217,7 +226,7 @@ public class BackupService : IBackupService
             addons: includedAddons
         );
 
-        if (!success)
+        if (jobId is null)
             throw new Exception("Failed to create backup");
 
         var backups = await _hassioClient.GetBackupsAsync(b => b.Name.StartsWith(name));
@@ -229,7 +238,6 @@ public class BackupService : IBackupService
         var backup = (await _hassioClient.GetBackupsAsync(b => b.Slug == slugId)).FirstOrDefault()
             ?? throw new ArgumentException("Backup not found", nameof(slugId));
 
-        // Persist so the flag survives the next GetBackupsAsync call
         _retentionDataStore.SetRetained(slugId, retain);
         backup.Retained = retain;
         return backup;
@@ -237,15 +245,57 @@ public class BackupService : IBackupService
 
     public Task<TransferOperation> GetTransferProgressAsync(string operationId)
     {
-        if (_operations.TryGetValue(operationId, out var operation))
-        {            
-            return Task.FromResult(operation);
+        if (!_operations.TryGetValue(operationId, out var operation))
+            throw new ArgumentException("Operation not found", nameof(operationId));
+
+        // Sync status from the background task if it faulted before setting Status itself
+        if (operation.BackgroundTask?.IsFaulted == true && operation.Status == TransferStatus.InProgress)
+        {
+            operation.Status = TransferStatus.Failed;
+            operation.EndTime = DateTime.UtcNow;
         }
 
-        throw new ArgumentException("Operation not found", nameof(operationId));
+        return Task.FromResult(operation);
     }
 
-    // Returns the standard HA folders TO include in a partial backup (i.e. all except the ones the user excluded)
+    public async Task AwaitOperationAsync(string operationId, CancellationToken ct = default)
+    {
+        if (!_operations.TryGetValue(operationId, out var operation))
+            throw new ArgumentException("Operation not found", nameof(operationId));
+
+        if (operation.BackgroundTask != null)
+            await operation.BackgroundTask.WaitAsync(ct);
+    }
+
+    public void SetSyncing(bool syncing)
+    {
+        _isSyncing = syncing;
+        if (!syncing)
+            _lastSyncTime = DateTime.UtcNow;
+    }
+
+    public void SetBackupCreationProgress(float? progress)
+    {
+        _backupCreationProgress = progress;
+    }
+
+    public SyncStatusSnapshot GetSyncStatus()
+    {
+        var activeUpload = _operations.Values
+            .FirstOrDefault(o => o.Type == TransferType.Upload && o.Status == TransferStatus.InProgress);
+        var activeDownload = _operations.Values
+            .FirstOrDefault(o => o.Type == TransferType.Download && o.Status == TransferStatus.InProgress);
+        return new SyncStatusSnapshot(_isSyncing, _lastSyncTime, activeUpload, activeDownload, _backupCreationProgress);
+    }
+
+    private static string FormatBytes(long bytes) => bytes switch
+    {
+        < 1024 => $"{bytes} B",
+        < 1_048_576 => $"{bytes / 1024.0:F1} KB",
+        < 1_073_741_824 => $"{bytes / 1_048_576.0:F1} MB",
+        _ => $"{bytes / 1_073_741_824.0:F1} GB"
+    };
+
     private static List<string> GetIncludedFolders(Settings settings)
     {
         var folders = new List<string>();

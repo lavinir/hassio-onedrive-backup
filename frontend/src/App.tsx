@@ -24,6 +24,7 @@ import {
 } from '@mui/icons-material'
 import BackupCard from './components/BackupCard'
 import { useBackups } from './queries/useBackups'
+import { useSyncStatus } from './queries/useSyncStatus'
 import Settings from './pages/Settings'
 import LoginIndicator from './components/LoginIndicator';
 import { useTriggerBackup } from './mutations/useBackupMutations';
@@ -35,6 +36,7 @@ function App() {
   const [mode, setMode] = useState<'light' | 'dark'>(prefersDarkMode ? 'dark' : 'light');
   const [currentPage, setCurrentPage] = useState<'dashboard' | 'settings'>('dashboard');
   const { data: backups = [], isLoading, refetch } = useBackups();
+  const { data: syncStatus } = useSyncStatus();
   const createBackupMutation = useTriggerBackup();
   const [createModalOpen, setCreateModalOpen] = useState(false);
 
@@ -135,9 +137,16 @@ function App() {
           </Grid>
         )}
 
-        <Box sx={{ textAlign: 'center', mt: 4, color: 'text.secondary' }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 1, mt: 4, color: 'text.secondary' }}>
+          {syncStatus?.isSyncing && <CircularProgress size={14} color="inherit" />}
           <Typography variant="body2">
-            Last sync: Today at 12:45 PM
+            {syncStatus?.isSyncing
+              ? syncStatus.activeUpload
+                ? `Uploading ${syncStatus.activeUpload.slug}... ${syncStatus.activeUpload.progress}%`
+                : 'Syncing with OneDrive...'
+              : syncStatus?.lastSyncTime
+                ? `Last sync: ${new Date(syncStatus.lastSyncTime).toLocaleString()}`
+                : 'Never synced'}
           </Typography>
         </Box>
       </>

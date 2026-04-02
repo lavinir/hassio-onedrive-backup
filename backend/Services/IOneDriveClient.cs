@@ -27,11 +27,17 @@ public interface IOneDriveClient
     Task ResetConnectionAsync();
     
     // Upload a file to OneDrive App Folder with progress reporting
-    Task<DriveItem> UploadFileAsync(string localFilePath, string oneDrivePath, ProgressCallback? progressCallback = null);
+    Task<DriveItem> UploadFileAsync(string localFilePath, string oneDrivePath, ProgressCallback? progressCallback = null, string? description = null);
     
     // Download a file from OneDrive App Folder with progress reporting
     Task DownloadFileAsync(string oneDrivePath, string localFilePath, ProgressCallback? progressCallback = null);
     
     // Enumerate all files in a directory in OneDrive App Folder
     Task<IList<DriveItem>> ListFilesInDirectoryAsync(string oneDriveDirectoryPath);
+
+    // Get a single file/folder item — returns null if not found
+    Task<DriveItem?> GetFileAsync(string oneDrivePath);
+
+    // Delete a file or folder at the given path
+    Task DeleteFileAsync(string oneDrivePath);
 }

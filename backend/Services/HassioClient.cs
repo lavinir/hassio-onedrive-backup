@@ -64,7 +64,7 @@ public class HassioClient : IHassioClient
         return filter != null ? backups.Where(b => filter(b)).ToList() : backups.ToList();
     }
 
-    public async Task<bool> CreateBackupAsync(string backupName, DateTime timeStamp, bool appendTimestamp = true, bool compressed = true, string? password = null, IEnumerable<string>? folders = null, IEnumerable<string>? addons = null)
+    public async Task<string?> CreateBackupAsync(string backupName, DateTime timeStamp, bool appendTimestamp = true, bool compressed = true, string? password = null, IEnumerable<string>? folders = null, IEnumerable<string>? addons = null)
     {
         const string dtFormat = "yyyy-MM-dd-HH-mm";
         string finalBackupName = appendTimestamp ? $"{backupName}_{timeStamp.ToString(dtFormat, CultureInfo.CurrentCulture)}" : backupName;
@@ -76,7 +76,7 @@ public class HassioClient : IHassioClient
         if (folders == null && addons == null)
         {
             uri = new Uri(SupervisorBaseUri + "/backups/new/full");
-            var fullPayload = new { name = finalBackupName, compressed, password };
+            var fullPayload = new { name = finalBackupName, compressed, password, background = true };
             payloadStr = JsonConvert.SerializeObject(fullPayload, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
             _logger.LogInformation("Starting full local backup");
         }
@@ -84,34 +84,34 @@ public class HassioClient : IHassioClient
         else
         {
             uri = new Uri(SupervisorBaseUri + "/backups/new/partial");
-            var partialPayload = new { name = finalBackupName, compressed, password, homeassistant = true, addons, folders };
+            var partialPayload = new { name = finalBackupName, compressed, password, homeassistant = true, addons, folders, background = true };
             payloadStr = JsonConvert.SerializeObject(partialPayload, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
             _logger.LogInformation("Starting partial local backup");
         }
 
-        var settings = await _settingsService.GetSettingsAsync();
-        using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(settings.General.HassAPITimeoutMinutes));
-
         try
         {
-            var response = await _httpClient.PostAsync(uri, new StringContent(payloadStr, Encoding.UTF8, "application/json"), cts.Token);
+            var response = await _httpClient.PostAsync(uri, new StringContent(payloadStr, Encoding.UTF8, "application/json"));
             response.EnsureSuccessStatusCode();
-            _logger.LogInformation("Backup complete");
-        }
-        catch (OperationCanceledException) when (cts.IsCancellationRequested)
-        {
-            _logger.LogError("Backup request timed out after {Minutes} minutes. Increase the Hass API timeout in settings.", settings.General.HassAPITimeoutMinutes);
-            _telemetryManager.TrackException(new TimeoutException($"Backup creation timed out after {settings.General.HassAPITimeoutMinutes} minutes"));
-            return false;
+            string content = await response.Content.ReadAsStringAsync();
+            var jobResponse = JsonConvert.DeserializeObject<HassBackgroundJobResponse>(content);
+            var jobId = jobResponse?.Data?.JobId;
+            _logger.LogInformation("Backup started in background (job_id: {JobId})", jobId);
+            return jobId;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed creating new backup");
             _telemetryManager.TrackException(ex);
-            return false;
+            return null;
         }
+    }
 
-        return true;
+    public async Task<(bool isDone, float progress)> GetJobStatusAsync(string jobId)
+    {
+        var uri = new Uri(SupervisorBaseUri + $"/jobs/{jobId}");
+        var response = await GetJsonResponseAsync<HassJobStatusResponse>(uri);
+        return (response?.Data?.Done ?? false, response?.Data?.Progress ?? 0f);
     }
 
     public async Task<bool> UploadBackupAsync(string filePath)
@@ -202,6 +202,22 @@ public class HassioClient : IHassioClient
     {
         var uri = new Uri(SupervisorBaseUri + "/addons/self/restart");
         await _httpClient.PostAsync(uri, null);
+    }
+
+    public async Task<bool> IsBackupManagerJobInProgressAsync()
+    {
+        try
+        {
+            var uri = new Uri(SupervisorBaseUri + "/jobs");
+            var response = await GetJsonResponseAsync<HassJobsResponse>(uri);
+            return response?.Data?.Jobs?.Any(j => !j.Done &&
+                j.Name?.StartsWith("backup_manager", StringComparison.OrdinalIgnoreCase) == true) ?? false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Could not check supervisor jobs — assuming no job in progress");
+            return false;
+        }
     }
 
     private async Task<T> GetJsonResponseAsync<T>(Uri uri)

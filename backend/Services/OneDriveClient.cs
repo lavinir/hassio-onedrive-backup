@@ -388,7 +388,7 @@ public class OneDriveClient : IOneDriveClient
         _logger.LogInformation("Successfully disconnected from OneDrive");
     }
 
-    public async Task<DriveItem> UploadFileAsync(string localFilePath, string oneDrivePath, ProgressCallback? progressCallback = null)
+    public async Task<DriveItem> UploadFileAsync(string localFilePath, string oneDrivePath, ProgressCallback? progressCallback = null, string? description = null)
     {
         var client = await GetGraphClientAsync();
         var driveId = await GetDriveIdFromAppFolder();
@@ -409,6 +409,7 @@ public class OneDriveClient : IOneDriveClient
                 Item = new DriveItemUploadableProperties
                 {
                     Name = Path.GetFileName(oneDrivePath),
+                    Description = description,
                     AdditionalData = new Dictionary<string, object>
                     {
                         { "@microsoft.graph.conflictBehavior", "replace" }
@@ -463,6 +464,12 @@ public class OneDriveClient : IOneDriveClient
             {
                 throw new Exception($"Failed to upload file {oneDrivePath}");
             }
+
+            if (description != null && result.Id != null)
+            {
+                await client.Drives[driveId].Items[result.Id].PatchAsync(new Microsoft.Graph.Models.DriveItem { Description = description });
+            }
+
             return result;
         }
     }
@@ -653,5 +660,35 @@ public class OneDriveClient : IOneDriveClient
         }
 
         return allItems;
+    }
+
+    public async Task<DriveItem?> GetFileAsync(string oneDrivePath)
+    {
+        var client = await GetGraphClientAsync();
+        var driveId = await GetDriveIdFromAppFolder();
+        oneDrivePath = oneDrivePath.Replace('\\', '/').TrimStart('/');
+
+        try
+        {
+            var appFolder = await client.Drives[driveId].Special["approot"].GetAsync();
+            if (appFolder == null) return null;
+            return await client.Drives[driveId].Items[appFolder.Id].ItemWithPath(oneDrivePath).GetAsync();
+        }
+        catch (Microsoft.Graph.Models.ODataErrors.ODataError ex) when (ex.ResponseStatusCode == 404)
+        {
+            return null;
+        }
+    }
+
+    public async Task DeleteFileAsync(string oneDrivePath)
+    {
+        var client = await GetGraphClientAsync();
+        var driveId = await GetDriveIdFromAppFolder();
+        oneDrivePath = oneDrivePath.Replace('\\', '/').TrimStart('/');
+
+        var appFolder = await client.Drives[driveId].Special["approot"].GetAsync();
+        if (appFolder == null) throw new InvalidOperationException("Failed to get app folder root");
+
+        await client.Drives[driveId].Items[appFolder.Id].ItemWithPath(oneDrivePath).DeleteAsync();
     }
 }

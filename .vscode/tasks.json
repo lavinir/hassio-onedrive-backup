@@ -36,6 +36,16 @@
                 "${workspaceFolder}/backend/HassioOneDriveBackup.csproj"
             ],
             "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "frontend: dev",
+            "type": "shell",
+            "command": "npm run dev",
+            "options": {
+                "cwd": "${workspaceFolder}/frontend"
+            },
+            "isBackground": true,
+            "problemMatcher": []
         }
     ]
 }

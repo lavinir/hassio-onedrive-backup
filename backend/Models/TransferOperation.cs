@@ -9,6 +9,9 @@ public class TransferOperation
     public TransferStatus Status { get; set; }
     public DateTime StartTime { get; set; } = DateTime.UtcNow;
     public DateTime? EndTime { get; set; }
+
+    // Internal task reference — allows GetTransferProgress to report faulted state
+    internal Task? BackgroundTask { get; set; }
 }
 
 public enum TransferType
