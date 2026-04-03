@@ -15,6 +15,7 @@ public class FileSyncServiceTests : IDisposable
     private readonly Mock<IDateTimeProvider> _dateTimeProvider;
     private readonly Mock<IHassioClient> _hassio;
     private readonly HassEntityStateService _entityState;
+    private readonly FileSyncStateService _fileSyncState;
     private readonly FileSyncService _svc;
 
     public FileSyncServiceTests()
@@ -27,6 +28,7 @@ public class FileSyncServiceTests : IDisposable
         _dateTimeProvider = new Mock<IDateTimeProvider>();
         _hassio = new Mock<IHassioClient>();
         _entityState = new HassEntityStateService(_hassio.Object, NullLogger<HassEntityStateService>.Instance);
+        _fileSyncState = new FileSyncStateService();
 
         _hassio.Setup(h => h.UpdateHassEntityStateAsync(It.IsAny<string>(), It.IsAny<string>()))
             .Returns(Task.CompletedTask);
@@ -38,6 +40,7 @@ public class FileSyncServiceTests : IDisposable
             _settings.Object,
             _dateTimeProvider.Object,
             _entityState,
+            _fileSyncState,
             NullLogger<FileSyncService>.Instance);
     }
 

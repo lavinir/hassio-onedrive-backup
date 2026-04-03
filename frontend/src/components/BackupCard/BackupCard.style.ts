@@ -17,10 +17,14 @@ export const CardHeader = styled(Box)`
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 16px;
+  min-width: 0;
 `;
 
 export const CardTitle = styled(Typography)`
   font-weight: bold;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 `;
 
 export const StatusContainer = styled(Box)`

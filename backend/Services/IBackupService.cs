@@ -15,6 +15,7 @@ public interface IBackupService
     void SetSyncing(bool syncing);
     void SetBackupCreationProgress(float? progress);
     SyncStatusSnapshot GetSyncStatus();
+    Task<BackupInfoResult> GetBackupInfoAsync(string slug);
 }
 
 public record SyncStatusSnapshot(

@@ -1,4 +1,4 @@
-import { FC, useState } from 'react';
+import { FC, useState, useEffect } from 'react';
 import { CardContent, CardActions, Button, Typography, IconButton, Menu, MenuItem, ListItemIcon, ListItemText, Divider, Tooltip, Alert } from '@mui/material';
 import { 
   MoreVert as MoreVertIcon,
@@ -14,6 +14,7 @@ import { getStatusInfo } from './BackupCard.utils';
 import { useDeleteBackup, useUploadBackup, useDownloadBackup, useUpdateBackupRetention } from '../../mutations/useBackupMutations';
 import { useTransferProgress } from '../../hooks/useTransferProgress';
 import ProgressIndicator from '../ProgressIndicator';
+import BackupDetailsDialog from '../BackupDetailsDialog';
 import { 
   StyledCard, 
   CardHeader, 
@@ -35,22 +36,25 @@ const BackupCard: FC<IBackupCardProps> = ({ backup }) => {
   const [action, setAction] = useState<'upload' | 'download' | null>(null);
   const [operationId, setOperationId] = useState<string | null>(null);
   const { progress, isComplete, isFailed } = useTransferProgress(operationId);
-  
+
   // Menu state
   const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
   const isMenuOpen = Boolean(menuAnchorEl);
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
-  // Reset state when operation completes
-  if (isComplete && operationId && !isFailed) {
-    setOperationId(null);
-    setAction(null);
-  }
+  // Clear operation state once it completes successfully
+  useEffect(() => {
+    if (isComplete && operationId && !isFailed) {
+      setOperationId(null);
+      setAction(null);
+    }
+  }, [isComplete, operationId, isFailed]);
 
   const handleUpload = () => {
     if (backup.status === 'Local') {
-      setAction('upload');
       uploadBackup([backup.slug, {
         onOperationStart: (id) => {
+          setAction('upload');
           setOperationId(id);
         },
         onError: () => {
@@ -63,9 +67,9 @@ const BackupCard: FC<IBackupCardProps> = ({ backup }) => {
 
   const handleDownload = () => {
     if (backup.status === 'OneDrive') {
-      setAction('download');
       downloadBackup([backup.slug, {
         onOperationStart: (id) => {
+          setAction('download');
           setOperationId(id);
         },
         onError: () => {
@@ -101,8 +105,7 @@ const BackupCard: FC<IBackupCardProps> = ({ backup }) => {
   };
 
   const handleBackupDetails = () => {
-    // Future implementation for showing backup details
-    console.log(`Show details for backup: ${backup.slug}`);
+    setDetailsOpen(true);
     handleMenuClose();
   };
 
@@ -110,7 +113,7 @@ const BackupCard: FC<IBackupCardProps> = ({ backup }) => {
     <StyledCard>
       <CardContent>
         <CardHeader>
-          <Box display="flex" alignItems="center">
+          <Box display="flex" alignItems="center" sx={{ minWidth: 0, flex: 1, overflow: 'hidden' }}>
             {backup.retained && (
               <Tooltip title="This backup is retained and won't be automatically deleted">
                 <RetentionBadge>
@@ -122,16 +125,14 @@ const BackupCard: FC<IBackupCardProps> = ({ backup }) => {
               {backup.name}
             </CardTitle>
           </Box>
-          <IconButton size="small" onClick={handleMenuOpen} aria-label="backup options">
+          <IconButton size="small" onClick={handleMenuOpen} aria-label="backup options" sx={{ flexShrink: 0, ml: 1 }}>
             <MoreVertIcon />
           </IconButton>
           <Menu
             anchorEl={menuAnchorEl}
             open={isMenuOpen}
             onClose={handleMenuClose}
-            MenuListProps={{
-              'aria-labelledby': 'backup-options-button',
-            }}
+            slotProps={{ list: { 'aria-labelledby': 'backup-options-button' } }}
             anchorOrigin={{
               vertical: 'bottom',
               horizontal: 'right',
@@ -158,29 +159,20 @@ const BackupCard: FC<IBackupCardProps> = ({ backup }) => {
         </CardHeader>
         <StatusContainer>
           <Box display="flex" alignItems="center" sx={{ flexGrow: 1 }}>
-            <StatusAvatar sx={{ color: theme => {
-              const color = statusInfo.color;
-              if (color === 'text.primary') {
-                return theme.palette.text.primary;
-              }
-              return color;
-            }}}>
-              {statusInfo.icon}
-            </StatusAvatar>
+            <Tooltip title={statusInfo.tooltip}>
+              <StatusAvatar sx={{ color: theme => {
+                const color = statusInfo.color;
+                if (color === 'text.primary') {
+                  return theme.palette.text.primary;
+                }
+                return color;
+              }}}>
+                {statusInfo.icon}
+              </StatusAvatar>
+            </Tooltip>
             <Typography variant="body2" color="text.secondary">
               {backup.status}
             </Typography>
-          </Box>
-          <Box>
-            <StyledChip
-              label={backup.source_type}
-              size="small"
-              color={
-                backup.source_type === 'Automated' ? 'primary' 
-                : backup.source_type === 'Manual' ? 'secondary'
-                : 'warning'
-              }
-            />
           </Box>
         </StatusContainer>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
@@ -254,6 +246,11 @@ const BackupCard: FC<IBackupCardProps> = ({ backup }) => {
           Delete
         </Button>
       </CardActions>
+      <BackupDetailsDialog
+        backup={backup}
+        open={detailsOpen}
+        onClose={() => setDetailsOpen(false)}
+      />
     </StyledCard>
   );
 };

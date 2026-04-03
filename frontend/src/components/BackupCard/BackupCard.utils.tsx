@@ -13,19 +13,19 @@ export const getStatusInfo = (status: string): IStatusInfo => {
       return {
         icon: <StorageIcon/>,
         color: 'text.primary', // This will be white in dark mode and black in light mode
-        tooltip: 'Exists locally only'
+        tooltip: 'Backup exists locally only'
       };
     case 'OneDrive':
       return {
         icon: <CloudIcon/>,
         color: '#0078d4', // OneDrive blue
-        tooltip: 'Exists on OneDrive only'
+        tooltip: 'Backup exists in OneDrive only'
       };
     case 'Synced':
       return {
         icon: <SyncAltIcon/>,
         color: '#4caf50', // Brighter success green
-        tooltip: 'Synced to both local and OneDrive'
+        tooltip: 'Backup exists locally in Home Assistant and in OneDrive'
       };
     default:
       return {

@@ -230,4 +230,36 @@ public class MockHassioClient : IHassioClient
         _logger.LogInformation("Mock: Checking backup manager job — returning false");
         return Task.FromResult(false);
     }
+
+    public Task<HassBackupInfoResponse?> GetBackupInfoAsync(string slug)
+    {
+        var backup = _backups.FirstOrDefault(b => b.Slug == slug);
+        if (backup == null)
+            return Task.FromResult<HassBackupInfoResponse?>(null);
+
+        var response = new HassBackupInfoResponse
+        {
+            Result = "ok",
+            Data = new HassBackupInfoResponse.BackupInfoData
+            {
+                Slug = backup.Slug,
+                Name = backup.Name,
+                Date = backup.Date,
+                Size = 1024.0f,
+                Type = backup.BackupType?.ToLower(),
+                Compressed = true,
+                Protected = false,
+                SupervisorVersion = "2026.03.2",
+                HomeAssistantVersion = "2026.3.4",
+                Addons = new List<HassBackupInfoResponse.BackupAddonInfoData>
+                {
+                    new() { Slug = "core_ssh", Name = "Terminal & SSH", Version = "9.7.1", Size = 0.0f },
+                    new() { Slug = "core_mosquitto", Name = "Mosquitto broker", Version = "6.4.1", Size = 0.0f }
+                },
+                Folders = new List<string> { "ssl", "share", "media" }
+            }
+        };
+
+        return Task.FromResult<HassBackupInfoResponse?>(response);
+    }
 }

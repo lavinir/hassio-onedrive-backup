@@ -1,10 +1,14 @@
 using System.Collections;
 using System.Text;
+using Microsoft.Extensions.Logging;
 
 namespace HassioOneDriveBackup.Utils
 {
     public static class TimeRangeHelper
     {
+        private static readonly ILogger _logger =
+            LoggerFactory.Create(b => b.AddConsole()).CreateLogger(nameof(TimeRangeHelper));
+
         public static BitArray GetAllowedHours(string? allowedHoursExpression)
         {
             var allowedHours = new BitArray(24);
@@ -25,18 +29,24 @@ namespace HassioOneDriveBackup.Utils
                     fromStr = section.StartsWith('-') ? "0" : section.Split('-').FirstOrDefault(s => string.IsNullOrWhiteSpace(s) == false, "0");
                     toStr = section.EndsWith('-') ? "23" : section.Split('-').LastOrDefault(s => string.IsNullOrWhiteSpace(s) == false, "23");
 
-                    int from = int.Parse(fromStr);
-                    int to = int.Parse(toStr);
+                    if (!int.TryParse(fromStr, out int from) || !int.TryParse(toStr, out int to)
+                        || from < 0 || from > 23 || to < 0 || to > 23 || from > to)
+                    {
+                        _logger.LogWarning(
+                            "Invalid allowed hours expression '{Expression}' (section '{Section}') — falling back to all hours allowed",
+                            allowedHoursExpression, section);
+                        allowedHours.SetAll(true);
+                        return allowedHours;
+                    }
 
                     for (int i = from; i <= to; i++)
-                    {
                         allowedHours.Set(i, true);
-                    }
                 }
-
             }
             catch (Exception ex)
             {
+                _logger.LogWarning(ex, "Failed to parse allowed hours expression '{Expression}' — falling back to all hours allowed",
+                    allowedHoursExpression);
                 allowedHours.SetAll(true);
             }
 

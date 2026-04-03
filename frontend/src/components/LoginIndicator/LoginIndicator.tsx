@@ -4,13 +4,14 @@ import { LoginStatusContainer, StatusDot } from './LoginIndicator.style';
 import { ILoginIndicatorProps } from './LoginIndicator.types';
 import { useLoginStatus } from '../../queries/useLoginStatus';
 
-const LoginIndicator: FC<ILoginIndicatorProps> = () => {
+const LoginIndicator: FC<ILoginIndicatorProps> = ({ onNavigateToSettings }) => {
   const { data: loginStatus, isLoading } = useLoginStatus();
   const isLoggedIn = loginStatus?.authState === 'LoggedIn';
   const isLoggingIn = loginStatus?.authState === 'LoggingIn';
+  const isNotConnected = !isLoggedIn && !isLoggingIn;
   const userEmail = loginStatus?.userEmail;
 
-  const tooltipTitle = isLoading 
+  const tooltipTitle = isLoading
     ? 'Checking login status...'
     : isLoggingIn
     ? 'OneDrive authorization in progress...'
@@ -18,23 +19,26 @@ const LoginIndicator: FC<ILoginIndicatorProps> = () => {
     ? `Connected as ${userEmail}`
     : isLoggedIn
     ? 'Connected to OneDrive'
-    : 'Not connected to OneDrive - Click Settings to connect';
+    : 'Not connected to OneDrive - Click to go to Settings';
 
   return (
     <Tooltip title={tooltipTitle}>
-      <LoginStatusContainer>
+      <LoginStatusContainer
+        onClick={() => isNotConnected && onNavigateToSettings?.()}
+        sx={{ cursor: isNotConnected ? 'pointer' : 'default' }}
+      >
         <StatusDot data-isloggedin={isLoggedIn.toString()} data-loggingin={isLoggingIn.toString()} />
-        <Typography 
-          variant="body2" 
-          color="inherit" 
+        <Typography
+          variant="body2"
+          color="inherit"
           sx={{ display: { xs: 'none', sm: 'block' } }}
         >
-          {isLoggingIn 
-            ? 'Connecting...' 
-            : isLoggedIn && userEmail 
+          {isLoggingIn
+            ? 'Connecting...'
+            : isLoggedIn && userEmail
             ? userEmail
-            : isLoggedIn 
-            ? 'Connected' 
+            : isLoggedIn
+            ? 'Connected'
             : 'Not Connected'
           }
         </Typography>

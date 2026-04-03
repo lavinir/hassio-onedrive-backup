@@ -505,18 +505,27 @@ public class OneDriveClient : IOneDriveClient
                 throw new Exception($"Failed to get content stream for file {oneDrivePath}");
             }
 
-            using var fileStream = File.Create(localFilePath);
-
-            // Use buffer for efficient copying
-            var buffer = new byte[81920];
-            long totalBytesRead = 0;
-            int bytesRead;
-
-            while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+            try
             {
-                await fileStream.WriteAsync(buffer, 0, bytesRead);
-                totalBytesRead += bytesRead;
-                progressCallback?.Invoke(totalBytesRead, totalSize);
+                using var fileStream = File.Create(localFilePath);
+
+                // Use buffer for efficient copying
+                var buffer = new byte[81920];
+                long totalBytesRead = 0;
+                int bytesRead;
+
+                while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                {
+                    await fileStream.WriteAsync(buffer, 0, bytesRead);
+                    totalBytesRead += bytesRead;
+                    progressCallback?.Invoke(totalBytesRead, totalSize);
+                }
+            }
+            catch
+            {
+                if (File.Exists(localFilePath))
+                    File.Delete(localFilePath);
+                throw;
             }
 
             _logger.LogInformation($"Successfully downloaded {oneDrivePath} to {localFilePath}");
@@ -598,8 +607,10 @@ public class OneDriveClient : IOneDriveClient
             }
 
             var resp = await _graphClient.Drives.WithUrl("https://graph.microsoft.com/v1.0/me/drive/special/approot").GetAsync();
-            string id = resp.AdditionalData["id"].ToString().Split("!").First();
-            return id;
+            if (resp?.AdditionalData == null || !resp.AdditionalData.TryGetValue("id", out var rawId) || rawId == null)
+                throw new InvalidOperationException("Drive ID missing from app root response");
+            _driveId = rawId.ToString()!.Split("!").First();
+            return _driveId;
         }
         catch (Exception ex)
         {

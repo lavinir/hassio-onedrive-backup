@@ -158,6 +158,32 @@ public class MockBackupService : IBackupService
 
     public SyncStatusSnapshot GetSyncStatus() => new(false, null, null, null, null);
 
+    public async Task<BackupInfoResult> GetBackupInfoAsync(string slug)
+    {
+        var backup = _backups.FirstOrDefault(b => b.Slug == slug);
+        if (backup == null || backup.Status == "OneDrive")
+            return new BackupInfoResult { IsAvailableLocally = false, Slug = slug };
+
+        return await Task.FromResult(new BackupInfoResult
+        {
+            IsAvailableLocally = true,
+            Slug = slug,
+            Name = backup.Name,
+            Date = backup.Date,
+            Type = backup.BackupType?.ToLower(),
+            Compressed = true,
+            IsProtected = false,
+            SupervisorVersion = "2026.03.2",
+            HomeAssistantVersion = "2026.3.4",
+            Addons = new List<BackupAddonInfo>
+            {
+                new() { Slug = "core_ssh", Name = "Terminal & SSH", Version = "9.7.1", Size = 0.0f },
+                new() { Slug = "core_mosquitto", Name = "Mosquitto broker", Version = "6.4.1", Size = 0.0f }
+            },
+            Folders = new List<string> { "ssl", "share", "media" }
+        });
+    }
+
     private async Task SimulateTransferAsync(string operationId)
     {
         var operation = _operations[operationId];

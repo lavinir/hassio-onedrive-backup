@@ -9,10 +9,12 @@ namespace HassioOneDriveBackup.Controllers;
 public class BackupController : ControllerBase
 {
     private readonly IBackupService _backupService;
+    private readonly FileSyncStateService _fileSyncStateService;
 
-    public BackupController(IBackupService backupService)
+    public BackupController(IBackupService backupService, FileSyncStateService fileSyncStateService)
     {
         _backupService = backupService;
+        _fileSyncStateService = fileSyncStateService;
     }
 
     [HttpGet]
@@ -24,8 +26,15 @@ public class BackupController : ControllerBase
     [HttpPost("{slug}/download")]
     public async Task<ActionResult<IDictionary<string, string>>> DownloadBackup(string slug)
     {
-        var operationId = await _backupService.DownloadBackupAsync(slug);
-        return Ok(new Dictionary<string, string> { { "operationId", operationId } });
+        try
+        {
+            var operationId = await _backupService.DownloadBackupAsync(slug);
+            return Ok(new Dictionary<string, string> { { "operationId", operationId } });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(ex.Message);
+        }
     }
 
     [HttpDelete("{slug}")]
@@ -38,8 +47,15 @@ public class BackupController : ControllerBase
     [HttpPost("{slug}/upload")]
     public async Task<ActionResult<IDictionary<string, string>>> UploadBackup(string slug)
     {
-        var operationId = await _backupService.UploadBackupAsync(slug);
-        return Ok(new Dictionary<string, string> { { "operationId", operationId } });
+        try
+        {
+            var operationId = await _backupService.UploadBackupAsync(slug);
+            return Ok(new Dictionary<string, string> { { "operationId", operationId } });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(ex.Message);
+        }
     }
 
     [HttpGet("progress/{operationId}")]
@@ -62,10 +78,17 @@ public class BackupController : ControllerBase
         return Ok(backup);
     }
 
+    [HttpGet("{slug}/info")]
+    public async Task<ActionResult<BackupInfoResult>> GetBackupInfo(string slug)
+    {
+        return Ok(await _backupService.GetBackupInfoAsync(slug));
+    }
+
     [HttpGet("sync-status")]
     public ActionResult<object> GetSyncStatus()
     {
         var snap = _backupService.GetSyncStatus();
+        var (fileSyncState, fileSyncLastTime) = _fileSyncStateService.GetStatus();
         return Ok(new
         {
             isSyncing = snap.IsSyncing,
@@ -83,6 +106,11 @@ public class BackupController : ControllerBase
             activeBackupCreation = snap.BackupCreationProgress == null ? null : new
             {
                 progress = snap.BackupCreationProgress
+            },
+            fileSyncState = new
+            {
+                state = fileSyncState,
+                lastSyncTime = fileSyncLastTime
             }
         });
     }

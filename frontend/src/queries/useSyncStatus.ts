@@ -5,6 +5,9 @@ export const useSyncStatus = () => {
   return useQuery({
     queryKey: ['sync-status'],
     queryFn: fetchSyncStatus,
-    refetchInterval: (query) => (query.state.data?.isSyncing ? 3000 : 30000),
+    refetchInterval: (query) => {
+      const data = query.state.data;
+      return (data?.isSyncing || data?.fileSyncState?.state === 'Syncing') ? 3000 : 30000;
+    },
   });
 };

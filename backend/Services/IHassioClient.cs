@@ -31,5 +31,7 @@ namespace HassioOneDriveBackup.Services
         Task RestartSelf();
 
         Task<bool> IsBackupManagerJobInProgressAsync();
+
+        Task<HassBackupInfoResponse?> GetBackupInfoAsync(string slug);
 	}
 }

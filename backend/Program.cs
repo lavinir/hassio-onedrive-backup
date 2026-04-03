@@ -29,6 +29,7 @@ builder.Services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
 builder.Services.AddSingleton<IRetentionPolicyService, RetentionPolicyService>();
 builder.Services.AddSingleton<RetentionDataStore>();
 builder.Services.AddSingleton<HassEntityStateService>();
+builder.Services.AddSingleton<FileSyncStateService>();
 builder.Services.AddHostedService<BackupOrchestratorService>();
 builder.Services.AddHostedService<FileSyncService>();
 

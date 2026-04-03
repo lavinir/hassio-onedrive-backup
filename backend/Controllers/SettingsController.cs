@@ -10,11 +10,23 @@ public class SettingsController : ControllerBase
 {
     private readonly ISettingsService _settingsService;
     private readonly IOneDriveClient _oneDriveClient;
+    private readonly IConfiguration _configuration;
 
-    public SettingsController(ISettingsService settingsService, IOneDriveClient oneDriveClient)
+    public SettingsController(ISettingsService settingsService, IOneDriveClient oneDriveClient, IConfiguration configuration)
     {
         _settingsService = settingsService;
         _oneDriveClient = oneDriveClient;
+        _configuration = configuration;
+    }
+
+    [HttpGet("build-info")]
+    public ActionResult<object> GetBuildInfo()
+    {
+        return Ok(new
+        {
+            version = _configuration["GrafanaTelemetry:ServiceVersion"] ?? "unknown",
+            branch = _configuration["GrafanaTelemetry:ServiceBranch"] ?? "main"
+        });
     }
 
     // Settings endpoints

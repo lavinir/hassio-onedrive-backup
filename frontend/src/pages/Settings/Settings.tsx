@@ -65,6 +65,8 @@ const Settings: FC<ISettingsProps> = () => {
   const [newSyncPath, setNewSyncPath] = useState('');
   const [newExcludedAddon, setNewExcludedAddon] = useState('');
   const [deviceCodeData, setDeviceCodeData] = useState<{ verificationUrl: string; userCode: string } | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   type SettingsSectionKey = keyof ISettingsForm;
 
@@ -170,12 +172,16 @@ const Settings: FC<ISettingsProps> = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSaveError(null);
+    setSaveSuccess(false);
     try {
       if (updateSettings.data) {
         await updateSettings.mutateAsync(updateSettings.data);
+        setSaveSuccess(true);
+        setTimeout(() => setSaveSuccess(false), 4000);
       }
     } catch (error) {
-      console.error('Failed to save settings:', error);
+      setSaveError('Failed to save settings. Please try again.');
     }
   };
 
@@ -639,7 +645,7 @@ const Settings: FC<ISettingsProps> = () => {
                   {settings.backup.excludedAddons.length > 0 ? (
                     <List dense>
                       {settings.backup.excludedAddons.map((addon, index) => (
-                        <ListItem key={index}>
+                        <ListItem key={addon}>
                           <ListItemText primary={addon} />
                           <ListItemSecondaryAction>
                             <IconButton edge="end" onClick={() => handleRemoveExcludedAddon(index)}>
@@ -788,7 +794,7 @@ const Settings: FC<ISettingsProps> = () => {
                   {settings.fileSync.syncPaths.length > 0 ? (
                     <List dense>
                       {settings.fileSync.syncPaths.map((path, index) => (
-                        <ListItem key={index}>
+                        <ListItem key={path}>
                           <ListItemText primary={path} />
                           <ListItemSecondaryAction>
                             <IconButton edge="end" onClick={() => handleRemoveSyncPath(index)}>
@@ -839,6 +845,8 @@ const Settings: FC<ISettingsProps> = () => {
         </SettingsCard>
 
         <ButtonContainer>
+          {saveError && <Alert severity="error" onClose={() => setSaveError(null)} sx={{ mb: 2 }}>{saveError}</Alert>}
+          {saveSuccess && <Alert severity="success" sx={{ mb: 2 }}>Settings saved.</Alert>}
           <Button
             type="submit"
             variant="contained"

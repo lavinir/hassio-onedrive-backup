@@ -142,7 +142,8 @@ public class HassioClient : IHassioClient
             var uri = new Uri(HassBaseUri + "/services/persistent_notification/create");
             var payload = new { message, title = "hassio-onedrive-backup", notification_id = notificationId };
             string payloadStr = JsonConvert.SerializeObject(payload, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
-            await _httpClient.PostAsync(uri, new StringContent(payloadStr, Encoding.UTF8, "application/json"));
+            var response = await _httpClient.PostAsync(uri, new StringContent(payloadStr, Encoding.UTF8, "application/json"));
+            response.EnsureSuccessStatusCode();
         }
         catch (Exception ex)
         {
@@ -174,9 +175,19 @@ public class HassioClient : IHassioClient
         _logger.LogInformation("Fetching local backup (Slug: {Slug})", backupSlug);
         var uri = new Uri(SupervisorBaseUri + $"/backups/{backupSlug}/download");
         var fileInfo = new FileInfo($"{LocalStorage.TempFolder}/{backupSlug}.tar");
-        await using var stream = await _httpClient.GetStreamAsync(uri);
-        using var fileStream = File.Create(fileInfo.FullName);
-        await stream.CopyToAsync(fileStream);
+        try
+        {
+            await using var stream = await _httpClient.GetStreamAsync(uri);
+            using var fileStream = File.Create(fileInfo.FullName);
+            await stream.CopyToAsync(fileStream);
+        }
+        catch
+        {
+            if (File.Exists(fileInfo.FullName))
+                File.Delete(fileInfo.FullName);
+            throw;
+        }
+
         _logger.LogInformation("Backup {Slug} fetched successfully", backupSlug);
 
         var backups = await GetBackupsAsync(b => b.Slug == backupSlug);
@@ -217,6 +228,20 @@ public class HassioClient : IHassioClient
         {
             _logger.LogWarning(ex, "Could not check supervisor jobs — assuming no job in progress");
             return false;
+        }
+    }
+
+    public async Task<HassBackupInfoResponse?> GetBackupInfoAsync(string slug)
+    {
+        try
+        {
+            var uri = new Uri(SupervisorBaseUri + $"/backups/{slug}/info");
+            return await GetJsonResponseAsync<HassBackupInfoResponse>(uri);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Could not fetch backup info for slug {Slug}", slug);
+            return null;
         }
     }
 

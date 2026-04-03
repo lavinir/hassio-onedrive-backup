@@ -12,6 +12,7 @@ public class FileSyncService : BackgroundService
     private readonly ISettingsService _settingsService;
     private readonly IDateTimeProvider _dateTimeProvider;
     private readonly HassEntityStateService _entityStateService;
+    private readonly FileSyncStateService _fileSyncStateService;
     private readonly ILogger<FileSyncService> _logger;
     private readonly SemaphoreSlim _semaphore = new(1, 1);
 
@@ -20,12 +21,14 @@ public class FileSyncService : BackgroundService
         ISettingsService settingsService,
         IDateTimeProvider dateTimeProvider,
         HassEntityStateService entityStateService,
+        FileSyncStateService fileSyncStateService,
         ILogger<FileSyncService> logger)
     {
         _oneDriveClient = oneDriveClient;
         _settingsService = settingsService;
         _dateTimeProvider = dateTimeProvider;
         _entityStateService = entityStateService;
+        _fileSyncStateService = fileSyncStateService;
         _logger = logger;
     }
 
@@ -98,6 +101,7 @@ public class FileSyncService : BackgroundService
         matcher.AddIncludePatterns(syncPaths);
 
         _entityStateService.UpdateFileSyncState("Syncing");
+        _fileSyncStateService.SetSyncing();
 
         var matchingFiles = matcher.GetResultsInFullPath("/").ToList();
         _logger.LogDebug("Found {Count} file(s) matching sync paths", matchingFiles.Count);
@@ -132,6 +136,7 @@ public class FileSyncService : BackgroundService
         }
 
         _entityStateService.UpdateFileSyncState("Synced");
+        _fileSyncStateService.SetSynced();
         _logger.LogDebug("File sync tick complete");
     }
 

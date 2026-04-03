@@ -16,12 +16,12 @@ public class IncomingHassFirewallMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
-        if (!_env.IsDevelopment())
+        if (!_env.IsDevelopment() && !_env.IsEnvironment("Testing"))
         {
-            var ip = context.Connection.RemoteIpAddress?.MapToIPv4().ToString();
-            if (!string.Equals(ip, AllowedIp, StringComparison.OrdinalIgnoreCase))
+            var remoteIp = context.Connection.RemoteIpAddress?.MapToIPv4();
+            if (remoteIp == null || !string.Equals(remoteIp.ToString(), AllowedIp, StringComparison.OrdinalIgnoreCase))
             {
-                _logger.LogError("Blocking request from unauthorized source IP: {Ip}", ip);
+                _logger.LogError("Blocking request from unauthorized source IP: {Ip}", remoteIp?.ToString() ?? "unknown");
                 context.Response.StatusCode = StatusCodes.Status403Forbidden;
                 return;
             }

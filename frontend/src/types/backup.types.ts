@@ -12,7 +12,7 @@ export interface Backup {
   status: BackupStatus;
   source_type: SourceType;
   backup_type: BackupType;
-  path?: string;
+  local_path?: string;
   retained?: boolean;
 }
 

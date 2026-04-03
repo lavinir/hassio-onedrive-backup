@@ -76,6 +76,9 @@ public class BackupService : IBackupService
 
     public Task<string> UploadBackupAsync(string slugId)
     {
+        if (_operations.Values.Any(o => o.BackupSlug == slugId && o.Status == TransferStatus.InProgress))
+            throw new InvalidOperationException($"An operation for backup '{slugId}' is already in progress");
+
         var operation = new TransferOperation
         {
             BackupSlug = slugId,
@@ -134,6 +137,9 @@ public class BackupService : IBackupService
 
     public Task<string> DownloadBackupAsync(string slugId)
     {
+        if (_operations.Values.Any(o => o.BackupSlug == slugId && o.Status == TransferStatus.InProgress))
+            throw new InvalidOperationException($"An operation for backup '{slugId}' is already in progress");
+
         var operation = new TransferOperation
         {
             BackupSlug = slugId,
@@ -286,6 +292,38 @@ public class BackupService : IBackupService
         var activeDownload = _operations.Values
             .FirstOrDefault(o => o.Type == TransferType.Download && o.Status == TransferStatus.InProgress);
         return new SyncStatusSnapshot(_isSyncing, _lastSyncTime, activeUpload, activeDownload, _backupCreationProgress);
+    }
+
+    public async Task<BackupInfoResult> GetBackupInfoAsync(string slug)
+    {
+        var infoResponse = await _hassioClient.GetBackupInfoAsync(slug);
+
+        if (infoResponse?.Data == null)
+            return new BackupInfoResult { IsAvailableLocally = false, Slug = slug };
+
+        var data = infoResponse.Data;
+        return new BackupInfoResult
+        {
+            IsAvailableLocally = true,
+            Slug = data.Slug,
+            Name = data.Name,
+            Date = data.Date,
+            Size = data.Size,
+            Type = data.Type,
+            Compressed = data.Compressed,
+            IsProtected = data.Protected,
+            SupervisorVersion = data.SupervisorVersion,
+            HomeAssistantVersion = data.HomeAssistantVersion,
+            Addons = data.Addons?.Select(a => new BackupAddonInfo
+            {
+                Slug = a.Slug,
+                Name = a.Name,
+                Version = a.Version,
+                Size = a.Size
+            }).ToList(),
+            Folders = data.Folders,
+            HomeAssistantExcludeDatabase = data.HomeAssistantExcludeDatabase
+        };
     }
 
     private static string FormatBytes(long bytes) => bytes switch

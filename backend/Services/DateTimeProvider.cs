@@ -25,7 +25,9 @@ public class DateTimeProvider : IDateTimeProvider
     {
         try
         {
-            var timeZoneId = _hassioClient.GetTimeZoneAsync().GetAwaiter().GetResult();
+            // Task.Run ensures execution on a thread-pool thread with no SynchronizationContext,
+            // preventing the deadlock that .GetAwaiter().GetResult() would cause in ASP.NET Core.
+            var timeZoneId = Task.Run(() => _hassioClient.GetTimeZoneAsync()).GetAwaiter().GetResult();
             _logger.LogInformation("Using Home Assistant timezone: {TimeZone}", timeZoneId);
             return TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
         }
