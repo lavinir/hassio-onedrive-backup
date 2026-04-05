@@ -1,15 +1,38 @@
 {
-  "version": "0.2.0",
-  "configurations": [
-    {
-      "name": "Run (Debug)",
-      "type": "dotnet",
-      "request": "launch",
-      "projectPath": "${workspaceFolder}/onedrive-backup/onedrive-backup.csproj",
-      "env": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
-      },
-      "preLaunchTask": "build"
-    }
-  ]
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": ".NET Core Launch (web)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/backend/bin/Debug/net10.0/HassioOneDriveBackup.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/backend",
+            "stopAtEntry": false,
+            // "serverReadyAction": {
+            //     "action": "openExternally",
+            //     "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
+            // },
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            },
+            "sourceFileMap": {
+                "/Views": "${workspaceFolder}/Views"
+            }
+        },
+        {
+            "name": ".NET Core Attach",
+            "type": "coreclr",
+            "request": "attach"
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Full Stack (backend + frontend)",
+            "configurations": [".NET Core Launch (web)"],
+            "preLaunchTask": "frontend: dev",
+            "stopAll": true
+        }
+    ]
 }

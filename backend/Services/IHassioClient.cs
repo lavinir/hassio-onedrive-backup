@@ -1,0 +1,37 @@
+using HassioOneDriveBackup.Models;
+
+namespace HassioOneDriveBackup.Services
+{
+    public interface IHassioClient
+    {
+        Task<List<Backup>> GetBackupsAsync(Predicate<Backup> filter);
+
+        Task SendPersistentNotificationAsync(string message, string? notificationId = null);
+
+        Task<string?> CreateBackupAsync(string backupName, DateTime timeStamp, bool appendTimestamp = true, bool compressed = true, string? password = null, IEnumerable<string>? folders = null, IEnumerable<string>? addons = null);
+
+        Task<(bool isDone, float progress)> GetJobStatusAsync(string jobId);
+
+        Task<bool> DeleteBackupAsync(Backup backup);
+
+        Task UpdateHassEntityStateAsync(string entityId, string payload);
+
+        Task<Backup> DownloadBackupAsync(string backupSlug);
+
+        Task<bool> UploadBackupAsync(string filePath);
+
+        Task<List<Addon>> GetAddonsAsync();
+
+        Task<HassAddonInfoResponse> GetAddonInfo(string slug);
+
+        Task<string> GetTimeZoneAsync();
+
+        Task PublishEventAsync(OneDriveEvents eventType, string payload = "");
+		
+        Task RestartSelf();
+
+        Task<bool> IsBackupManagerJobInProgressAsync();
+
+        Task<HassBackupInfoResponse?> GetBackupInfoAsync(string slug);
+	}
+}
