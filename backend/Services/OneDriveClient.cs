@@ -34,8 +34,8 @@ public class OneDriveClient : IOneDriveClient
 
         // Set up the token cache location
         _tokenCachePath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "HassioOneDriveBackup"
+            configuration["DataFolder"] ?? "/data",
+            "token-cache"
         );
 
         _logger.LogInformation($"Token cache path: {_tokenCachePath}");

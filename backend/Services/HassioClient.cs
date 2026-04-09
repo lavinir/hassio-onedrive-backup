@@ -55,6 +55,10 @@ public class HassioClient : IHassioClient
     {
         var uri = new Uri(SupervisorBaseUri + "/backups");
         var response = await GetJsonResponseAsync<HassBackupsResponse>(uri);
+        if (response?.DataProperty?.Backups == null)
+        {
+            throw new InvalidOperationException("Supervisor returned null backup data");
+        }
         if (!response.Result.Equals("ok", StringComparison.OrdinalIgnoreCase))
         {
             throw new InvalidOperationException($"Failed getting backups from Supervisor. Result: {response.Result}");
