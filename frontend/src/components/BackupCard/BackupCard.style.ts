@@ -1,5 +1,5 @@
 import styled from '@emotion/styled';
-import { Card, Box, Avatar, Typography, Chip, Theme } from '@mui/material';
+import { Card, Box, Avatar, Typography, Chip } from '@mui/material';
 
 export const StyledCard = styled(Card)`
   border-radius: 12px;

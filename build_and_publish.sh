@@ -1,36 +1,98 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -e
 
-REGISTRY="ghcr.io/lavinir"
-VERSION="${1:-$(grep '^version:' config.yaml | awk '{print $2}' | tr -d '"')}"
-PLATFORMS="linux/amd64,linux/arm/v7,linux/arm64"
+VERSION=""
+SIGN_IMAGES=false
+CAS_API_KEY=""
 
-echo "Building version ${VERSION} for platforms: ${PLATFORMS}"
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --version)
+            VERSION="$2"
+            shift 2
+            ;;
+        --sign-images)
+            SIGN_IMAGES=true
+            shift
+            ;;
+        --cas-api-key)
+            CAS_API_KEY="$2"
+            shift 2
+            ;;
+        *)
+            echo "Unknown argument: $1"
+            echo "Usage: $0 [--version <version>] [--sign-images] [--cas-api-key <key>]"
+            exit 1
+            ;;
+    esac
+done
 
-# Ensure buildx builder with multi-platform support exists
+if [[ -z "$VERSION" ]]; then
+    VERSION="$(grep '^version:' config.yaml | awk '{print $2}' | tr -d '"')"
+fi
+
+echo "Building version ${VERSION}"
+
+if [[ "$SIGN_IMAGES" == true ]]; then
+    export CAS_API_KEY="$CAS_API_KEY"
+    cas login
+fi
+
+# Ensure buildx builder with multi-platform support exists and is active
 docker buildx inspect multi-platform-builder > /dev/null 2>&1 || \
-  docker buildx create --name multi-platform-builder --use
-
+    docker buildx create --name multi-platform-builder
 docker buildx use multi-platform-builder
+docker buildx inspect --bootstrap > /dev/null
 
-# Build and push each arch-tagged image
-for ARCH in amd64 armhf armv7 aarch64; do
-  case "$ARCH" in
-    amd64)   PLATFORM="linux/amd64" ;;
-    armhf)   PLATFORM="linux/arm/v6" ;;
-    armv7)   PLATFORM="linux/arm/v7" ;;
-    aarch64) PLATFORM="linux/arm64" ;;
-  esac
-
-  IMAGE="${REGISTRY}/${ARCH}-hassonedrive:${VERSION}"
-  echo "Building ${IMAGE} (${PLATFORM})"
-
-  docker buildx build \
-    --platform "${PLATFORM}" \
+##################  linux-x64
+echo "Building and publishing linux-x64"
+docker buildx build \
+    --platform linux/amd64 \
     --build-arg VERSION="${VERSION}" \
-    --tag "${IMAGE}" \
+    --tag "ghcr.io/lavinir/amd64-hassonedrive:${VERSION}" \
     --push \
     .
-done
+
+if [[ "$SIGN_IMAGES" == true ]]; then
+    echo "Signing linux-x64 Image"
+    cas notarize --bom "docker://ghcr.io/lavinir/amd64-hassonedrive:${VERSION}"
+fi
+
+##################  linux-arm
+echo "Building and publishing linux-arm (armv7)"
+docker buildx build \
+    --platform linux/arm/v7 \
+    --build-arg VERSION="${VERSION}" \
+    --tag "ghcr.io/lavinir/armv7-hassonedrive:${VERSION}" \
+    --push \
+    .
+
+echo "Building and publishing linux-arm (armhf)"
+docker buildx build \
+    --platform linux/arm/v7 \
+    --build-arg VERSION="${VERSION}" \
+    --tag "ghcr.io/lavinir/armhf-hassonedrive:${VERSION}" \
+    --push \
+    .
+
+if [[ "$SIGN_IMAGES" == true ]]; then
+    echo "Signing linux-arm Images"
+    cas notarize --bom "docker://ghcr.io/lavinir/armv7-hassonedrive:${VERSION}"
+    cas notarize --bom "docker://ghcr.io/lavinir/armhf-hassonedrive:${VERSION}"
+fi
+
+##################  linux-arm64
+echo "Building and publishing linux-arm64"
+docker buildx build \
+    --platform linux/arm64 \
+    --build-arg VERSION="${VERSION}" \
+    --tag "ghcr.io/lavinir/aarch64-hassonedrive:${VERSION}" \
+    --push \
+    .
+
+if [[ "$SIGN_IMAGES" == true ]]; then
+    echo "Signing linux-arm64 Image"
+    cas notarize --bom "docker://ghcr.io/lavinir/aarch64-hassonedrive:${VERSION}"
+fi
 
 echo "All images published for version ${VERSION}"

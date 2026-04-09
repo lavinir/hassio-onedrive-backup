@@ -1,14 +1,14 @@
 import styled from '@emotion/styled';
-import { Button, Link } from '@mui/material';
+import { Button, Link, Theme } from '@mui/material';
 
 export const StyledCode = styled.div`
   display: flex;
   align-items: center;
   gap: 16px;
   padding: 12px 16px;
-  background-color: ${({ theme }) => 
-    theme.palette.mode === 'dark' 
-      ? 'rgba(255, 255, 255, 0.05)' 
+  background-color: ${({ theme }) =>
+    (theme as Theme).palette.mode === 'dark'
+      ? 'rgba(255, 255, 255, 0.05)'
       : 'rgba(0, 0, 0, 0.03)'
   };
   border-radius: 8px;
@@ -23,7 +23,7 @@ export const StyledButton = styled(Button)`
 
 export const StyledLink = styled(Link)`
   word-break: break-all;
-  color: ${({ theme }) => theme.palette.primary.main};
+  color: ${({ theme }) => (theme as Theme).palette.primary.main};
   
   &:hover {
     text-decoration: underline;

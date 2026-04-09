@@ -1,11 +1,8 @@
-import React, { FC, useState } from 'react';
-import { 
-  Dialog, 
-  DialogTitle, 
-  DialogContent, 
-  DialogActions, 
-  Button, 
-  TextField
+import { FC, useState } from 'react';
+import {
+  DialogTitle,
+  DialogActions,
+  Button
 } from '@mui/material';
 import { ICreateBackupModalProps } from './CreateBackupModal.types';
 import { 
