@@ -1,57 +1,57 @@
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 
 namespace HassioOneDriveBackup.Models;
 
 public class Backup
 {
-    [JsonPropertyName("slug")]
+    [JsonProperty("slug")]
     public string Slug { get; set; }
 
-    [JsonPropertyName("date")]
+    [JsonProperty("date")]
     public DateTime Date { get; set; }
 
-    [JsonPropertyName("name")]
+    [JsonProperty("name")]
     public string Name { get; set; }
 
-    [JsonPropertyName("size")]
+    [JsonProperty("size")]
     public string Size { get; set; }
 
-    [JsonPropertyName("backup_type")]
+    [JsonProperty("backup_type")]
     public string BackupType { get; set; }
 
-    [JsonPropertyName("protected")]
+    [JsonProperty("protected")]
     public bool Protected { get; set; }
 
-    [JsonPropertyName("compressed")]
+    [JsonProperty("compressed")]
     public bool Compressed { get; set; }
 
-    [JsonPropertyName("status")]
+    [JsonProperty("status")]
     public string Status { get; set; } = string.Empty;
 
-    [JsonPropertyName("source_type")]
+    [JsonProperty("source_type")]
     public string SourceType { get; set; } = string.Empty;
 
-    [JsonPropertyName("local_path")]
+    [JsonProperty("local_path")]
     public string? LocalPath { get; set; }
 
-    [JsonPropertyName("retained")]
+    [JsonProperty("retained")]
     public bool Retained { get; set; }
 }
 
 public class BackupTransferOperation
 {
-    [JsonPropertyName("operationId")]
+    [JsonProperty("operationId")]
     public string OperationId { get; set; } = string.Empty;
-    
-    [JsonPropertyName("backupId")]
+
+    [JsonProperty("backupId")]
     public string BackupId { get; set; } = string.Empty;
-    
-    [JsonPropertyName("startTime")]
+
+    [JsonProperty("startTime")]
     public DateTime StartTime { get; set; }
-    
-    [JsonPropertyName("type")]
+
+    [JsonProperty("type")]
     public string Type { get; set; } = string.Empty;
-    
-    [JsonPropertyName("progress")]
+
+    [JsonProperty("progress")]
     public double Progress { get; set; }
 }

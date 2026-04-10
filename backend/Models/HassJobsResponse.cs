@@ -1,57 +1,57 @@
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 
 namespace HassioOneDriveBackup.Models;
 
 public class HassJobsResponse
 {
-    [JsonPropertyName("result")]
+    [JsonProperty("result")]
     public string? Result { get; set; }
 
-    [JsonPropertyName("data")]
+    [JsonProperty("data")]
     public JobsData? Data { get; set; }
 
     public class JobsData
     {
-        [JsonPropertyName("jobs")]
+        [JsonProperty("jobs")]
         public Job[]? Jobs { get; set; }
     }
 
     public class Job
     {
-        [JsonPropertyName("job_id")]
+        [JsonProperty("job_id")]
         public string? JobId { get; set; }
 
-        [JsonPropertyName("name")]
+        [JsonProperty("name")]
         public string? Name { get; set; }
 
-        [JsonPropertyName("done")]
+        [JsonProperty("done")]
         public bool Done { get; set; }
 
-        [JsonPropertyName("progress")]
+        [JsonProperty("progress")]
         public float Progress { get; set; }
     }
 }
 
 public class HassBackgroundJobResponse
 {
-    [JsonPropertyName("result")]
+    [JsonProperty("result")]
     public string? Result { get; set; }
 
-    [JsonPropertyName("data")]
+    [JsonProperty("data")]
     public JobData? Data { get; set; }
 
     public class JobData
     {
-        [JsonPropertyName("job_id")]
+        [JsonProperty("job_id")]
         public string? JobId { get; set; }
     }
 }
 
 public class HassJobStatusResponse
 {
-    [JsonPropertyName("result")]
+    [JsonProperty("result")]
     public string? Result { get; set; }
 
-    [JsonPropertyName("data")]
+    [JsonProperty("data")]
     public HassJobsResponse.Job? Data { get; set; }
 }

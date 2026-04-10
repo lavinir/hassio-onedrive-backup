@@ -14,6 +14,7 @@ public class OneDriveClient : IOneDriveClient
     private readonly string[] _scopes = new[] { "Files.ReadWrite.AppFolder", "User.Read" };
     private readonly ILogger<OneDriveClient> _logger;
     private readonly string _tokenCachePath;
+    private readonly string _legacyAuthRecordPath;
     private DeviceCodeCredential? _deviceCodeCredential;
     private GraphServiceClient? _graphClient;
     private readonly string _tenantId = "consumers";
@@ -33,10 +34,9 @@ public class OneDriveClient : IOneDriveClient
         _logger = logger;
 
         // Set up the token cache location
-        _tokenCachePath = Path.Combine(
-            configuration["DataFolder"] ?? "/data",
-            "token-cache"
-        );
+        var dataFolder = configuration["DataFolder"] ?? "/data";
+        _tokenCachePath = Path.Combine(dataFolder, "token-cache");
+        _legacyAuthRecordPath = Path.Combine(dataFolder, "record.auth");
 
         _logger.LogInformation($"Token cache path: {_tokenCachePath}");
 
@@ -69,9 +69,17 @@ public class OneDriveClient : IOneDriveClient
                 _authRecord = AuthenticationRecord.Deserialize(recordStream);
                 _logger.LogInformation("Authentication record loaded successfully");
             }
+            else if (File.Exists(_legacyAuthRecordPath))
+            {
+                _logger.LogInformation("Found legacy authentication record, migrating...");
+                using Stream recordStream = File.OpenRead(_legacyAuthRecordPath);
+                _authRecord = AuthenticationRecord.Deserialize(recordStream);
+                SaveAuthenticationRecord(_authRecord);
+                _logger.LogInformation("Legacy authentication record migrated successfully");
+            }
             else
             {
-                _logger.LogInformation("No authentication record found at: " + _authRecordPath);
+                _logger.LogInformation("No authentication record found");
             }
         }
         catch (Exception ex)
@@ -102,7 +110,7 @@ public class OneDriveClient : IOneDriveClient
             {
                 TokenCachePersistenceOptions = new TokenCachePersistenceOptions
                 {
-                    Name = "HassioOneDriveBackup",
+                    Name = "hassio-onedrive-auth",
                     UnsafeAllowUnencryptedStorage = true
                 },
                 AuthorityHost = AzureAuthorityHosts.AzurePublicCloud,
@@ -246,7 +254,7 @@ public class OneDriveClient : IOneDriveClient
             {
                 TokenCachePersistenceOptions = new TokenCachePersistenceOptions
                 {
-                    Name = "HassioOneDriveBackup",
+                    Name = "hassio-onedrive-auth",
                     UnsafeAllowUnencryptedStorage = true
                 },
                 AuthorityHost = AzureAuthorityHosts.AzurePublicCloud,
