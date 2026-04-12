@@ -28,6 +28,8 @@ namespace hassio_onedrive_backup.Hass
 
         Task<string> GetTimeZoneAsync();
 
+        Task<bool> IsBackupManagerJobInProgressAsync();
+
         Task PublishEventAsync(OneDriveEvents eventType, string payload = "");
 		
         Task RestartSelf();

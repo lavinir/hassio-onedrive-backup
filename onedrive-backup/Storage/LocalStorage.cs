@@ -140,14 +140,14 @@ namespace hassio_onedrive_backup.Storage
                 return true;
             }
 
-            File.Create(fileName);
+            File.Create(fileName).Dispose();
             setFlags.Add(flag);
             return false;        
         }
 
         public enum Flag
         {
-            ReleaseNotes_2_3_8,
+            ReleaseNotes_2_3_10,
         }
 
         private static string ConvertBackFileNameToMetadataFileName(string fileName)

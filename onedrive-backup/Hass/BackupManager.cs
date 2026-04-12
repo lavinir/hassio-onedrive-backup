@@ -68,6 +68,12 @@ namespace hassio_onedrive_backup.Hass
                 _isExecuting = true;
                 var now = _dateTimeProvider.Now;
 
+                if (await _hassIoClient.IsBackupManagerJobInProgressAsync())
+                {
+                    _logger.LogInfo("Home Assistant Backup Manager Job In Progress. Skipping backup cycle.");
+                    return;
+                }
+
                 _logger.LogVerbose("Refreshing existing backups...");
                 await RefreshBackupsAndUpdateHassEntity();
 
@@ -170,7 +176,10 @@ namespace hassio_onedrive_backup.Hass
                         else
                         {
                             bool metadataDelted = LocalStorage.DeleteOneDriveBackup(backupToDelete);
-                            _logger.LogWarning($"Failed deleting backup metadata {backupToDelete.Slug}");
+                            if (!metadataDelted)
+                            {
+                                _logger.LogWarning($"Failed deleting backup metadata {backupToDelete.Slug}");
+                            }
                         }
                     }
 
@@ -623,7 +632,7 @@ namespace hassio_onedrive_backup.Hass
             }
             catch (Exception ex)
             {
-                _logger.LogWarning($"Unrecognized file found in backup folder : {item.Name}");
+                _logger.LogVerbose($"Unrecognized file found in backup folder : {item.Name}");
                 if (string.IsNullOrEmpty(item.Description) == false)
                 {
                     _logger.LogVerbose($"{item.Name} Description: {item.Description}");

@@ -9,7 +9,7 @@ namespace hassio_onedrive_backup.Contracts
 {
     public class AddonOptions : IEqualityComparer<AddonOptions>
     {
-        public const string AddonVersion = "2.3.8";
+        public const string AddonVersion = "2.3.10";
 
         public event Action OnOptionsChanged;
 
@@ -184,6 +184,7 @@ namespace hassio_onedrive_backup.Contracts
             LogLevelStr = newOptions.LogLevelStr;
             IgnoreUpgradeBackups = newOptions.IgnoreUpgradeBackups;
             EnableAnonymousTelemetry = newOptions.EnableAnonymousTelemetry;
+            EnableAnonymousErrorReporting = newOptions.EnableAnonymousErrorReporting;
             IgnoreAllowedHoursForFileSync = newOptions.IgnoreAllowedHoursForFileSync;
             DarkMode = newOptions.DarkMode;
         }
