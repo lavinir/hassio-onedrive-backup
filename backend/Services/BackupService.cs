@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using HassioOneDriveBackup.Models;
+using Microsoft.Graph.Models;
 
 namespace HassioOneDriveBackup.Services;
 
@@ -37,8 +38,17 @@ public class BackupService : IBackupService
     {
         var settings = await _settingsService.GetSettingsAsync();
         var localBackups = await _hassioClient.GetBackupsAsync(_ => true);
-        var oneDriveItems = await _oneDriveClient.ListFilesInDirectoryAsync(
-            $"backups/{settings.General.InstanceName}");
+
+        IEnumerable<DriveItem> oneDriveItems;
+        try
+        {
+            oneDriveItems = await _oneDriveClient.ListFilesInDirectoryAsync(
+                $"backups/{settings.General.InstanceName}");
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return localBackups.OrderByDescending(b => b.Date);
+        }
 
         var oneDriveSlugs = new HashSet<string>(
             oneDriveItems.Select(i => Path.GetFileNameWithoutExtension(i.Name ?? "")),

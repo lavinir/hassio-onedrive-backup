@@ -86,6 +86,14 @@ public class BackupOrchestratorService : BackgroundService
         }
 
         _logger.LogDebug("Orchestrator tick starting at {Time}", now);
+
+        var authInfo = await _oneDriveClient.IsLoggedInAsync();
+        if (authInfo.AuthState != OneDriveAuthState.LoggedIn)
+        {
+            _logger.LogDebug("Skipping orchestrator tick — not authenticated with OneDrive");
+            return;
+        }
+
         _backupService.SetSyncing(true);
 
         // Fetch current state from both sources

@@ -114,9 +114,8 @@ public class OneDriveClient : IOneDriveClient
                     UnsafeAllowUnencryptedStorage = true
                 },
                 AuthorityHost = AzureAuthorityHosts.AzurePublicCloud,
-                TenantId = _tenantId,
-                // Only prompt when explicitly requested
-                DisableAutomaticAuthentication = true
+                TenantId = _tenantId
+                // DisableAutomaticAuthentication not set — silent cache-based token refresh must be allowed
             };
 
             // Set the authentication record in the options if available

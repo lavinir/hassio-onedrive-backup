@@ -26,6 +26,7 @@ RUN dotnet publish -c Release -o /app/publish \
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS final
 RUN apk add --no-cache tzdata
 WORKDIR /app
+ENV HOME=/data
 EXPOSE 8099
 
 COPY --from=backend-build /app/publish ./
