@@ -8,8 +8,6 @@ using onedrive_backup;
 using onedrive_backup.Contracts;
 using onedrive_backup.Graph;
 using onedrive_backup.Hass;
-using System;
-using System.Globalization;
 using test.onedrive_backup.Mocks;
 using static hassio_onedrive_backup.Contracts.HassAddonsResponse;
 using static hassio_onedrive_backup.Contracts.HassBackupsResponse;
@@ -162,10 +160,11 @@ namespace hassio_onedrive_backup.Tests
 			}
 
 			// Verify Weeks
-			var currentWeek = CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(_dateTimeProvider.Now, CalendarWeekRule.FirstDay, System.DayOfWeek.Sunday);
-			for (int week = currentWeek; week > currentWeek - _addonOptions.GenerationalWeeks; week--)
+			for (int i = 0; i < _addonOptions.GenerationalWeeks; i++)
 			{
-				Assert.IsTrue(_localBackups.Any(backup => CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(backup.BackupDate, CalendarWeekRule.FirstDay, System.DayOfWeek.Sunday) == week));
+				var windowEnd = _dateTimeProvider.Now.Date.AddDays(-i * 7);
+				var windowStart = windowEnd.AddDays(-6);
+				Assert.IsTrue(_localBackups.Any(b => b.BackupDate.Date >= windowStart && b.BackupDate.Date <= windowEnd));
 			}
 
 			for (int day = 0; day <= _addonOptions.GenerationalDays; day++)
@@ -216,10 +215,11 @@ namespace hassio_onedrive_backup.Tests
 			}
 
 			// Verify Weeks
-			var currentWeek = CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(_dateTimeProvider.Now, CalendarWeekRule.FirstDay, System.DayOfWeek.Sunday);
-			for (int week = currentWeek; week > currentWeek - _addonOptions.GenerationalWeeks; week--)
+			for (int i = 0; i < _addonOptions.GenerationalWeeks; i++)
 			{
-				Assert.IsTrue(_localBackups.Any(backup => CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(backup.BackupDate, CalendarWeekRule.FirstDay, System.DayOfWeek.Sunday) == week));
+				var windowEnd = _dateTimeProvider.Now.Date.AddDays(-i * 7);
+				var windowStart = windowEnd.AddDays(-6);
+				Assert.IsTrue(_localBackups.Any(b => b.BackupDate.Date >= windowStart && b.BackupDate.Date <= windowEnd));
 			}
 
 			// Verify Days
@@ -307,10 +307,11 @@ namespace hassio_onedrive_backup.Tests
 			}
 
 			// Verify Weeks
-			var currentWeek = CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(_dateTimeProvider.Now, CalendarWeekRule.FirstDay, System.DayOfWeek.Sunday);
-			for (int week = currentWeek; week > currentWeek - _addonOptions.GenerationalWeeks; week--)
+			for (int i = 0; i < _addonOptions.GenerationalWeeks; i++)
 			{
-				Assert.IsTrue(_onedriveBackups.Any(backup => CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(backup.BackupDate, CalendarWeekRule.FirstDay, System.DayOfWeek.Sunday) == week));
+				var windowEnd = _dateTimeProvider.Now.Date.AddDays(-i * 7);
+				var windowStart = windowEnd.AddDays(-6);
+				Assert.IsTrue(_onedriveBackups.Any(b => b.BackupDate.Date >= windowStart && b.BackupDate.Date <= windowEnd));
 			}
 
 			for (int day = 0; day <= _addonOptions.GenerationalDays; day++)
@@ -361,10 +362,11 @@ namespace hassio_onedrive_backup.Tests
 			}
 
 			// Verify Weeks
-			var currentWeek = CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(_dateTimeProvider.Now, CalendarWeekRule.FirstDay, System.DayOfWeek.Sunday);
-			for (int week = currentWeek; week > currentWeek - _addonOptions.GenerationalWeeks; week--)
+			for (int i = 0; i < _addonOptions.GenerationalWeeks; i++)
 			{
-				Assert.IsTrue(_onedriveBackups.Any(backup => CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(backup.BackupDate, CalendarWeekRule.FirstDay, System.DayOfWeek.Sunday) == week));
+				var windowEnd = _dateTimeProvider.Now.Date.AddDays(-i * 7);
+				var windowStart = windowEnd.AddDays(-6);
+				Assert.IsTrue(_onedriveBackups.Any(b => b.BackupDate.Date >= windowStart && b.BackupDate.Date <= windowEnd));
 			}
 
 			// Verify Days
