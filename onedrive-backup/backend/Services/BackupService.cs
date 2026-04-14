@@ -39,6 +39,13 @@ public class BackupService : IBackupService
         var settings = await _settingsService.GetSettingsAsync();
         var localBackups = await _hassioClient.GetBackupsAsync(_ => true);
 
+        // Skip OneDrive if not authenticated — mirrors BackupOrchestratorService pattern
+        var authInfo = await _oneDriveClient.IsLoggedInAsync();
+        if (authInfo.AuthState != OneDriveAuthState.LoggedIn)
+        {
+            return localBackups.OrderByDescending(b => b.Date);
+        }
+
         IEnumerable<DriveItem> oneDriveItems;
         try
         {

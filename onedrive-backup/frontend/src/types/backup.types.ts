@@ -11,7 +11,7 @@ export interface Backup {
   size: string;
   status: BackupStatus;
   source_type: SourceType;
-  backup_type: BackupType;
+  type: BackupType;
   local_path?: string;
   retained?: boolean;
 }

@@ -52,7 +52,7 @@ const BackupDetailsDialog: FC<BackupDetailsDialogProps> = ({ backup, open, onClo
           <DetailRow label="Name" value={backup.name} />
           <DetailRow label="Date" value={new Date(backup.date).toLocaleString()} />
           <DetailRow label="Size" value={backup.size} />
-          <DetailRow label="Type" value={backup.backup_type} />
+          <DetailRow label="Type" value={backup.type} />
         </>
       );
     }

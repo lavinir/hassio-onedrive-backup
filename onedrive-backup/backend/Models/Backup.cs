@@ -16,7 +16,7 @@ public class Backup
     [JsonProperty("size")]
     public string Size { get; set; }
 
-    [JsonProperty("backup_type")]
+    [JsonProperty("type")]
     public string BackupType { get; set; }
 
     [JsonProperty("protected")]

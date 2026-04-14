@@ -184,12 +184,14 @@ const BackupCard: FC<IBackupCardProps> = ({ backup }) => {
             size="small"
             variant="outlined"
           />
-          <StyledChip
-            label={backup.backup_type}
-            size="small"
-            color="default"
-            variant="outlined"
-          />
+          {backup.type && (
+            <StyledChip
+              label={backup.type}
+              size="small"
+              color="default"
+              variant="outlined"
+            />
+          )}
           {backup.retained && (
             <StyledChip
               label="Retained"

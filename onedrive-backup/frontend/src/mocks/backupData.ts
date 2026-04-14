@@ -8,7 +8,7 @@ export const mockBackups: Backup[] = [
     size: '1.2 GB',
     status: 'Local',
     source_type: 'Automated',
-    backup_type: 'Full',
+    type: 'Full',
   },
   {
     slug: 'backup_2024_01_02',
@@ -17,7 +17,7 @@ export const mockBackups: Backup[] = [
     size: '800 MB',
     status: 'OneDrive',
     source_type: 'Manual',
-    backup_type: 'Partial',
+    type: 'Partial',
   },
   {
     slug: 'backup_2024_01_03',
@@ -26,7 +26,7 @@ export const mockBackups: Backup[] = [
     size: '1.5 GB',
     status: 'Synced',
     source_type: 'Automated',
-    backup_type: 'Full',
+    type: 'Full',
   },
   {
     slug: 'backup_2024_01_04',
@@ -35,7 +35,7 @@ export const mockBackups: Backup[] = [
     size: '900 MB',
     status: 'In Progress',
     source_type: 'Manual',
-    backup_type: 'Partial',
+    type: 'Partial',
   },
   {
     slug: 'backup_2024_01_05',
@@ -44,6 +44,6 @@ export const mockBackups: Backup[] = [
     size: '2.1 GB',
     status: 'Local',
     source_type: 'External',
-    backup_type: 'Full',
+    type: 'Full',
   }
 ];

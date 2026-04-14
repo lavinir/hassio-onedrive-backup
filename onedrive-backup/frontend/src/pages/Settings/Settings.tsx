@@ -1,4 +1,4 @@
-import { FC, useState } from 'react';
+import { FC, useState, useEffect } from 'react';
 import {
   Typography,
   CardContent,
@@ -205,6 +205,12 @@ const Settings: FC<ISettingsProps> = () => {
   const handleCloseDeviceCodeDialog = () => {
     setDeviceCodeData(null);
   };
+
+  useEffect(() => {
+    if (loginStatus?.authState === 'LoggedIn' && deviceCodeData !== null) {
+      setDeviceCodeData(null);
+    }
+  }, [loginStatus?.authState]);
 
   if (isSettingsLoading || !settings) {
     return (

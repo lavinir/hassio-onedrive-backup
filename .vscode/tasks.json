@@ -7,7 +7,7 @@
             "type": "process",
             "args": [
                 "build",
-                "${workspaceFolder}/backend/HassioOneDriveBackup.csproj",
+                "${workspaceFolder}/onedrive-backup/backend/HassioOneDriveBackup.csproj",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary"
             ],
@@ -19,7 +19,7 @@
             "type": "process",
             "args": [
                 "publish",
-                "${workspaceFolder}/backend/HassioOneDriveBackup.csproj",
+                "${workspaceFolder}/onedrive-backup/backend/HassioOneDriveBackup.csproj",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary"
             ],
@@ -33,7 +33,7 @@
                 "watch",
                 "run",
                 "--project",
-                "${workspaceFolder}/backend/HassioOneDriveBackup.csproj"
+                "${workspaceFolder}/onedrive-backup/backend/HassioOneDriveBackup.csproj"
             ],
             "problemMatcher": "$msCompile"
         },
@@ -42,7 +42,7 @@
             "type": "shell",
             "command": "npm run dev",
             "options": {
-                "cwd": "${workspaceFolder}/frontend"
+                "cwd": "${workspaceFolder}/onedrive-backup/frontend"
             },
             "isBackground": true,
             "problemMatcher": []

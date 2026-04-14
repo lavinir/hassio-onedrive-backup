@@ -34,6 +34,7 @@ import { useBackups } from './queries/useBackups'
 import { useSyncStatus } from './queries/useSyncStatus'
 import Settings from './pages/Settings'
 import LoginIndicator from './components/LoginIndicator';
+import { useLoginStatus } from './queries/useLoginStatus';
 import { useTriggerBackup } from './mutations/useBackupMutations';
 import CreateBackupModal from './components/CreateBackupModal';
 import { useBuildInfo } from './queries/useBuildInfo';
@@ -43,7 +44,9 @@ function App() {
   const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
   const [mode, setMode] = useState<'light' | 'dark'>(prefersDarkMode ? 'dark' : 'light');
   const [currentPage, setCurrentPage] = useState<'dashboard' | 'settings'>('dashboard');
-  const { data: backups = [], isLoading, refetch } = useBackups();
+  const { data: loginStatus } = useLoginStatus();
+  const isLoggedIn = loginStatus?.authState === 'LoggedIn';
+  const { data: backups = [], isLoading, refetch } = useBackups(isLoggedIn);
   const { data: syncStatus } = useSyncStatus();
   const { data: buildInfo } = useBuildInfo();
   const createBackupMutation = useTriggerBackup();
@@ -130,7 +133,7 @@ function App() {
           </Button>
         </Box>
 
-        {isLoading ? (
+        {isLoading && isLoggedIn ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
             <CircularProgress />
           </Box>
@@ -309,7 +312,7 @@ function App() {
               target="_blank"
               rel="noopener noreferrer"
               underline="hover"
-              color="inherit"
+              color="primary"
             >
               Support this project
             </Link>
