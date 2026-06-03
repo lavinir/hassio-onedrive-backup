@@ -13,13 +13,18 @@ public class OneDriveClient : IOneDriveClient
     private readonly string _clientId;
     private readonly string[] _scopes = new[] { "Files.ReadWrite.AppFolder", "User.Read" };
     private readonly ILogger<OneDriveClient> _logger;
-    private readonly string _tokenCachePath;
-    private readonly string _legacyAuthRecordPath;
+    private readonly string _authRecordPath;
     private DeviceCodeCredential? _deviceCodeCredential;
     private GraphServiceClient? _graphClient;
     private readonly string _tenantId = "consumers";
-    private string _authRecordPath => Path.Combine(_tokenCachePath, "auth_record.json");
     private AuthenticationRecord? _authRecord;
+    private const string MsalCacheName = "hassio-onedrive-auth";
+    // MsalCacheDirectory is computed at call time, AFTER XDG_DATA_HOME is set in the constructor.
+    // With XDG_DATA_HOME=/data, LocalApplicationData returns /data, so the cache lands on the
+    // persistent volume at /data/.IdentityService/ instead of a relative or ephemeral path.
+    private string MsalCacheDirectory => Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        ".IdentityService");
 
     // Simple flag to track if there's an ongoing auth flow
     private bool _authFlowInProgress = false;
@@ -33,23 +38,20 @@ public class OneDriveClient : IOneDriveClient
         _clientId = configuration["OneDrive:ClientId"] ?? throw new ArgumentNullException("OneDrive:ClientId configuration is missing");
         _logger = logger;
 
-        // Set up the token cache location
         var dataFolder = configuration["DataFolder"] ?? "/data";
-        _tokenCachePath = Path.Combine(dataFolder, "token-cache");
-        _legacyAuthRecordPath = Path.Combine(dataFolder, "record.auth");
+        _authRecordPath = Path.Combine(dataFolder, "record.auth");
 
-        _logger.LogInformation($"Token cache path: {_tokenCachePath}");
+        // Force MSAL's persistent token cache onto the /data volume.
+        // On Alpine, SpecialFolder.LocalApplicationData returns "" when XDG_DATA_HOME is unset,
+        // causing MSAL to write the cache to a relative path in the ephemeral container layer.
+        // Setting XDG_DATA_HOME here makes LocalApplicationData return /data so the cache is
+        // written to /data/.IdentityService/ which survives addon upgrades.
+        if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("XDG_DATA_HOME")))
+        {
+            Environment.SetEnvironmentVariable("XDG_DATA_HOME", dataFolder);
+        }
 
-        // Ensure the directory exists
-        try
-        {
-            Directory.CreateDirectory(_tokenCachePath);
-            _logger.LogInformation("Token cache directory created or verified");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, $"Failed to create token cache directory: {_tokenCachePath}");
-        }
+        _logger.LogInformation($"HOME={Environment.GetEnvironmentVariable("HOME") ?? "(not set)"}, XDG_DATA_HOME={Environment.GetEnvironmentVariable("XDG_DATA_HOME") ?? "(not set)"}, MSAL cache dir: {MsalCacheDirectory}");
 
         // Load the authentication record if it exists
         LoadAuthenticationRecord();
@@ -69,14 +71,6 @@ public class OneDriveClient : IOneDriveClient
                 _authRecord = AuthenticationRecord.Deserialize(recordStream);
                 _logger.LogInformation("Authentication record loaded successfully");
             }
-            else if (File.Exists(_legacyAuthRecordPath))
-            {
-                _logger.LogInformation("Found legacy authentication record, migrating...");
-                using Stream recordStream = File.OpenRead(_legacyAuthRecordPath);
-                _authRecord = AuthenticationRecord.Deserialize(recordStream);
-                SaveAuthenticationRecord(_authRecord);
-                _logger.LogInformation("Legacy authentication record migrated successfully");
-            }
             else
             {
                 _logger.LogInformation("No authentication record found");
@@ -92,7 +86,7 @@ public class OneDriveClient : IOneDriveClient
     {
         try
         {
-            using Stream recordStream = File.OpenWrite(_authRecordPath);
+            using Stream recordStream = new FileStream(_authRecordPath, FileMode.Create, FileAccess.Write);
             record.Serialize(recordStream);
             _logger.LogInformation("Authentication record saved successfully");
         }
@@ -110,12 +104,14 @@ public class OneDriveClient : IOneDriveClient
             {
                 TokenCachePersistenceOptions = new TokenCachePersistenceOptions
                 {
-                    Name = "hassio-onedrive-auth",
+                    Name = MsalCacheName,
                     UnsafeAllowUnencryptedStorage = true
                 },
                 AuthorityHost = AzureAuthorityHosts.AzurePublicCloud,
-                TenantId = _tenantId
-                // DisableAutomaticAuthentication not set — silent cache-based token refresh must be allowed
+                TenantId = _tenantId,
+                // Prevent automatic device code flows on startup — silent cache-based token refresh still works.
+                // Without this, any failed silent refresh blocks for ~15 minutes waiting for a device code to expire.
+                DisableAutomaticAuthentication = true
             };
 
             // Set the authentication record in the options if available
@@ -135,7 +131,8 @@ public class OneDriveClient : IOneDriveClient
             // Hook up the credential with Graph client
             _graphClient = new GraphServiceClient(_deviceCodeCredential, _scopes);
 
-            _logger.LogInformation("Graph client initialized");
+            var msalCacheFile = Path.Combine(MsalCacheDirectory, $"{MsalCacheName}.cache");
+            _logger.LogInformation($"Graph client initialized (MSAL cache file present: {File.Exists(msalCacheFile)}, path: {msalCacheFile})");
         }
         catch (Exception ex)
         {
@@ -253,7 +250,7 @@ public class OneDriveClient : IOneDriveClient
             {
                 TokenCachePersistenceOptions = new TokenCachePersistenceOptions
                 {
-                    Name = "hassio-onedrive-auth",
+                    Name = MsalCacheName,
                     UnsafeAllowUnencryptedStorage = true
                 },
                 AuthorityHost = AzureAuthorityHosts.AzurePublicCloud,
@@ -368,20 +365,22 @@ public class OneDriveClient : IOneDriveClient
             _logger.LogWarning(ex, "Failed to delete authentication record file");
         }
 
-        // Delete all MSAL cache files in the directory
+        // Delete all MSAL cache files from the correct location
         try
         {
-            var cacheDir = new DirectoryInfo(_tokenCachePath);
-            foreach (var file in cacheDir.GetFiles("msal.cache*"))
+            if (Directory.Exists(MsalCacheDirectory))
             {
-                try
+                foreach (var file in Directory.GetFiles(MsalCacheDirectory, "*.cache"))
                 {
-                    file.Delete();
-                    _logger.LogDebug($"Deleted MSAL cache file: {file.Name}");
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, $"Failed to delete MSAL cache file: {file.FullName}");
+                    try
+                    {
+                        File.Delete(file);
+                        _logger.LogDebug($"Deleted MSAL cache file: {Path.GetFileName(file)}");
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, $"Failed to delete MSAL cache file: {file}");
+                    }
                 }
             }
 

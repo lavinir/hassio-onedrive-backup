@@ -41,9 +41,8 @@ fi
 ##################  linux-x64
 echo "Building linux-x64"
 docker build -t "ghcr.io/lavinir/amd64-hassonedrive:${VERSION}" \
-    --build-arg BUILD_ARCH=linux-x64 \
-    --build-arg SDK_IMAGE_ARCH_TAG=10.0-alpine \
-    --build-arg RUNTIME_IMAGE_ARCH_TAG=10.0-alpine-amd64 .
+    --platform linux/amd64 \
+    --build-arg VERSION="${VERSION}" .
 
 if [[ "$SIGN_IMAGES" == true ]]; then
     echo "Signing linux-x64 Image"
@@ -56,14 +55,12 @@ docker push "ghcr.io/lavinir/amd64-hassonedrive:${VERSION}"
 ##################  linux-arm
 echo "Building linux-arm"
 docker build -t "ghcr.io/lavinir/armv7-hassonedrive:${VERSION}" \
-    --build-arg SDK_IMAGE_ARCH_TAG=10.0-alpine \
-    --build-arg RUNTIME_IMAGE_ARCH_TAG=10.0-alpine-arm32v7 \
-    --build-arg BUILD_ARCH=linux-arm .
+    --platform linux/arm/v7 \
+    --build-arg VERSION="${VERSION}" .
 
 docker build -t "ghcr.io/lavinir/armhf-hassonedrive:${VERSION}" \
-    --build-arg SDK_IMAGE_ARCH_TAG=10.0-alpine \
-    --build-arg RUNTIME_IMAGE_ARCH_TAG=10.0-alpine-arm32v7 \
-    --build-arg BUILD_ARCH=linux-arm .
+    --platform linux/arm/v7 \
+    --build-arg VERSION="${VERSION}" .
 
 if [[ "$SIGN_IMAGES" == true ]]; then
     echo "Signing linux-arm Images"
@@ -78,9 +75,8 @@ docker push "ghcr.io/lavinir/armv7-hassonedrive:${VERSION}"
 ##################  linux-arm64
 echo "Building linux-arm64"
 docker build -t "ghcr.io/lavinir/aarch64-hassonedrive:${VERSION}" \
-    --build-arg SDK_IMAGE_ARCH_TAG=10.0-alpine \
-    --build-arg RUNTIME_IMAGE_ARCH_TAG=10.0-alpine-arm64v8 \
-    --build-arg BUILD_ARCH=linux-arm64 .
+    --platform linux/arm64 \
+    --build-arg VERSION="${VERSION}" .
 
 if [[ "$SIGN_IMAGES" == true ]]; then
     echo "Signing linux-arm64 Image"
